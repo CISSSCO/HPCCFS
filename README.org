@@ -1,0 +1,520 @@
+:PROPERTIES:
+:ID:       e83f4c4d-881d-4cb4-975c-3776d03d82b1
+:END:
+#+title: ClusterSetup
+#+date: [2026-03-14 Sat 00:35]
+#+AUTHOR: Cisco Ramon
+#+DESCRIPTION: Building a mini HPC cluster environment using Rocky Linux, VirtualBox, Slurm, MPI, and OpenMP
+#+STARTUP: overview
+#+OPTIONS: toc:3 num:t
+#+PROPERTY: header-args :results output
+#+SETUPFILE: https://fniessen.github.io/org-html-themes/org/html-theme-readtheorg.setup
+#+HTML_HEAD: <style> pre.src { font-size: 16px !important;} code { font-size: 16px !important;} </style>
+
+* Introduction
+
+This guide explains how to build a small HPC cluster from scratch using
+VirtualBox and Rocky Linux.
+
+The setup is designed for learning and experimentation. The overall structure
+is inspired by real HPC environments and supercomputers, but everything is
+kept lightweight so it can run on a normal laptop or workstation.
+
+The goal is to create a working cluster environment where you can practice:
+
+- Linux system administration
+- Slurm job scheduling
+- MPI/OpenMP execution
+- Cluster networking
+- Shared storage setup
+- User management
+- Software installation
+- HPC monitoring and automation
+
+This is not a theoretical HPC book. The focus is completely practical.
+
+Throughout this guide, we will gradually build the cluster node-by-node and
+configure each component manually.
+
+* Cluster Architecture
+The cluster consists of five virtual machines connected using an internal
+network.
+
+#+begin_example
+                 HOST MACHINE
+                       |
+         ssh -p XXXX localhost
+                       |
+               [ NAT Adapter ]
+                       |
+ ------------------------------------------------
+ |               INTERNAL NETWORK               |
+ |                  "hpcnet"                    |
+ ------------------------------------------------
+
+master      10.10.10.1
+login       10.10.10.2
+compute01   10.10.10.11
+compute02   10.10.10.12
+compute03   10.10.10.13
+#+end_example
+
+* Node Details
+** Node Role
+*** Master Node
+
+The master node manages the overall cluster.
+
+Main responsibilities:
+
+- Slurm controller
+- NFS server
+- LDAP server
+- Monitoring tools
+- Shared software stack
+- Cluster configuration
+
+*** Login Node
+
+The login node is the access point for users.
+
+Typical tasks performed here:
+
+- SSH login
+- Code compilation
+- Job submission
+- Accessing shared storage
+
+*** Compute Nodes
+
+Compute nodes run the actual workloads.
+
+These nodes are mainly used for:
+
+- MPI jobs
+- OpenMP jobs
+- Batch workloads
+- Parallel execution
+
+** Networking Setup
+
+Two network adapters are used for each VM.
+
+*** NAT Adapter
+
+Used for:
+
+- Internet access
+- Package installation
+- SSH access from host system
+
+*** Internal Network
+
+Used for communication between cluster nodes.
+
+Network name:
+
+#+begin_example
+hpcnet
+#+end_example
+
+This network is isolated and only used inside the cluster.
+
+** Static IP Addressing
+
+Each node uses a fixed IP address.
+
+| VM Name   | Hostname        | Internal IP | SSH Port |
+|-----------+-----------------+-------------+----------|
+| master    | master.local    | 10.10.10.1  | 2221     |
+| login     | login.local     | 10.10.10.2  | 2222     |
+| compute01 | compute01.local | 10.10.10.11 | 2223     |
+| compute02 | compute02.local | 10.10.10.12 | 2224     |
+| compute03 | compute03.local | 10.10.10.13 | 2225     |
+
+Example SSH access:
+
+#+begin_src bash
+ssh -p 2221 hpcuser@localhost
+#+end_src
+
+* Resource Allocation
+The following configuration is enough for a lightweight HPC lab.
+You can increase resources later depending on your host system.
+** Master Node
+
+| Resource | Value |
+|----------+-------|
+| RAM      | 2 GB  |
+| CPU      | 2     |
+| Disk     | 30 GB |
+
+** Login Node
+
+| Resource | Value |
+|----------+-------|
+| RAM      | 2 GB  |
+| CPU      | 2     |
+| Disk     | 25 GB |
+
+** Compute Nodes
+
+| Resource | Value |
+|----------+-------|
+| RAM      | 2 GB  |
+| CPU      | 2     |
+| Disk     | 20 GB |
+
+* Master Node Setup
+This section covers the complete setup of the master node. The master node
+acts as the central management node of the cluster.
+
+Main responsibilities:
+
+- Cluster management
+- Shared storage
+- Slurm controller
+- Monitoring services
+- User authentication
+- Software management
+  
+** Install VirtualBox on Manjaro
+I'm using Manjaro (Arch) as my base system.
+*** Update packages
+#+begin_src bash
+sudo pacman -Syu
+#+end_src
+
+*** Install VirtualBox and host modules
+#+begin_src bash
+sudo pacman -S virtualbox virtualbox-host-modules-arch
+#+end_src
+
+*** Install VirtualBox extension pack
+#+begin_src bash
+sudo pacman -S virtualbox-ext-oracle
+#+end_src
+
+*** Load VirtualBox kernel module
+#+begin_src bash
+sudo modprobe vboxdrv
+#+end_src
+
+*** Add current user to VirtualBox group
+#+begin_src bash
+sudo usermod -aG vboxusers $USER
+#+end_src
+
+*** Reboot the system
+#+begin_src bash
+sudo reboot
+#+end_src
+
+** Download Rocky Linux
+
+Download Rocky Linux Minimal ISO:
+
+https://rockylinux.org/download
+
+Choose:
+
+- x86_64
+- Minimal ISO
+  
+The minimal installation keeps the environment lightweight and avoids
+unnecessary packages.
+** Create Master VM
+Open VirtualBox and create a new virtual machine.
+*** VM Name
+
+#+begin_example
+master
+#+end_example
+
+*** Type
+
+#+begin_example
+Linux
+Red Hat (64-bit)
+#+end_example
+
+*** Hardware
+
+| Setting | Value |
+|----------+-------|
+| RAM      | 2046 MB |
+| CPU      | 2 |
+| Disk     | 30 GB |
+
+*** Disk Type
+
+#+begin_example
+VDI
+Dynamically Allocated
+#+end_example
+
+This configuration is enough for a lightweight HPC lab environment.
+** Network Configuration
+
+*** Adapter 1
+
+#+begin_example
+Attached to: NAT
+#+end_example
+Used for:
+
+- Internet access
+- Package installation
+- SSH access from host machine
+  
+*** NAT Port Forwarding
+Open:
+
+#+begin_example
+Settings -> Network -> Adapter 1 -> Advanced -> Port Forwarding
+#+end_example
+
+| Name | Protocol | Host Port | Guest Port |
+|-------+-----------+------------+-------------|
+| ssh   | TCP       | 2221       | 22          |
+
+*** Adapter 2
+
+#+begin_example
+Attached to: Internal Network
+#+end_example
+
+Internal Network Name:
+
+#+begin_example
+hpcnet
+#+end_example
+
+IMPORTANT:
+All nodes MUST use the same internal network name.
+This network is used for communication between cluster nodes.
+
+** Rocky Linux Installation
+
+Choose:
+
+#+begin_example
+Minimal Install
+#+end_example
+
+*** Network and Hostname
+
+Enable BOTH network adapters.
+
+Set hostname:
+
+#+begin_example
+master.local
+#+end_example
+
+*** User Creation
+Create an administrative user during installation.
+
+| Field | Value |
+|--------+-------|
+| Username | hpcadmin |
+| Administrator | YES |
+After installation, log into the VM.
+
+** Initial System Verification
+*** Check Interfaces
+
+#+begin_src bash
+ip addr
+#+end_src
+
+Expected:
+
+- NAT interface should receive:
+  - 10.0.2.15
+- Internal interface should exist but may not yet have static IP
+
+** Configure Static Internal Network
+*** Check Device Names
+
+#+begin_src bash
+nmcli device status
+#+end_src
+
+Expected:
+
+| Interface | Purpose |
+|------------+----------|
+| enp0s3     | NAT |
+| enp0s8     | Internal Network |
+
+** Configure Internal Interface
+
+Launch NetworkManager TUI:
+
+#+begin_src bash
+sudo nmtui
+#+end_src
+
+Navigate:
+
+#+begin_example
+Edit a connection
+#+end_example
+
+Select:
+
+#+begin_example
+enp0s8
+#+end_example
+
+Set:
+
+| Field | Value |
+|--------+-------|
+| IPv4 Method | Manual |
+| Address | 10.10.10.1/24 |
+| Gateway | blank |
+| DNS | blank |
+
+DO NOT modify NAT interface.
+
+** Restart Networking
+
+#+begin_src bash
+sudo systemctl restart NetworkManager
+#+end_src
+
+** Verify Networking
+
+#+begin_src bash
+ip addr
+#+end_src
+
+Expected:
+
+| Interface | IP |
+|------------+----------------|
+| NAT        | 10.0.2.x |
+| Internal   | 10.10.10.1 |
+
+** SSH Access from Host
+
+From host machine:
+
+#+begin_src bash
+ssh -p 2221 hpcadmin@localhost
+#+end_src
+If the connection works, port forwarding is configured correctly.
+
+** System Update and Packages
+*** Update System
+
+#+begin_src bash
+sudo dnf update -y
+#+end_src
+
+*** Install Base Packages
+
+#+begin_src bash
+sudo dnf install -y \
+vim wget curl git \
+net-tools bind-utils \
+htop tmux tree \
+gcc gcc-c++ gcc-gfortran \
+make cmake \
+python3 \
+openssh-server
+#+end_src
+
+These packages provide:
+
+- Development tools
+- Network utilities
+- Monitoring utilities
+- Basic administration tools
+  
+** Timezone Configuration
+Check timezone:
+
+#+begin_src bash
+timedatectl
+#+end_src
+
+Set timezone if needed:
+
+#+begin_src bash
+sudo timedatectl set-timezone Asia/Kolkata
+#+end_src
+
+** Configure /etc/hosts
+
+Edit:
+
+#+begin_src bash
+sudo vim /etc/hosts
+#+end_src
+
+Add:
+
+#+begin_example
+10.10.10.1   master master.local
+10.10.10.2   login login.local
+10.10.10.11  compute01 compute01.local
+10.10.10.12  compute02 compute02.local
+10.10.10.13  compute03 compute03.local
+#+end_example
+This allows hostname-based communication between nodes.
+
+** Disable Firewall (Temporary)
+For initial setup and testing:
+#+begin_src bash
+sudo systemctl disable --now firewalld
+#+end_src
+NOTE:
+
+Firewall rules can be configured properly later after cluster setup is complete.
+
+** SELinux Configuration
+
+Check status:
+
+#+begin_src bash
+getenforce
+#+end_src
+
+Temporarily disable enforcing:
+
+#+begin_src bash
+sudo setenforce 0
+#+end_src
+
+Persist configuration:
+
+#+begin_src bash
+sudo vim /etc/selinux/config
+#+end_src
+
+Modify:
+
+#+begin_example
+SELINUX=permissive
+#+end_example
+This helps avoid permission-related issues during initial cluster setup.
+
+** Verify Hostname
+#+begin_src bash
+hostnamectl
+#+end_src
+
+Expected:
+
+#+begin_example
+Static hostname: master.local
+#+end_example
+
+If hostname is not updated(showing previous), reboot the machine.
+
+At this point, the master node setup is complete and ready for cloning or
+further cluster configuration.
+
