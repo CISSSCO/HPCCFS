@@ -9,7 +9,7 @@
 #+OPTIONS: toc:3 num:t
 #+PROPERTY: header-args :results output
 #+SETUPFILE: https://fniessen.github.io/org-html-themes/org/html-theme-readtheorg.setup
-#+HTML_HEAD: <style> pre.src { font-size: 16px !important;} code { font-size: 16px !important;} </style>
+#+HTML_HEAD: <style> pre.src { font-size: 15px !important;} code { font-size: 15px !important;} </style>
 
 * Introduction
 
@@ -517,4 +517,2427 @@ If hostname is not updated(showing previous), reboot the machine.
 
 At this point, the master node setup is complete and ready for cloning or
 further cluster configuration.
+
+* Cloning Nodes
+
+Purpose:
+
+- avoid reinstalling all nodes manually
+- simulate real HPC image provisioning workflow
+
+** Create Snapshot
+
+Power off VM:
+
+#+begin_src bash
+sudo poweroff
+#+end_src
+
+Create snapshot in VirtualBox:
+
+#+begin_example
+clean-base-master
+#+end_example
+
+** Clone Nodes
+
+Create FULL CLONES.
+
+IMPORTANT:
+Enable:
+
+#+begin_example
+Reinitialize the MAC address of all network cards
+#+end_example
+
+** Clone Names
+
+| VM Name |
+|----------|
+| login |
+| compute01 |
+| compute02 |
+| compute03 |
+
+** Configure Port Forwarding
+
+*** Login Node
+
+| Host Port | Guest Port |
+|------------+-------------|
+| 2222       | 22 |
+
+*** Compute01
+
+| Host Port | Guest Port |
+|------------+-------------|
+| 2223       | 22 |
+
+*** Compute02
+
+| Host Port | Guest Port |
+|------------+-------------|
+| 2224       | 22 |
+
+*** Compute03
+
+| Host Port | Guest Port |
+|------------+-------------|
+| 2225       | 22 |
+
+** Machine ID Regeneration
+
+IMPORTANT:
+Each cloned Linux machine must have unique machine-id.
+
+** Remove Existing Machine ID
+
+#+begin_src bash
+sudo rm -f /etc/machine-id
+#+end_src
+
+** Generate New Machine ID
+
+#+begin_src bash
+sudo systemd-machine-id-setup
+#+end_src
+
+** Verify Machine ID
+
+#+begin_src bash
+cat /etc/machine-id
+#+end_src
+
+Ensure every node has unique machine-id.
+
+** Configure Hostname
+
+*** Login Node
+
+Edit hostname:
+
+#+begin_src bash
+sudo vim /etc/hostname
+#+end_src
+
+Set:
+
+#+begin_example
+login.local
+#+end_example
+
+Apply:
+
+#+begin_src bash
+sudo hostnamectl set-hostname login.local
+#+end_src
+
+*** Compute01
+
+Set hostname:
+
+#+begin_example
+compute01.local
+#+end_example
+
+Apply:
+
+#+begin_src bash
+sudo hostnamectl set-hostname compute01.local
+#+end_src
+
+*** Compute02
+
+#+begin_example
+compute02.local
+#+end_example
+
+#+begin_src bash
+sudo hostnamectl set-hostname compute02.local
+#+end_src
+
+*** Compute03
+
+#+begin_example
+compute03.local
+#+end_example
+
+#+begin_src bash
+sudo hostnamectl set-hostname compute03.local
+#+end_src
+
+** Configure Static Internal IPs
+
+Launch:
+
+#+begin_src bash
+sudo nmtui
+#+end_src
+
+Edit internal adapter:
+
+#+begin_example
+enp0s8
+#+end_example
+
+*** Login Node
+
+#+begin_example
+10.10.10.2/24
+#+end_example
+
+*** Compute01
+
+#+begin_example
+10.10.10.11/24
+#+end_example
+
+*** Compute02
+
+#+begin_example
+10.10.10.12/24
+#+end_example
+
+*** Compute03
+
+#+begin_example
+10.10.10.13/24
+#+end_example
+
+** Restart Networking
+
+#+begin_src bash
+sudo systemctl restart NetworkManager
+#+end_src
+
+** Verify Networking
+
+#+begin_src bash
+ip addr
+#+end_src
+
+** Verify Routing
+
+#+begin_src bash
+ip route
+#+end_src
+
+Expected:
+
+#+begin_example
+default via 10.0.2.2 dev enp0s3
+10.10.10.0/24 dev enp0s8
+#+end_example
+
+** Verify Connectivity
+
+*** Ping Between Nodes
+
+#+begin_src bash
+ping master
+#+end_src
+
+#+begin_src bash
+ping login
+#+end_src
+
+#+begin_src bash
+ping compute01
+#+end_src
+
+** SSH Verification
+
+From host:
+
+*** Master
+
+#+begin_src bash
+ssh -p 2221 hpcadmin@localhost
+#+end_src
+
+*** Login
+
+#+begin_src bash
+ssh -p 2222 hpcadmin@localhost
+#+end_src
+
+*** Compute01
+
+#+begin_src bash
+ssh -p 2223 hpcadmin@localhost
+#+end_src
+
+*** Compute02
+
+#+begin_src bash
+ssh -p 2224 hpcadmin@localhost
+#+end_src
+
+*** Compute03
+
+#+begin_src bash
+ssh -p 2225 hpcadmin@localhost
+#+end_src
+
+* Shared Infrastructure Services
+
+Goal:
+
+Transform the cluster into a realistic HPC-style shared environment.
+
+This phase includes:
+
+- passwordless SSH
+- shared home directories
+- NFS server/client configuration
+- persistent mounts
+- multi-node shared filesystem verification
+
+By the end of this phase:
+
+- all nodes share same /home
+- users can access same files from all nodes
+- cluster behaves like a real HPC environment
+
+** Cluster Role Architecture
+
+*** Master Node
+
+Purpose:
+
+- cluster management
+- NFS server
+- future Slurm controller
+- future Munge authority
+- future LDAP server
+
+Services:
+
+| Service | Purpose |
+|----------+----------|
+| nfs-server | shared storage |
+| future slurmctld | scheduler controller |
+| future munge | authentication |
+
+*** Login Node
+
+Purpose:
+
+- user login
+- compilation
+- job submission
+
+Users should:
+- SSH into login node
+- compile programs
+- submit jobs using Slurm
+
+*** Compute Nodes
+
+Purpose:
+
+- execute jobs only
+
+Future services:
+
+| Service | Purpose |
+|----------+----------|
+| slurmd | compute daemon |
+| munge | authentication |
+
+** Verify User Consistency
+
+IMPORTANT:
+
+NFS shared storage requires same UID/GID across all nodes.
+
+Verify user identity on all nodes:
+
+#+begin_src bash
+id hpcadmin
+#+end_src
+
+Expected:
+
+#+begin_example
+uid=1000(hpcadmin) gid=1000(hpcadmin)
+#+end_example
+
+All nodes must match.
+
+** Passwordless SSH Configuration
+
+Purpose:
+
+- MPI communication
+- Slurm execution
+- cluster automation
+- remote management
+
+SSH trust is generated ONLY from login node.
+
+This mimics real HPC architecture:
+
+#+begin_example
+User -> Login Node -> Compute Nodes
+#+end_example
+
+** Generate SSH Key on Login Node
+
+SSH into login node from host:
+
+#+begin_src bash
+ssh -p 2222 hpcadmin@localhost
+#+end_src
+
+Generate SSH key:
+
+#+begin_src bash
+ssh-keygen
+#+end_src
+
+Press Enter for all prompts.
+
+Generated files:
+
+#+begin_example
+~/.ssh/id_rsa
+~/.ssh/id_rsa.pub
+#+end_example
+
+** Copy SSH Keys to Cluster Nodes
+
+*** Master
+
+#+begin_src bash
+ssh-copy-id hpcadmin@master
+#+end_src
+
+*** Compute01
+
+#+begin_src bash
+ssh-copy-id hpcadmin@compute01
+#+end_src
+
+*** Compute02
+
+#+begin_src bash
+ssh-copy-id hpcadmin@compute02
+#+end_src
+
+*** Compute03
+
+#+begin_src bash
+ssh-copy-id hpcadmin@compute03
+#+end_src
+
+** Verify Passwordless SSH
+
+*** Test Master
+
+#+begin_src bash
+ssh master hostname
+#+end_src
+
+Expected:
+
+#+begin_example
+master.local
+#+end_example
+
+*** Test Compute01
+
+#+begin_src bash
+ssh compute01 hostname
+#+end_src
+
+Expected:
+
+#+begin_example
+compute01.local
+#+end_example
+
+*** Test Compute02
+
+#+begin_src bash
+ssh compute02 hostname
+#+end_src
+
+*** Test Compute03
+
+#+begin_src bash
+ssh compute03 hostname
+#+end_src
+
+No password prompts should appear.
+
+** HPC Concept — Why Passwordless SSH Matters
+
+Passwordless SSH becomes essential for:
+
+| Feature | Purpose |
+|----------+----------|
+| MPI | remote process launch |
+| Slurm | distributed execution |
+| automation | orchestration |
+| monitoring | remote administration |
+
+** NFS Shared Storage Setup
+
+Purpose:
+
+Provide shared home directories across all cluster nodes.
+
+This is a core HPC architecture requirement.
+
+Without shared storage:
+
+- source code differs per node
+- binaries differ
+- scripts unavailable across nodes
+- MPI execution becomes difficult
+
+Real HPC systems commonly use:
+
+- NFS
+- Lustre
+- BeeGFS
+- GPFS
+
+This lab begins with NFS.
+
+** Install NFS Packages
+
+Install on ALL nodes:
+
+#+begin_src bash
+sudo dnf install -y nfs-utils
+#+end_src
+
+** Configure NFS Server on Master
+
+SSH into master node.
+
+** Enable NFS Services
+
+#+begin_src bash
+sudo systemctl enable --now nfs-server
+#+end_src
+
+Verify:
+
+#+begin_src bash
+systemctl status nfs-server
+#+end_src
+
+Expected:
+
+#+begin_example
+active (running)
+#+end_example
+
+** Configure NFS Exports
+
+Edit exports file:
+
+#+begin_src bash
+sudo vim /etc/exports
+#+end_src
+
+Add:
+
+#+begin_example
+/home 10.10.10.0/24(rw,sync,no_root_squash)
+#+end_example
+
+** Export Option Explanation
+
+| Option | Meaning |
+|---------+----------|
+| rw | read/write access |
+| sync | synchronous writes |
+| no_root_squash | preserve root privileges |
+
+** Apply Exports
+
+#+begin_src bash
+sudo exportfs -rav
+#+end_src
+
+** Verify Exports
+
+#+begin_src bash
+sudo exportfs -v
+#+end_src
+
+Expected export:
+
+#+begin_example
+/home 10.10.10.0/24(...)
+#+end_example
+
+** Configure NFS Clients
+
+Perform on:
+
+- login
+- compute01
+- compute02
+- compute03
+
+** Backup Existing Home Directory
+
+#+begin_src bash
+sudo mv /home /home.local
+#+end_src
+
+Purpose:
+
+Preserve original local home directory.
+
+** Create New Mount Point
+
+#+begin_src bash
+sudo mkdir /home
+#+end_src
+
+** Mount Shared NFS Home
+
+#+begin_src bash
+sudo mount master:/home /home
+#+end_src
+
+** Verify Mount
+
+#+begin_src bash
+df -h
+#+end_src
+
+Expected:
+
+#+begin_example
+master:/home
+#+end_example
+
+mounted on:
+
+#+begin_example
+/home
+#+end_example
+
+** Verify Shared Filesystem
+
+From login node:
+
+#+begin_src bash
+touch ~/shared_test
+#+end_src
+
+From compute01:
+
+#+begin_src bash
+ls ~
+#+end_src
+
+Expected:
+
+#+begin_example
+shared_test
+#+end_example
+
+This confirms successful shared filesystem operation.
+
+** Configure Persistent NFS Mounts
+
+Without this configuration:
+
+- NFS mount disappears after reboot
+
+** Configure /etc/fstab
+
+On ALL client nodes:
+
+#+begin_src bash
+sudo vim /etc/fstab
+#+end_src
+
+Add:
+
+#+begin_example
+master:/home   /home   nfs   defaults   0 0
+#+end_example
+
+** Verify fstab Before Reboot
+
+IMPORTANT:
+
+Always validate fstab before rebooting.
+
+Run:
+
+#+begin_src bash
+sudo mount -a
+#+end_src
+
+If no errors appear:
+- fstab configuration is correct
+
+** Reboot Validation Procedure
+
+Purpose:
+
+Validate persistent cluster infrastructure after reboot.
+
+This is important real-world HPC administration practice.
+
+** Reboot Order
+
+*** Reboot Master First
+
+#+begin_src bash
+sudo reboot
+#+end_src
+
+Wait until:
+- SSH becomes available
+- NFS server active
+
+Verify:
+
+#+begin_src bash
+systemctl status nfs-server
+#+end_src
+
+*** Reboot Login Node
+
+#+begin_src bash
+sudo reboot
+#+end_src
+
+*** Reboot Compute Nodes
+
+#+begin_src bash
+sudo reboot
+#+end_src
+
+Perform for:
+- compute01
+- compute02
+- compute03
+
+** Verify Persistent Mounts After Reboot
+
+On login node:
+
+#+begin_src bash
+df -h
+#+end_src
+
+Expected:
+
+#+begin_example
+master:/home
+#+end_example
+
+mounted automatically.
+
+** Verify Active NFS Mount
+
+#+begin_src bash
+mount | grep home
+#+end_src
+
+Expected:
+
+#+begin_example
+master:/home on /home type nfs
+#+end_example
+
+** Verify Shared Files After Reboot
+
+#+begin_src bash
+ls ~
+#+end_src
+
+Expected:
+- previously created shared files still visible
+* Munge Authentication + Slurm Scheduler
+
+Goal:
+
+Transform the cluster into a scheduler-managed HPC environment.
+
+This phase includes:
+
+- Munge authentication
+- Slurm controller setup
+- Compute node daemon setup
+- Scheduler configuration
+- Partition creation
+- Multi-node execution
+- Resource allocation testing
+
+By the end of this phase:
+
+- cluster nodes authenticate securely
+- Slurm manages compute resources
+- jobs execute across nodes
+- scheduler topology becomes operational
+
+** HPC Scheduler Architecture
+
+*** Master Node
+
+Purpose:
+
+- Slurm controller
+- cluster scheduler
+- resource manager
+- Munge authority
+
+Services:
+
+| Service | Purpose |
+|----------+----------|
+| munged | cluster authentication |
+| slurmctld | scheduler controller |
+
+*** Login Node
+
+Purpose:
+
+- user login
+- compilation
+- job submission
+
+Users should:
+
+- login here
+- compile here
+- submit jobs here
+
+*** Compute Nodes
+
+Purpose:
+
+- execute jobs
+
+Services:
+
+| Service | Purpose |
+|----------+----------|
+| munged | authentication |
+| slurmd | compute execution daemon |
+
+** IMPORTANT Rocky Linux 10 Issue
+
+Originally the cluster was created using:
+
+#+begin_example
+Rocky Linux 10
+#+end_example
+
+Problem encountered:
+
+#+begin_example
+No match for argument: slurm
+#+end_example
+
+Reason:
+
+- Rocky Linux 10 HPC ecosystem still immature
+- Slurm packages unavailable in standard repos
+- OpenHPC EL10 support incomplete
+
+Resolution:
+
+- cluster rebuilt using Rocky Linux 9 Minimal
+
+Important HPC lesson:
+
+Production HPC clusters usually avoid bleeding-edge enterprise releases because:
+
+- scheduler ecosystems lag behind
+- HPC repos may not exist
+- compatibility becomes unstable
+
+** Install EPEL Repository
+
+Install on ALL nodes:
+
+#+begin_src bash
+sudo dnf install -y epel-release
+#+end_src
+
+** Enable CRB Repository
+
+Required on Rocky Linux 9.
+
+Install on ALL nodes:
+
+#+begin_src bash
+sudo crb enable
+#+end_src
+
+** Install Munge + Slurm Packages
+
+Install on ALL nodes:
+
+#+begin_src bash
+sudo dnf install -y \
+munge munge-libs \
+slurm slurm-slurmd slurm-slurmctld
+#+end_src
+
+** Verify Installed Packages
+
+*** Verify Munge
+
+#+begin_src bash
+rpm -qa | grep munge
+#+end_src
+
+Expected:
+
+#+begin_example
+munge
+munge-libs
+#+end_example
+
+*** Verify Slurm
+
+#+begin_src bash
+rpm -qa | grep slurm
+#+end_src
+
+Expected:
+
+#+begin_example
+slurm
+slurm-slurmd
+slurm-slurmctld
+#+end_example
+
+** Verify System Users
+
+*** Verify Munge User
+
+#+begin_src bash
+id munge
+#+end_src
+
+*** Verify Slurm User
+
+#+begin_src bash
+id slurm
+#+end_src
+
+** IMPORTANT Issue Encountered — Missing slurm User
+
+Problem:
+
+#+begin_example
+id: ‘slurm’: no such user
+#+end_example
+
+Reason:
+
+Some Slurm packages on Rocky Linux do not automatically create the slurm user.
+
+Resolution:
+
+Create manually on ALL nodes.
+
+** Create Slurm Group
+
+#+begin_src bash
+sudo groupadd slurm
+#+end_src
+
+** Create Slurm User
+
+#+begin_src bash
+sudo useradd -r -g slurm -s /sbin/nologin slurm
+#+end_src
+
+Explanation:
+
+| Option | Meaning |
+|---------+----------|
+| -r | system account |
+| -g slurm | primary group |
+| -s /sbin/nologin | disable shell login |
+
+** Verify Slurm User
+
+#+begin_src bash
+id slurm
+#+end_src
+
+Expected:
+
+#+begin_example
+uid=...
+gid=...
+#+end_example
+
+** IMPORTANT HPC Security Concept
+
+Cluster daemons should not run permanently as root.
+
+Therefore:
+
+- Munge runs as munge user
+- Slurm runs as slurm user
+
+This is standard enterprise daemon security practice.
+
+** Configure Munge Authentication
+
+Purpose:
+
+Create secure trust relationship between all cluster nodes.
+
+IMPORTANT:
+
+All nodes MUST use the same:
+
+#+begin_example
+/etc/munge/munge.key
+#+end_example
+
+This key acts as the cluster-wide shared secret.
+
+** Generate Munge Key on Master
+
+ONLY on master node:
+
+#+begin_src bash
+sudo /usr/sbin/create-munge-key
+#+end_src
+
+** Verify Munge Key
+
+#+begin_src bash
+ls -l /etc/munge/munge.key
+#+end_src
+
+Expected:
+
+#+begin_example
+-rw-------
+#+end_example
+
+owned by:
+
+#+begin_example
+munge munge
+#+end_example
+
+** IMPORTANT Mistake Encountered — Munge Key Generated on All Nodes
+
+Problem:
+
+Munge key accidentally generated independently on all nodes.
+
+Result:
+
+Nodes could not authenticate each other.
+
+Important HPC lesson:
+
+Munge works using a:
+
+#+begin_example
+shared trust model
+#+end_example
+
+All nodes MUST share identical munge.key.
+
+** Correct Munge Key Distribution
+
+*** Copy Key Temporarily
+
+On master:
+
+#+begin_src bash
+sudo cp /etc/munge/munge.key /tmp/
+#+end_src
+
+*** Temporary Permission Adjustment
+
+#+begin_src bash
+sudo chmod 644 /tmp/munge.key
+#+end_src
+
+Purpose:
+
+Allow normal user SCP transfer.
+
+** IMPORTANT SSH Root Login Issue
+
+Problem encountered:
+
+#+begin_example
+Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password)
+#+end_example
+
+Reason:
+
+Using:
+
+#+begin_src bash
+sudo scp ...
+#+end_src
+
+attempted root SSH login.
+
+Rocky Linux disables direct root SSH login by default.
+
+Resolution:
+
+Use normal user SCP.
+
+** Copy Munge Key to Login Node
+
+#+begin_src bash
+scp /tmp/munge.key login:/tmp/
+#+end_src
+
+** Copy Munge Key to Compute01
+
+#+begin_src bash
+scp /tmp/munge.key compute01:/tmp/
+#+end_src
+
+** Copy Munge Key to Compute02
+
+#+begin_src bash
+scp /tmp/munge.key compute02:/tmp/
+#+end_src
+
+** Copy Munge Key to Compute03
+
+#+begin_src bash
+scp /tmp/munge.key compute03:/tmp/
+#+end_src
+
+** Remove Temporary Key Copy
+
+On master:
+
+#+begin_src bash
+sudo rm -f /tmp/munge.key
+#+end_src
+
+** Install Munge Key on Client Nodes
+
+Perform on:
+
+- login
+- compute01
+- compute02
+- compute03
+
+** Stop Munge Service
+
+#+begin_src bash
+sudo systemctl stop munge
+#+end_src
+
+** Install Key
+
+#+begin_src bash
+sudo mv /tmp/munge.key /etc/munge/
+#+end_src
+
+** Fix Ownership
+
+#+begin_src bash
+sudo chown munge:munge /etc/munge/munge.key
+#+end_src
+
+** Fix Permissions
+
+#+begin_src bash
+sudo chmod 400 /etc/munge/munge.key
+#+end_src
+
+** Start Munge
+
+On ALL nodes:
+
+#+begin_src bash
+sudo systemctl enable --now munge
+#+end_src
+
+** IMPORTANT Issue Encountered — Munge Not Running on Master
+
+Problem:
+
+#+begin_example
+munge: Error: Failed to access "/var/run/munge/munge.socket.2"
+#+end_example
+
+Reason:
+
+Munge service never started on master.
+
+Resolution:
+
+#+begin_src bash
+sudo systemctl enable --now munge
+#+end_src
+
+Important lesson:
+
+Difference between:
+
+| State | Meaning |
+|--------+----------|
+| inactive | service not started |
+| failed | service crashed |
+
+** Verify Munge Service
+
+#+begin_src bash
+systemctl status munge
+#+end_src
+
+Expected:
+
+#+begin_example
+active (running)
+#+end_example
+
+** Verify Munge Authentication
+
+From master:
+
+#+begin_src bash
+munge -n | ssh compute01 unmunge
+#+end_src
+
+** Test Compute02
+
+#+begin_src bash
+munge -n | ssh compute02 unmunge
+#+end_src
+
+** Test Compute03
+
+#+begin_src bash
+munge -n | ssh compute03 unmunge
+#+end_src
+
+** Test Login Node
+
+#+begin_src bash
+munge -n | ssh login unmunge
+#+end_src
+
+Expected:
+
+#+begin_example
+STATUS: Success
+#+end_example
+
+** HPC Concepts Learned
+
+Munge introduced:
+
+- cluster-wide authentication
+- distributed trust model
+- shared secret authentication
+- daemon security
+- inter-node trust validation
+
+** Configure Slurm Scheduler
+
+Purpose:
+
+Enable centralized resource scheduling.
+
+IMPORTANT:
+
+#+begin_example
+/etc/slurm/slurm.conf
+#+end_example
+
+must be IDENTICAL on ALL nodes.
+
+** IMPORTANT Issue Encountered — Default localhost Configuration
+
+Problem:
+
+#+begin_example
+sinfo
+-> localhost
+#+end_example
+
+Reason:
+
+Default example slurm.conf remained active.
+
+Resolution:
+
+Replace configuration with custom cluster topology.
+
+Important HPC lesson:
+
+Incorrect topology configuration is one of the most common Slurm admin problems.
+
+** Create Slurm Configuration
+
+On master:
+
+#+begin_src bash
+sudo vim /etc/slurm/slurm.conf
+#+end_src
+
+Replace ENTIRE file with:
+
+#+begin_src ini
+ClusterName=hpccluster
+SlurmctldHost=master
+
+MpiDefault=none
+ProctrackType=proctrack/cgroup
+ReturnToService=2
+
+SlurmctldPidFile=/run/slurmctld.pid
+SlurmdPidFile=/run/slurmd.pid
+
+SlurmdSpoolDir=/var/spool/slurmd
+StateSaveLocation=/var/spool/slurmctld
+
+SlurmUser=slurm
+
+SwitchType=switch/none
+TaskPlugin=task/affinity
+
+SchedulerType=sched/backfill
+
+SelectType=select/cons_tres
+SelectTypeParameters=CR_Core
+
+AuthType=auth/munge
+
+NodeName=compute01 CPUs=2 State=UNKNOWN
+NodeName=compute02 CPUs=2 State=UNKNOWN
+NodeName=compute03 CPUs=2 State=UNKNOWN
+
+PartitionName=debug Nodes=ALL Default=YES MaxTime=INFINITE State=UP
+#+end_src
+
+** Configuration Explanation
+
+| Parameter | Purpose |
+|------------+----------|
+| ClusterName | cluster identifier |
+| SlurmctldHost | controller node |
+| NodeName | compute nodes |
+| CPUs=2 | available CPUs |
+| PartitionName | scheduler queue |
+
+** Create Slurm Runtime Directories
+
+*** On Master
+
+#+begin_src bash
+sudo mkdir -p /var/spool/slurmctld
+#+end_src
+
+#+begin_src bash
+sudo mkdir -p /var/spool/slurmd
+#+end_src
+
+** Set Ownership
+
+#+begin_src bash
+sudo chown slurm:slurm /var/spool/slurmctld
+#+end_src
+
+#+begin_src bash
+sudo chown slurm:slurm /var/spool/slurmd
+#+end_src
+
+** Create slurmd Directories on Compute Nodes
+
+*** Compute01
+
+#+begin_src bash
+ssh compute01 sudo -S mkdir -p /var/spool/slurmd
+#+end_src
+
+*** Compute02
+
+#+begin_src bash
+ssh compute02 sudo -S mkdir -p /var/spool/slurmd
+#+end_src
+
+*** Compute03
+
+#+begin_src bash
+ssh compute03 sudo -S mkdir -p /var/spool/slurmd
+#+end_src
+
+** IMPORTANT sudo Over SSH Issue
+
+Problem:
+
+#+begin_example
+sudo: a terminal is required to read the password
+#+end_example
+
+Resolution:
+
+Use:
+
+#+begin_src bash
+sudo -S
+#+end_src
+
+Important Linux administration concept:
+
+sudo over non-interactive SSH requires stdin password handling.
+
+** Fix Ownership on Compute Nodes
+
+*** Compute01
+
+#+begin_src bash
+ssh compute01 sudo -S chown slurm:slurm /var/spool/slurmd
+#+end_src
+
+*** Compute02
+
+#+begin_src bash
+ssh compute02 sudo -S chown slurm:slurm /var/spool/slurmd
+#+end_src
+
+*** Compute03
+
+#+begin_src bash
+ssh compute03 sudo -S chown slurm:slurm /var/spool/slurmd
+#+end_src
+
+** Verify Runtime Directories
+
+#+begin_src bash
+ls -ld /var/spool/slurmctld
+#+end_src
+
+Expected:
+
+#+begin_example
+slurm slurm
+#+end_example
+
+** Distribute slurm.conf
+
+*** Login
+
+#+begin_src bash
+scp /etc/slurm/slurm.conf login:/tmp/
+#+end_src
+
+*** Compute01
+
+#+begin_src bash
+scp /etc/slurm/slurm.conf compute01:/tmp/
+#+end_src
+
+*** Compute02
+
+#+begin_src bash
+scp /etc/slurm/slurm.conf compute02:/tmp/
+#+end_src
+
+*** Compute03
+
+#+begin_src bash
+scp /etc/slurm/slurm.conf compute03:/tmp/
+#+end_src
+
+** Install Configuration on Nodes
+
+On ALL nodes:
+
+#+begin_src bash
+sudo mv /tmp/slurm.conf /etc/slurm/slurm.conf
+#+end_src
+
+** Start Slurm Controller
+
+ONLY on master:
+
+#+begin_src bash
+sudo systemctl enable --now slurmctld
+#+end_src
+
+** Verify Controller
+
+#+begin_src bash
+systemctl status slurmctld
+#+end_src
+
+Expected:
+
+#+begin_example
+active (running)
+#+end_example
+
+** Start slurmd on Compute Nodes
+
+On:
+- compute01
+- compute02
+- compute03
+
+#+begin_src bash
+sudo systemctl enable --now slurmd
+#+end_src
+
+** Verify slurmd
+
+#+begin_src bash
+systemctl status slurmd
+#+end_src
+
+Expected:
+
+#+begin_example
+active (running)
+#+end_example
+
+** Reconfigure Slurm
+
+On master:
+
+#+begin_src bash
+sudo scontrol reconfigure
+#+end_src
+
+** IMPORTANT Issue Encountered — Nodes in DRAIN State
+
+Problem:
+
+Nodes entered:
+
+#+begin_example
+DRAIN
+#+end_example
+
+after CPU topology changes.
+
+Reason:
+
+Slurm detected mismatch between:
+- configured CPUs
+- detected hardware topology
+
+Resolution:
+
+Clear stale slurmd state.
+
+** Stop slurmd
+
+On compute nodes:
+
+#+begin_src bash
+sudo systemctl stop slurmd
+#+end_src
+
+** Remove Old State
+
+#+begin_src bash
+sudo rm -rf /var/spool/slurmd/*
+#+end_src
+
+** Restart slurmd
+
+#+begin_src bash
+sudo systemctl start slurmd
+#+end_src
+
+** Resume Nodes
+
+On master:
+
+#+begin_src bash
+sudo scontrol update NodeName=compute01 State=RESUME
+#+end_src
+
+#+begin_src bash
+sudo scontrol update NodeName=compute02 State=RESUME
+#+end_src
+
+#+begin_src bash
+sudo scontrol update NodeName=compute03 State=RESUME
+#+end_src
+
+** Verify Cluster Status
+
+#+begin_src bash
+sinfo
+#+end_src
+
+Expected:
+
+#+begin_example
+PARTITION AVAIL TIMELIMIT NODES STATE NODELIST
+debug* up infinite 3 idle compute[01-03]
+#+end_example
+
+** Verify Node Details
+
+#+begin_src bash
+scontrol show nodes
+#+end_src
+
+This displays:
+
+- CPU information
+- memory
+- node states
+- scheduler topology
+- resource allocation
+
+** Test Slurm Execution
+
+*** Single Node Test
+
+From login node:
+
+#+begin_src bash
+srun hostname
+#+end_src
+
+Expected:
+
+#+begin_example
+compute01.local
+#+end_example
+
+** Multi-node Execution
+
+#+begin_src bash
+srun -N 3 hostname
+#+end_src
+
+Expected:
+
+#+begin_example
+compute01.local
+compute02.local
+compute03.local
+#+end_example
+
+** Multi-task Multi-node Execution
+
+#+begin_src bash
+srun -N 3 -n 6 hostname
+#+end_src
+
+This verifies:
+
+- task distribution
+- multi-node scheduling
+- CPU allocation
+
+** Multi-core Single-node Execution
+
+#+begin_src bash
+srun -N 1 -n 2 hostname
+#+end_src
+
+Expected:
+
+#+begin_example
+compute01.local
+compute01.local
+#+end_example
+
+** IMPORTANT Slurm Scheduling Concept
+
+Earlier:
+
+#+begin_src bash
+srun -N 1 -n 2 hostname
+#+end_src
+
+failed because nodes initially had:
+
+#+begin_example
+CPUs=1
+#+end_example
+
+After increasing VM CPUs and updating slurm.conf:
+
+#+begin_example
+CPUs=2
+#+end_example
+
+the scheduler successfully allocated 2 tasks on a single node.
+
+Important HPC lesson:
+
+Slurm strictly enforces:
+- CPU limits
+- task allocation
+- topology constraints
+- resource consistency
+  
+* Shared Software Filesystem (/apps) + HPC Software Stack
+
+Goal:
+
+Create a dedicated shared software filesystem for:
+
+- Spack
+- compilers
+- MPI stacks
+- scientific applications
+- modulefiles
+- HPC software hierarchy
+
+This phase transitions the cluster from:
+
+#+begin_example
+basic scheduler infrastructure
+#+end_example
+
+to:
+
+#+begin_example
+realistic HPC software environment
+#+end_example
+
+** Why Separate /apps Filesystem?
+
+Initially:
+
+- each VM had a 30 GB local disk
+- /home was exported from master over NFS
+
+Concern encountered:
+
+#+begin_example
+Shared /home only had ~30 GB available.
+Spack and HPC software stacks can become very large.
+#+end_example
+
+Important HPC storage concept:
+
+Real HPC clusters usually separate:
+
+| Filesystem | Purpose |
+|-------------+----------|
+| /home | user files |
+| /apps | software stack |
+| /scratch | temporary runtime data |
+| /archive | long-term storage |
+
+Therefore a dedicated:
+
+#+begin_example
+/apps
+#+end_example
+
+filesystem was created.
+
+This is significantly closer to real HPC architecture.
+
+** IMPORTANT Storage Architecture Concept
+
+Each VM still has its own independent local storage.
+
+Example:
+
+| Node | Local Disk |
+|-------+-------------|
+| master | 30 GB |
+| login | 30 GB |
+| compute01 | 30 GB |
+| compute02 | 30 GB |
+| compute03 | 30 GB |
+
+When:
+
+#+begin_example
+master:/home
+#+end_example
+
+was mounted via NFS:
+
+- compute node local /home became hidden
+- but local disks still exist
+
+Only the exported filesystem becomes shared.
+
+Therefore:
+
+#+begin_example
+/apps
+#+end_example
+
+was created as a dedicated shared software layer.
+
+** Add New Virtual Disk to Master
+
+A second virtual disk was attached ONLY to:
+
+#+begin_example
+master
+#+end_example
+
+Purpose:
+
+- centralized software storage
+- shared application filesystem
+- Spack software stack
+
+Disk size selected:
+
+#+begin_example
+60 GB
+#+end_example
+
+Disk type:
+
+#+begin_example
+VDI (Dynamically Allocated)
+#+end_example
+
+** Verify New Disk Detection
+
+After booting master:
+
+#+begin_src bash
+lsblk
+#+end_src
+
+Expected:
+
+#+begin_example
+sda    30G
+sdb    60G
+#+end_example
+
+Important:
+
+| Device | Purpose |
+|---------+----------|
+| sda | OS disk |
+| sdb | New apps disk |
+
+Only:
+
+#+begin_example
+sdb
+#+end_example
+
+was modified.
+
+** Create GPT Partition Table
+
+#+begin_src bash
+sudo fdisk /dev/sdb
+#+end_src
+
+Inside fdisk:
+
+Create GPT label:
+
+#+begin_example
+g
+#+end_example
+
+Create partition:
+
+#+begin_example
+n
+#+end_example
+
+Accept defaults.
+
+Write changes:
+
+#+begin_example
+w
+#+end_example
+
+** Verify Partition
+
+#+begin_src bash
+lsblk
+#+end_src
+
+Expected:
+
+#+begin_example
+sdb
+└── sdb1
+#+end_example
+
+** Create XFS Filesystem
+
+#+begin_src bash
+sudo mkfs.xfs /dev/sdb1
+#+end_src
+
+Why XFS?
+
+- default enterprise filesystem
+- highly scalable
+- excellent for large filesystems
+- commonly used in HPC
+
+** Create Mount Point
+
+#+begin_src bash
+sudo mkdir -p /apps
+#+end_src
+
+** Get Filesystem UUID
+
+#+begin_src bash
+sudo blkid /dev/sdb1
+#+end_src
+
+Example:
+
+#+begin_example
+UUID="xxxxxxxx-xxxx-xxxx"
+#+end_example
+
+** Configure Persistent Mount
+
+Edit:
+
+#+begin_src bash
+sudo vim /etc/fstab
+#+end_src
+
+Add:
+
+#+begin_src fstab
+UUID=YOUR_UUID_HERE   /apps   xfs   defaults   0 0
+#+end_src
+
+Important Linux administration concept:
+
+UUIDs are preferred over:
+
+#+begin_example
+/dev/sdb1
+#+end_example
+
+because device names can change after reboot.
+
+** Mount Filesystem
+
+#+begin_src bash
+sudo mount -a
+#+end_src
+
+** Verify Mount
+
+#+begin_src bash
+df -h
+#+end_src
+
+Expected:
+
+#+begin_example
+/apps
+#+end_example
+
+mounted with approximately:
+
+#+begin_example
+60 GB
+#+end_example
+
+** Configure Ownership
+
+#+begin_src bash
+sudo chown hpcadmin:hpcadmin /apps
+#+end_src
+
+** Create Shared HPC Software Hierarchy
+
+#+begin_src bash
+mkdir -p /apps/{spack,modulefiles,software,sources}
+#+end_src
+
+Resulting structure:
+
+#+begin_example
+/apps
+├── spack
+├── modulefiles
+├── software
+└── sources
+#+end_example
+
+** HPC Software Hierarchy Concept
+
+Purpose of directories:
+
+| Directory | Purpose |
+|------------+----------|
+| spack | Spack package manager |
+| modulefiles | custom modulefiles |
+| software | installed software |
+| sources | downloaded sources |
+
+This is similar to production HPC software layouts.
+
+** Export /apps via NFS
+
+Edit exports file:
+
+#+begin_src bash
+sudo vim /etc/exports
+#+end_src
+
+Add:
+
+#+begin_src exports
+/apps 10.10.10.0/24(rw,sync,no_root_squash)
+#+end_src
+
+** Apply NFS Exports
+
+#+begin_src bash
+sudo exportfs -rav
+#+end_src
+
+** Verify Exports
+
+#+begin_src bash
+showmount -e localhost
+#+end_src
+
+Expected:
+
+#+begin_example
+/apps
+/home
+#+end_example
+
+** Create Mount Points on Client Nodes
+
+On:
+- login
+- compute01
+- compute02
+- compute03
+
+Create:
+
+#+begin_src bash
+sudo mkdir -p /apps
+#+end_src
+
+** Configure Persistent NFS Mounts
+
+Edit:
+
+#+begin_src bash
+sudo vim /etc/fstab
+#+end_src
+
+Add:
+
+#+begin_src fstab
+master:/apps   /apps   nfs   defaults,_netdev   0 0
+#+end_src
+
+** Mount Shared /apps Filesystem
+
+#+begin_src bash
+sudo mount -a
+#+end_src
+
+** Verify Shared Mount
+
+#+begin_src bash
+df -h
+#+end_src
+
+Expected:
+
+#+begin_example
+master:/apps
+#+end_example
+
+mounted on all nodes.
+
+** Verify Shared Filesystem Functionality
+
+On master:
+
+#+begin_src bash
+touch /apps/testfile
+#+end_src
+
+On compute node:
+
+#+begin_src bash
+ls /apps
+#+end_src
+
+Expected:
+
+#+begin_example
+testfile
+#+end_example
+
+This verifies:
+
+- shared software filesystem
+- NFS functionality
+- cluster-wide software visibility
+
+** HPC Architecture After /apps Setup
+
+Current cluster storage architecture:
+
+| Filesystem | Purpose |
+|-------------+----------|
+| /home | user files |
+| /apps | software stack |
+| local disks | local runtime storage |
+
+This resembles real HPC environments significantly more closely.
+
+** PHASE 1G — Spack Software Stack + MPI Runtime Validation
+
+Goal:
+
+Create centralized HPC software stack using:
+
+- Spack
+- shared software filesystem
+- shared compilers
+- shared MPI stack
+- scheduler-aware runtime execution
+
+This phase validates:
+
+- software distribution
+- multinode execution
+- Slurm integration
+- MPI runtime functionality
+
+** IMPORTANT HPC Software Stack Concept
+
+Instead of:
+
+#+begin_example
+dnf install openmpi
+#+end_example
+
+a centralized HPC software stack was created.
+
+Benefits:
+
+- software installed once
+- accessible cluster-wide
+- compiler hierarchy support
+- reproducible builds
+- module-based software environments
+
+This approach is significantly closer to real HPC centers.
+
+** Install Development Tools
+
+Installed manually on ALL nodes:
+
+#+begin_src bash
+sudo dnf groupinstall -y "Development Tools"
+#+end_src
+
+Purpose:
+
+Provides:
+
+- gcc
+- g++
+- gfortran
+- make
+- linker tools
+- development environment
+
+Important note:
+
+System compilers are still required even when using Spack.
+
+** Clone Spack into Shared Filesystem
+
+Move to:
+
+#+begin_src bash
+cd /apps
+#+end_src
+
+Clone Spack:
+
+#+begin_src bash
+git clone https://github.com/spack/spack.git
+#+end_src
+
+** Enter Spack Directory
+
+#+begin_src bash
+cd spack
+#+end_src
+
+** Initialize Spack Environment
+
+#+begin_src bash
+source share/spack/setup-env.sh
+#+end_src
+
+Purpose:
+
+Adds:
+
+- spack command
+- environment variables
+- shell integration
+
+to current shell session.
+
+** Clone Additional Spack Repository
+
+#+begin_src bash
+git clone https://github.com/spack/spack-packages.git
+#+end_src
+
+** Configure Spack Repository
+
+#+begin_src bash
+spack repo set --destination "$(pwd)/spack-packages" builtin
+#+end_src
+
+Purpose:
+
+Configure additional package repository support.
+
+** Verify Spack Functionality
+
+#+begin_src bash
+spack info gcc
+#+end_src
+
+Expected:
+
+Detailed GCC package information.
+
+This verifies:
+
+- Spack environment working
+- package repository functional
+- package metadata accessible
+
+** IMPORTANT HPC Software Stack Concept
+
+Spack operates as:
+
+#+begin_example
+source-based HPC package manager
+#+end_example
+
+Unlike:
+
+| Package Manager | Purpose |
+|------------------+----------|
+| dnf | operating system |
+| Spack | HPC software ecosystem |
+
+Production HPC systems commonly separate:
+
+- OS packages
+- scientific software stacks
+
+exactly like this setup.
+
+** Install GCC Using Spack
+
+Install GCC version:
+
+#+begin_src bash
+spack install gcc@13.4.0
+#+end_src
+
+Purpose:
+
+Create dedicated HPC compiler stack.
+
+Important concept:
+
+Production HPC systems frequently maintain multiple compiler versions simultaneously.
+
+Example:
+
+#+begin_example
+gcc@11
+gcc@12
+gcc@13
+intel
+nvhpc
+#+end_example
+
+** Load Installed GCC Compiler
+
+#+begin_src bash
+spack load gcc@13.4.0
+#+end_src
+
+** Verify Loaded Compiler
+
+#+begin_src bash
+which gcc
+#+end_src
+
+Expected:
+
+Spack-managed GCC path.
+
+** Install OpenMPI Using Spack
+
+#+begin_src bash
+spack install openmpi
+#+end_src
+
+Purpose:
+
+Create shared MPI runtime stack.
+
+Important HPC concept:
+
+MPI stacks are usually tightly coupled with compiler toolchains.
+
+** Load OpenMPI Environment
+
+#+begin_src bash
+spack load openmpi
+#+end_src
+
+** Verify MPI Compiler Wrapper
+
+#+begin_src bash
+which mpicc
+#+end_src
+
+Expected:
+
+Spack OpenMPI compiler wrapper path.
+
+** IMPORTANT MPI Wrapper Concept
+
+#+begin_example
+mpicc
+#+end_example
+
+is NOT a compiler itself.
+
+It is a wrapper that automatically injects:
+
+- MPI headers
+- MPI libraries
+- runtime link flags
+
+around GCC.
+
+This is a critical HPC build concept.
+
+** Create MPI Sum Program
+
+Create source file:
+
+#+begin_src bash
+vim mpi_sum.c
+#+end_src
+
+Program purpose:
+
+- validate MPI runtime
+- validate multinode execution
+- validate scheduler-aware MPI execution
+
+** Compile MPI Program
+
+#+begin_src bash
+mpicc mpi_sum.c -o mpi_sum
+#+end_src
+
+This validates:
+
+- MPI compiler wrappers
+- compiler environment
+- MPI header visibility
+- MPI runtime linking
+
+** IMPORTANT Shared Filesystem Advantage
+
+Because compilation occurred inside shared:
+
+#+begin_example
+/apps
+#+end_example
+
+or shared home:
+
+- binary became visible cluster-wide
+- no recompilation required on compute nodes
+
+This is one of the major advantages of shared HPC software stacks.
+
+** Create Slurm Batch Script
+
+Create script:
+
+#+begin_src bash
+vim script.sh
+#+end_src
+
+Submit script purpose:
+
+- validate Slurm scheduling
+- validate multinode MPI execution
+- validate scheduler-aware runtime launch
+
+** Submit MPI Job
+
+#+begin_src bash
+sbatch script.sh
+#+end_src
+
+This validates:
+
+- Slurm scheduler
+- job allocation
+- distributed runtime execution
+- MPI integration with Slurm
+
+** Verify Job Execution
+
+Check queue:
+
+#+begin_src bash
+squeue --me
+#+end_src
+
+Check output files.
+
+Expected:
+
+- successful MPI execution
+- distributed ranks
+- correct computed result
 
