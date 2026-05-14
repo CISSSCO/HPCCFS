@@ -1,0 +1,5578 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2026-05-14 Thu 15:09 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ClusterSetup</title>
+<meta name="author" content="Cisco Ramon" />
+<meta name="description" content="Building a mini HPC cluster environment using Rocky Linux, VirtualBox, Slurm, MPI, and OpenMP" />
+<meta name="generator" content="Org Mode" />
+<link rel="stylesheet" type="text/css" href="https://fniessen.github.io/org-html-themes/src/readtheorg_theme/css/htmlize.css"/>
+<link rel="stylesheet" type="text/css" href="https://fniessen.github.io/org-html-themes/src/readtheorg_theme/css/readtheorg.css"/>
+<link rel="stylesheet" type="text/css" href="https://fniessen.github.io/org-html-themes/src/readtheorg_theme/css/code-copy.css"/>
+<link rel="stylesheet" type="text/css" href="src/readtheorg_theme/css/search.css"/>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="https://fniessen.github.io/org-html-themes/src/lib/js/jquery.stickytableheaders.min.js"></script>
+<script type="text/javascript" src="https://fniessen.github.io/org-html-themes/src/readtheorg_theme/js/search.js"></script>
+<script type="text/javascript" src="https://fniessen.github.io/org-html-themes/src/readtheorg_theme/js/readtheorg.js"></script>
+<script type="text/javascript" src="https://fniessen.github.io/org-html-themes/src/readtheorg_theme/js/code-copy.js"></script>
+<style> pre.src { font-size: 15px !important;} code { font-size: 15px !important;} </style>
+</head>
+<body>
+<div id="content" class="content">
+<h1 class="title">ClusterSetup</h1>
+<div id="table-of-contents" role="doc-toc">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents" role="doc-toc">
+<ul>
+<li><a href="#orga03f3e9">1. Introduction</a></li>
+<li><a href="#orgb67995e">2. Cluster Architecture</a></li>
+<li><a href="#orgbd78282">3. Node Details</a>
+<ul>
+<li><a href="#org16ef95e">3.1. Node Role</a></li>
+<li><a href="#orgda8ccc1">3.2. Networking Setup</a></li>
+<li><a href="#orgac5754d">3.3. Static IP Addressing</a></li>
+</ul>
+</li>
+<li><a href="#orgbd82272">4. Resource Allocation</a>
+<ul>
+<li><a href="#org57ff685">4.1. Master Node</a></li>
+<li><a href="#org2339c2c">4.2. Login Node</a></li>
+<li><a href="#org3f32f68">4.3. Compute Nodes</a></li>
+</ul>
+</li>
+<li><a href="#orgde2b95e">5. Master Node Setup</a>
+<ul>
+<li><a href="#orgea625bf">5.1. Install VirtualBox on Manjaro</a></li>
+<li><a href="#orgbacfb4b">5.2. Download Rocky Linux</a></li>
+<li><a href="#org41ef415">5.3. Create Master VM</a></li>
+<li><a href="#orgb45b2d2">5.4. Network Configuration</a></li>
+<li><a href="#org78c6406">5.5. Rocky Linux Installation</a></li>
+<li><a href="#org2f08489">5.6. Initial System Verification</a></li>
+<li><a href="#org1558e48">5.7. Configure Static Internal Network</a></li>
+<li><a href="#org86b8826">5.8. Configure Internal Interface</a></li>
+<li><a href="#orgab95202">5.9. Restart Networking</a></li>
+<li><a href="#org9adf498">5.10. Verify Networking</a></li>
+<li><a href="#orgd997bc2">5.11. SSH Access from Host</a></li>
+<li><a href="#org386b2ad">5.12. System Update and Packages</a></li>
+<li><a href="#orgbcc1b56">5.13. Timezone Configuration</a></li>
+<li><a href="#org4d5e32b">5.14. Configure /etc/hosts</a></li>
+<li><a href="#orga881a81">5.15. Disable Firewall (Temporary)</a></li>
+<li><a href="#org0489a68">5.16. SELinux Configuration</a></li>
+<li><a href="#org23f0d61">5.17. Verify Hostname</a></li>
+</ul>
+</li>
+<li><a href="#org088de12">6. Cloning Nodes</a>
+<ul>
+<li><a href="#org7e7099b">6.1. Create Snapshot</a></li>
+<li><a href="#org55e8ef9">6.2. Clone Nodes</a></li>
+<li><a href="#orga1c3bff">6.3. Clone Names</a></li>
+<li><a href="#org4c6686d">6.4. Configure Port Forwarding</a></li>
+<li><a href="#org11c11d5">6.5. Machine ID Regeneration</a></li>
+<li><a href="#orgb91c9df">6.6. Remove Existing Machine ID</a></li>
+<li><a href="#orge855847">6.7. Generate New Machine ID</a></li>
+<li><a href="#orgf9fe192">6.8. Verify Machine ID</a></li>
+<li><a href="#org95f0c9d">6.9. Configure Hostname</a></li>
+<li><a href="#org09e07cd">6.10. Configure Static Internal IPs</a></li>
+<li><a href="#org040bb38">6.11. Restart Networking</a></li>
+<li><a href="#orgf09e3ad">6.12. Verify Networking</a></li>
+<li><a href="#orgabe7732">6.13. Verify Routing</a></li>
+<li><a href="#org9694cb2">6.14. Verify Connectivity</a></li>
+<li><a href="#orgb25c900">6.15. SSH Verification</a></li>
+</ul>
+</li>
+<li><a href="#orgc8bf324">7. Shared Infrastructure Services</a>
+<ul>
+<li><a href="#orgd2ef0fd">7.1. Cluster Role Architecture</a></li>
+<li><a href="#org8dc00a0">7.2. Verify User Consistency</a></li>
+<li><a href="#org4b29c9d">7.3. Passwordless SSH Configuration</a></li>
+<li><a href="#org7b1d3b1">7.4. Generate SSH Key on Login Node</a></li>
+<li><a href="#org1bc8758">7.5. Copy SSH Keys to Cluster Nodes</a></li>
+<li><a href="#org9b62927">7.6. Verify Passwordless SSH</a></li>
+<li><a href="#org7fe458b">7.7. HPC Concept — Why Passwordless SSH Matters</a></li>
+<li><a href="#org4cfeb17">7.8. NFS Shared Storage Setup</a></li>
+<li><a href="#orgeb1143b">7.9. Install NFS Packages</a></li>
+<li><a href="#org9b19555">7.10. Configure NFS Server on Master</a></li>
+<li><a href="#org7db98d6">7.11. Enable NFS Services</a></li>
+<li><a href="#orgd588317">7.12. Configure NFS Exports</a></li>
+<li><a href="#orgb23eff3">7.13. Export Option Explanation</a></li>
+<li><a href="#org264bfe2">7.14. Apply Exports</a></li>
+<li><a href="#orgba71754">7.15. Verify Exports</a></li>
+<li><a href="#org0fb659f">7.16. Configure NFS Clients</a></li>
+<li><a href="#orge7d7458">7.17. Backup Existing Home Directory</a></li>
+<li><a href="#orgcbd8cc2">7.18. Create New Mount Point</a></li>
+<li><a href="#org3cfada6">7.19. Mount Shared NFS Home</a></li>
+<li><a href="#org9b50bb6">7.20. Verify Mount</a></li>
+<li><a href="#org3d94a03">7.21. Verify Shared Filesystem</a></li>
+<li><a href="#org181a53b">7.22. Configure Persistent NFS Mounts</a></li>
+<li><a href="#org25ebf8e">7.23. Configure /etc/fstab</a></li>
+<li><a href="#orgacf8609">7.24. Verify fstab Before Reboot</a></li>
+<li><a href="#org51ebf50">7.25. Reboot Validation Procedure</a></li>
+<li><a href="#org71188ba">7.26. Reboot Order</a></li>
+<li><a href="#org353bc99">7.27. Verify Persistent Mounts After Reboot</a></li>
+<li><a href="#orge813d9f">7.28. Verify Active NFS Mount</a></li>
+<li><a href="#org5baac79">7.29. Verify Shared Files After Reboot</a></li>
+</ul>
+</li>
+<li><a href="#org31081ef">8. Munge Authentication + Slurm Scheduler</a>
+<ul>
+<li><a href="#org59da9f8">8.1. HPC Scheduler Architecture</a></li>
+<li><a href="#orgc2847f4">8.2. IMPORTANT Rocky Linux 10 Issue</a></li>
+<li><a href="#orgc4776b8">8.3. Install EPEL Repository</a></li>
+<li><a href="#orgbb39f3a">8.4. Enable CRB Repository</a></li>
+<li><a href="#orgcade97f">8.5. Install Munge + Slurm Packages</a></li>
+<li><a href="#org7a37405">8.6. Verify Installed Packages</a></li>
+<li><a href="#org1fd4529">8.7. Verify System Users</a></li>
+<li><a href="#org4353c6d">8.8. IMPORTANT Issue Encountered — Missing slurm User</a></li>
+<li><a href="#org4e87d78">8.9. Create Slurm Group</a></li>
+<li><a href="#org013066f">8.10. Create Slurm User</a></li>
+<li><a href="#orgb454e37">8.11. Verify Slurm User</a></li>
+<li><a href="#org3f6e2b9">8.12. IMPORTANT HPC Security Concept</a></li>
+<li><a href="#org14234e5">8.13. Configure Munge Authentication</a></li>
+<li><a href="#orgf7c9626">8.14. Generate Munge Key on Master</a></li>
+<li><a href="#orgd9b0ce3">8.15. Verify Munge Key</a></li>
+<li><a href="#orgde4ca88">8.16. IMPORTANT Mistake Encountered — Munge Key Generated on All Nodes</a></li>
+<li><a href="#org38a7129">8.17. Correct Munge Key Distribution</a></li>
+<li><a href="#org737f91a">8.18. IMPORTANT SSH Root Login Issue</a></li>
+<li><a href="#orgd654179">8.19. Copy Munge Key to Login Node</a></li>
+<li><a href="#org1abde9a">8.20. Copy Munge Key to Compute01</a></li>
+<li><a href="#org433338a">8.21. Copy Munge Key to Compute02</a></li>
+<li><a href="#org42f8d50">8.22. Copy Munge Key to Compute03</a></li>
+<li><a href="#org4bfbf34">8.23. Remove Temporary Key Copy</a></li>
+<li><a href="#org784fb5c">8.24. Install Munge Key on Client Nodes</a></li>
+<li><a href="#org32cc460">8.25. Stop Munge Service</a></li>
+<li><a href="#orged4a68c">8.26. Install Key</a></li>
+<li><a href="#orgdc4b84d">8.27. Fix Ownership</a></li>
+<li><a href="#org0b4cd18">8.28. Fix Permissions</a></li>
+<li><a href="#org9f028d6">8.29. Start Munge</a></li>
+<li><a href="#org1525a59">8.30. IMPORTANT Issue Encountered — Munge Not Running on Master</a></li>
+<li><a href="#orgf7de11b">8.31. Verify Munge Service</a></li>
+<li><a href="#org9e6b00e">8.32. Verify Munge Authentication</a></li>
+<li><a href="#org0d33f8e">8.33. Test Compute02</a></li>
+<li><a href="#org6430ea0">8.34. Test Compute03</a></li>
+<li><a href="#orgbfda07e">8.35. Test Login Node</a></li>
+<li><a href="#orgda7a2e2">8.36. HPC Concepts Learned</a></li>
+<li><a href="#orgf117705">8.37. Configure Slurm Scheduler</a></li>
+<li><a href="#org73ee4cc">8.38. IMPORTANT Issue Encountered — Default localhost Configuration</a></li>
+<li><a href="#org5acfb15">8.39. Create Slurm Configuration</a></li>
+<li><a href="#org2522096">8.40. Configuration Explanation</a></li>
+<li><a href="#org18b7abf">8.41. Create Slurm Runtime Directories</a></li>
+<li><a href="#orgd1e3a20">8.42. Set Ownership</a></li>
+<li><a href="#org59d0657">8.43. Create slurmd Directories on Compute Nodes</a></li>
+<li><a href="#orga3e0438">8.44. IMPORTANT sudo Over SSH Issue</a></li>
+<li><a href="#org45b7279">8.45. Fix Ownership on Compute Nodes</a></li>
+<li><a href="#org394b7ba">8.46. Verify Runtime Directories</a></li>
+<li><a href="#org5a70da7">8.47. Distribute slurm.conf</a></li>
+<li><a href="#org96a7b1a">8.48. Install Configuration on Nodes</a></li>
+<li><a href="#org723c3a6">8.49. Start Slurm Controller</a></li>
+<li><a href="#org9ade1e3">8.50. Verify Controller</a></li>
+<li><a href="#org0182adb">8.51. Start slurmd on Compute Nodes</a></li>
+<li><a href="#org775f6cc">8.52. Verify slurmd</a></li>
+<li><a href="#orgf9183fe">8.53. Reconfigure Slurm</a></li>
+<li><a href="#orgdffccb5">8.54. IMPORTANT Issue Encountered — Nodes in DRAIN State</a></li>
+<li><a href="#orgdc9b570">8.55. Stop slurmd</a></li>
+<li><a href="#orgeb705db">8.56. Remove Old State</a></li>
+<li><a href="#orge49ac3f">8.57. Restart slurmd</a></li>
+<li><a href="#org632ea79">8.58. Resume Nodes</a></li>
+<li><a href="#org906e106">8.59. Verify Cluster Status</a></li>
+<li><a href="#org67bd400">8.60. Verify Node Details</a></li>
+<li><a href="#org8ed52cb">8.61. Test Slurm Execution</a></li>
+<li><a href="#org78c97e2">8.62. Multi-node Execution</a></li>
+<li><a href="#orge82cdd1">8.63. Multi-task Multi-node Execution</a></li>
+<li><a href="#org85b5579">8.64. Multi-core Single-node Execution</a></li>
+<li><a href="#org89d2244">8.65. IMPORTANT Slurm Scheduling Concept</a></li>
+</ul>
+</li>
+<li><a href="#orgfcee875">9. Shared Software Filesystem (/apps) + HPC Software Stack</a>
+<ul>
+<li><a href="#org543c65e">9.1. Why Separate /apps Filesystem?</a></li>
+<li><a href="#orgccbc573">9.2. IMPORTANT Storage Architecture Concept</a></li>
+<li><a href="#org9103f71">9.3. Add New Virtual Disk to Master</a></li>
+<li><a href="#org8cd04af">9.4. Verify New Disk Detection</a></li>
+<li><a href="#org155528e">9.5. Create GPT Partition Table</a></li>
+<li><a href="#orgc756f11">9.6. Verify Partition</a></li>
+<li><a href="#org035373d">9.7. Create XFS Filesystem</a></li>
+<li><a href="#org60ab06c">9.8. Create Mount Point</a></li>
+<li><a href="#orge2fa41f">9.9. Get Filesystem UUID</a></li>
+<li><a href="#org4a7c1ac">9.10. Configure Persistent Mount</a></li>
+<li><a href="#org14cff56">9.11. Mount Filesystem</a></li>
+<li><a href="#orgb53de78">9.12. Verify Mount</a></li>
+<li><a href="#org5b1edba">9.13. Configure Ownership</a></li>
+<li><a href="#orga5edc0e">9.14. Create Shared HPC Software Hierarchy</a></li>
+<li><a href="#orgded7c58">9.15. HPC Software Hierarchy Concept</a></li>
+<li><a href="#org210005f">9.16. Export /apps via NFS</a></li>
+<li><a href="#orgf71728b">9.17. Apply NFS Exports</a></li>
+<li><a href="#org604aa5f">9.18. Verify Exports</a></li>
+<li><a href="#org88bdcb3">9.19. Create Mount Points on Client Nodes</a></li>
+<li><a href="#org3f42d5d">9.20. Configure Persistent NFS Mounts</a></li>
+<li><a href="#orgda5757a">9.21. Mount Shared /apps Filesystem</a></li>
+<li><a href="#org7c5e198">9.22. Verify Shared Mount</a></li>
+<li><a href="#org595e4d8">9.23. Verify Shared Filesystem Functionality</a></li>
+<li><a href="#org22a0583">9.24. HPC Architecture After /apps Setup</a></li>
+<li><a href="#orge500b1c">9.25. PHASE 1G — Spack Software Stack + MPI Runtime Validation</a></li>
+<li><a href="#orgd7c2229">9.26. IMPORTANT HPC Software Stack Concept</a></li>
+<li><a href="#org57a40fb">9.27. Install Development Tools</a></li>
+<li><a href="#orgbe16511">9.28. Clone Spack into Shared Filesystem</a></li>
+<li><a href="#org3d1f1d7">9.29. Enter Spack Directory</a></li>
+<li><a href="#orgf63f583">9.30. Initialize Spack Environment</a></li>
+<li><a href="#org73de31f">9.31. Clone Additional Spack Repository</a></li>
+<li><a href="#org5aed8f4">9.32. Configure Spack Repository</a></li>
+<li><a href="#org3c52440">9.33. Verify Spack Functionality</a></li>
+<li><a href="#org4f32c12">9.34. IMPORTANT HPC Software Stack Concept</a></li>
+<li><a href="#org31608ba">9.35. Install GCC Using Spack</a></li>
+<li><a href="#orgf725a41">9.36. Load Installed GCC Compiler</a></li>
+<li><a href="#orgcf4e483">9.37. Verify Loaded Compiler</a></li>
+<li><a href="#orga3ee49c">9.38. Install OpenMPI Using Spack</a></li>
+<li><a href="#orgb249dfc">9.39. Load OpenMPI Environment</a></li>
+<li><a href="#org5caa2fc">9.40. Verify MPI Compiler Wrapper</a></li>
+<li><a href="#org4a1a2d0">9.41. IMPORTANT MPI Wrapper Concept</a></li>
+<li><a href="#org152eeef">9.42. Create MPI Sum Program</a></li>
+<li><a href="#orgf72a238">9.43. Compile MPI Program</a></li>
+<li><a href="#org0df87ef">9.44. IMPORTANT Shared Filesystem Advantage</a></li>
+<li><a href="#org9290a1b">9.45. Create Slurm Batch Script</a></li>
+<li><a href="#org88abaaa">9.46. Submit MPI Job</a></li>
+<li><a href="#org9c3ce53">9.47. Verify Job Execution</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-orga03f3e9" class="outline-2">
+<h2 id="orga03f3e9"><span class="section-number-2">1.</span> Introduction</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+This guide explains how to build a small HPC cluster from scratch using
+VirtualBox and Rocky Linux.
+</p>
+
+<p>
+The setup is designed for learning and experimentation. The overall structure
+is inspired by real HPC environments and supercomputers, but everything is
+kept lightweight so it can run on a normal laptop or workstation.
+</p>
+
+<p>
+The goal is to create a working cluster environment where you can practice:
+</p>
+
+<ul class="org-ul">
+<li>Linux system administration</li>
+<li>Slurm job scheduling</li>
+<li>MPI/OpenMP execution</li>
+<li>Cluster networking</li>
+<li>Shared storage setup</li>
+<li>User management</li>
+<li>Software installation</li>
+<li>HPC monitoring and automation</li>
+</ul>
+
+<p>
+This is not a theoretical HPC book. The focus is completely practical.
+</p>
+
+<p>
+Throughout this guide, we will gradually build the cluster node-by-node and
+configure each component manually.
+</p>
+</div>
+</div>
+<div id="outline-container-orgb67995e" class="outline-2">
+<h2 id="orgb67995e"><span class="section-number-2">2.</span> Cluster Architecture</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+The cluster consists of five virtual machines connected using an internal
+network.
+</p>
+
+<pre class="example" id="org01ca7a5">
+                 HOST MACHINE
+                       |
+         ssh -p XXXX localhost
+                       |
+               [ NAT Adapter ]
+                       |
+ ------------------------------------------------
+ |               INTERNAL NETWORK               |
+ |                  "hpcnet"                    |
+ ------------------------------------------------
+
+master      10.10.10.1
+login       10.10.10.2
+compute01   10.10.10.11
+compute02   10.10.10.12
+compute03   10.10.10.13
+</pre>
+</div>
+</div>
+<div id="outline-container-orgbd78282" class="outline-2">
+<h2 id="orgbd78282"><span class="section-number-2">3.</span> Node Details</h2>
+<div class="outline-text-2" id="text-3">
+</div>
+<div id="outline-container-org16ef95e" class="outline-3">
+<h3 id="org16ef95e"><span class="section-number-3">3.1.</span> Node Role</h3>
+<div class="outline-text-3" id="text-3-1">
+</div>
+<ol class="org-ol">
+<li><a id="org120d946"></a>Master Node<br />
+<div class="outline-text-4" id="text-3-1-1">
+<p>
+The master node manages the overall cluster.
+</p>
+
+<p>
+Main responsibilities:
+</p>
+
+<ul class="org-ul">
+<li>Slurm controller</li>
+<li>NFS server</li>
+<li>LDAP server</li>
+<li>Monitoring tools</li>
+<li>Shared software stack</li>
+<li>Cluster configuration</li>
+</ul>
+</div>
+</li>
+<li><a id="org634d663"></a>Login Node<br />
+<div class="outline-text-4" id="text-3-1-2">
+<p>
+The login node is the access point for users.
+</p>
+
+<p>
+Typical tasks performed here:
+</p>
+
+<ul class="org-ul">
+<li>SSH login</li>
+<li>Code compilation</li>
+<li>Job submission</li>
+<li>Accessing shared storage</li>
+</ul>
+</div>
+</li>
+<li><a id="org388cb87"></a>Compute Nodes<br />
+<div class="outline-text-4" id="text-3-1-3">
+<p>
+Compute nodes run the actual workloads.
+</p>
+
+<p>
+These nodes are mainly used for:
+</p>
+
+<ul class="org-ul">
+<li>MPI jobs</li>
+<li>OpenMP jobs</li>
+<li>Batch workloads</li>
+<li>Parallel execution</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+<div id="outline-container-orgda8ccc1" class="outline-3">
+<h3 id="orgda8ccc1"><span class="section-number-3">3.2.</span> Networking Setup</h3>
+<div class="outline-text-3" id="text-3-2">
+<p>
+Two network adapters are used for each VM.
+</p>
+</div>
+<ol class="org-ol">
+<li><a id="org670cfbb"></a>NAT Adapter<br />
+<div class="outline-text-4" id="text-3-2-1">
+<p>
+Used for:
+</p>
+
+<ul class="org-ul">
+<li>Internet access</li>
+<li>Package installation</li>
+<li>SSH access from host system</li>
+</ul>
+</div>
+</li>
+<li><a id="org8a3e95f"></a>Internal Network<br />
+<div class="outline-text-4" id="text-3-2-2">
+<p>
+Used for communication between cluster nodes.
+</p>
+
+<p>
+Network name:
+</p>
+
+<pre class="example" id="org7b38427">
+hpcnet
+</pre>
+
+<p>
+This network is isolated and only used inside the cluster.
+</p>
+</div>
+</li>
+</ol>
+</div>
+<div id="outline-container-orgac5754d" class="outline-3">
+<h3 id="orgac5754d"><span class="section-number-3">3.3.</span> Static IP Addressing</h3>
+<div class="outline-text-3" id="text-3-3">
+<p>
+Each node uses a fixed IP address.
+</p>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+
+<col  class="org-right" />
+
+<col  class="org-right" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">VM Name</th>
+<th scope="col" class="org-left">Hostname</th>
+<th scope="col" class="org-right">Internal IP</th>
+<th scope="col" class="org-right">SSH Port</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">master</td>
+<td class="org-left">master.local</td>
+<td class="org-right">10.10.10.1</td>
+<td class="org-right">2221</td>
+</tr>
+
+<tr>
+<td class="org-left">login</td>
+<td class="org-left">login.local</td>
+<td class="org-right">10.10.10.2</td>
+<td class="org-right">2222</td>
+</tr>
+
+<tr>
+<td class="org-left">compute01</td>
+<td class="org-left">compute01.local</td>
+<td class="org-right">10.10.10.11</td>
+<td class="org-right">2223</td>
+</tr>
+
+<tr>
+<td class="org-left">compute02</td>
+<td class="org-left">compute02.local</td>
+<td class="org-right">10.10.10.12</td>
+<td class="org-right">2224</td>
+</tr>
+
+<tr>
+<td class="org-left">compute03</td>
+<td class="org-left">compute03.local</td>
+<td class="org-right">10.10.10.13</td>
+<td class="org-right">2225</td>
+</tr>
+</tbody>
+</table>
+
+<p>
+Example SSH access:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>ssh -p 2221 hpcuser@localhost
+</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div id="outline-container-orgbd82272" class="outline-2">
+<h2 id="orgbd82272"><span class="section-number-2">4.</span> Resource Allocation</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+The following configuration is enough for a lightweight HPC lab.
+You can increase resources later depending on your host system.
+</p>
+</div>
+<div id="outline-container-org57ff685" class="outline-3">
+<h3 id="org57ff685"><span class="section-number-3">4.1.</span> Master Node</h3>
+<div class="outline-text-3" id="text-4-1">
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">Resource</th>
+<th scope="col" class="org-left">Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">RAM</td>
+<td class="org-left">2 GB</td>
+</tr>
+
+<tr>
+<td class="org-left">CPU</td>
+<td class="org-left">2</td>
+</tr>
+
+<tr>
+<td class="org-left">Disk</td>
+<td class="org-left">30 GB</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="outline-container-org2339c2c" class="outline-3">
+<h3 id="org2339c2c"><span class="section-number-3">4.2.</span> Login Node</h3>
+<div class="outline-text-3" id="text-4-2">
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">Resource</th>
+<th scope="col" class="org-left">Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">RAM</td>
+<td class="org-left">2 GB</td>
+</tr>
+
+<tr>
+<td class="org-left">CPU</td>
+<td class="org-left">2</td>
+</tr>
+
+<tr>
+<td class="org-left">Disk</td>
+<td class="org-left">25 GB</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="outline-container-org3f32f68" class="outline-3">
+<h3 id="org3f32f68"><span class="section-number-3">4.3.</span> Compute Nodes</h3>
+<div class="outline-text-3" id="text-4-3">
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">Resource</th>
+<th scope="col" class="org-left">Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">RAM</td>
+<td class="org-left">2 GB</td>
+</tr>
+
+<tr>
+<td class="org-left">CPU</td>
+<td class="org-left">2</td>
+</tr>
+
+<tr>
+<td class="org-left">Disk</td>
+<td class="org-left">20 GB</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div id="outline-container-orgde2b95e" class="outline-2">
+<h2 id="orgde2b95e"><span class="section-number-2">5.</span> Master Node Setup</h2>
+<div class="outline-text-2" id="text-5">
+<p>
+This section covers the complete setup of the master node. The master node
+acts as the central management node of the cluster.
+</p>
+
+<p>
+Main responsibilities:
+</p>
+
+<ul class="org-ul">
+<li>Cluster management</li>
+<li>Shared storage</li>
+<li>Slurm controller</li>
+<li>Monitoring services</li>
+<li>User authentication</li>
+<li>Software management</li>
+</ul>
+</div>
+<div id="outline-container-orgea625bf" class="outline-3">
+<h3 id="orgea625bf"><span class="section-number-3">5.1.</span> Install VirtualBox on Manjaro</h3>
+<div class="outline-text-3" id="text-5-1">
+<p>
+I&rsquo;m using Manjaro (Arch) as my base system.
+</p>
+</div>
+<ol class="org-ol">
+<li><a id="orgb3c5f48"></a>Update packages<br />
+<div class="outline-text-4" id="text-5-1-1">
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo pacman -Syu
+</code></pre>
+</div>
+</div>
+</li>
+<li><a id="org2219ce2"></a>Install VirtualBox and host modules<br />
+<div class="outline-text-4" id="text-5-1-2">
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo pacman -S virtualbox virtualbox-host-modules-arch
+</code></pre>
+</div>
+</div>
+</li>
+<li><a id="org0ac95c1"></a>Install VirtualBox extension pack<br />
+<div class="outline-text-4" id="text-5-1-3">
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo pacman -S virtualbox-ext-oracle
+</code></pre>
+</div>
+</div>
+</li>
+<li><a id="org448c33c"></a>Load VirtualBox kernel module<br />
+<div class="outline-text-4" id="text-5-1-4">
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo modprobe vboxdrv
+</code></pre>
+</div>
+</div>
+</li>
+<li><a id="orgf93c259"></a>Add current user to VirtualBox group<br />
+<div class="outline-text-4" id="text-5-1-5">
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo usermod -aG vboxusers $USER
+</code></pre>
+</div>
+</div>
+</li>
+<li><a id="orgbbcfef2"></a>Reboot the system<br />
+<div class="outline-text-4" id="text-5-1-6">
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo reboot
+</code></pre>
+</div>
+</div>
+</li>
+</ol>
+</div>
+<div id="outline-container-orgbacfb4b" class="outline-3">
+<h3 id="orgbacfb4b"><span class="section-number-3">5.2.</span> Download Rocky Linux</h3>
+<div class="outline-text-3" id="text-5-2">
+<p>
+Download Rocky Linux Minimal ISO:
+</p>
+
+<p>
+<a href="https://rockylinux.org/download">https://rockylinux.org/download</a>
+</p>
+
+<p>
+Choose:
+</p>
+
+<ul class="org-ul">
+<li>x86_64</li>
+<li>Minimal ISO</li>
+</ul>
+
+<p>
+The minimal installation keeps the environment lightweight and avoids
+unnecessary packages.
+</p>
+</div>
+</div>
+<div id="outline-container-org41ef415" class="outline-3">
+<h3 id="org41ef415"><span class="section-number-3">5.3.</span> Create Master VM</h3>
+<div class="outline-text-3" id="text-5-3">
+<p>
+Open VirtualBox and create a new virtual machine.
+</p>
+</div>
+<ol class="org-ol">
+<li><a id="orgdfc8662"></a>VM Name<br />
+<div class="outline-text-4" id="text-5-3-1">
+<pre class="example" id="org01b4ac0">
+master
+</pre>
+</div>
+</li>
+<li><a id="orgc81105f"></a>Type<br />
+<div class="outline-text-4" id="text-5-3-2">
+<pre class="example" id="org001b32f">
+Linux
+Red Hat (64-bit)
+</pre>
+</div>
+</li>
+<li><a id="orge78636b"></a>Hardware<br />
+<div class="outline-text-4" id="text-5-3-3">
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">Setting</th>
+<th scope="col" class="org-left">Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">RAM</td>
+<td class="org-left">2046 MB</td>
+</tr>
+
+<tr>
+<td class="org-left">CPU</td>
+<td class="org-left">2</td>
+</tr>
+
+<tr>
+<td class="org-left">Disk</td>
+<td class="org-left">30 GB</td>
+</tr>
+</tbody>
+</table>
+</div>
+</li>
+<li><a id="orge6d3ac8"></a>Disk Type<br />
+<div class="outline-text-4" id="text-5-3-4">
+<pre class="example" id="org6d7c0df">
+VDI
+Dynamically Allocated
+</pre>
+
+<p>
+This configuration is enough for a lightweight HPC lab environment.
+</p>
+</div>
+</li>
+</ol>
+</div>
+<div id="outline-container-orgb45b2d2" class="outline-3">
+<h3 id="orgb45b2d2"><span class="section-number-3">5.4.</span> Network Configuration</h3>
+<div class="outline-text-3" id="text-5-4">
+</div>
+<ol class="org-ol">
+<li><a id="org7956085"></a>Adapter 1<br />
+<div class="outline-text-4" id="text-5-4-1">
+<pre class="example" id="org07f8c66">
+Attached to: NAT
+</pre>
+<p>
+Used for:
+</p>
+
+<ul class="org-ul">
+<li>Internet access</li>
+<li>Package installation</li>
+<li>SSH access from host machine</li>
+</ul>
+</div>
+</li>
+<li><a id="org06a6923"></a>NAT Port Forwarding<br />
+<div class="outline-text-4" id="text-5-4-2">
+<p>
+Open:
+</p>
+
+<pre class="example" id="orga0ca2eb">
+Settings -&gt; Network -&gt; Adapter 1 -&gt; Advanced -&gt; Port Forwarding
+</pre>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+
+<col  class="org-right" />
+
+<col  class="org-right" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">Name</th>
+<th scope="col" class="org-left">Protocol</th>
+<th scope="col" class="org-right">Host Port</th>
+<th scope="col" class="org-right">Guest Port</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">ssh</td>
+<td class="org-left">TCP</td>
+<td class="org-right">2221</td>
+<td class="org-right">22</td>
+</tr>
+</tbody>
+</table>
+</div>
+</li>
+<li><a id="org1d5e93a"></a>Adapter 2<br />
+<div class="outline-text-4" id="text-5-4-3">
+<pre class="example" id="org863d5f2">
+Attached to: Internal Network
+</pre>
+
+<p>
+Internal Network Name:
+</p>
+
+<pre class="example" id="orgf8f2712">
+hpcnet
+</pre>
+
+<p>
+IMPORTANT:
+All nodes MUST use the same internal network name.
+This network is used for communication between cluster nodes.
+</p>
+</div>
+</li>
+</ol>
+</div>
+<div id="outline-container-org78c6406" class="outline-3">
+<h3 id="org78c6406"><span class="section-number-3">5.5.</span> Rocky Linux Installation</h3>
+<div class="outline-text-3" id="text-5-5">
+<p>
+Choose:
+</p>
+
+<pre class="example" id="org43eee27">
+Minimal Install
+</pre>
+</div>
+<ol class="org-ol">
+<li><a id="org440fc94"></a>Network and Hostname<br />
+<div class="outline-text-4" id="text-5-5-1">
+<p>
+Enable BOTH network adapters.
+</p>
+
+<p>
+Set hostname:
+</p>
+
+<pre class="example" id="orgadd1b8c">
+master.local
+</pre>
+</div>
+</li>
+<li><a id="org0c27eac"></a>User Creation<br />
+<div class="outline-text-4" id="text-5-5-2">
+<p>
+Create an administrative user during installation.
+</p>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">Field</th>
+<th scope="col" class="org-left">Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">Username</td>
+<td class="org-left">hpcadmin</td>
+</tr>
+
+<tr>
+<td class="org-left">Administrator</td>
+<td class="org-left">YES</td>
+</tr>
+</tbody>
+</table>
+<p>
+After installation, log into the VM.
+</p>
+</div>
+</li>
+</ol>
+</div>
+<div id="outline-container-org2f08489" class="outline-3">
+<h3 id="org2f08489"><span class="section-number-3">5.6.</span> Initial System Verification</h3>
+<div class="outline-text-3" id="text-5-6">
+</div>
+<ol class="org-ol">
+<li><a id="orgb61e6f2"></a>Check Interfaces<br />
+<div class="outline-text-4" id="text-5-6-1">
+<div class="org-src-container">
+<pre class="src src-bash"><code>ip addr
+</code></pre>
+</div>
+
+<p>
+Expected:
+</p>
+
+<ul class="org-ul">
+<li>NAT interface should receive:
+<ul class="org-ul">
+<li>10.0.2.15</li>
+</ul></li>
+<li>Internal interface should exist but may not yet have static IP</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+<div id="outline-container-org1558e48" class="outline-3">
+<h3 id="org1558e48"><span class="section-number-3">5.7.</span> Configure Static Internal Network</h3>
+<div class="outline-text-3" id="text-5-7">
+</div>
+<ol class="org-ol">
+<li><a id="org60abb79"></a>Check Device Names<br />
+<div class="outline-text-4" id="text-5-7-1">
+<div class="org-src-container">
+<pre class="src src-bash"><code>nmcli device status
+</code></pre>
+</div>
+
+<p>
+Expected:
+</p>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">Interface</th>
+<th scope="col" class="org-left">Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">enp0s3</td>
+<td class="org-left">NAT</td>
+</tr>
+
+<tr>
+<td class="org-left">enp0s8</td>
+<td class="org-left">Internal Network</td>
+</tr>
+</tbody>
+</table>
+</div>
+</li>
+</ol>
+</div>
+<div id="outline-container-org86b8826" class="outline-3">
+<h3 id="org86b8826"><span class="section-number-3">5.8.</span> Configure Internal Interface</h3>
+<div class="outline-text-3" id="text-5-8">
+<p>
+Launch NetworkManager TUI:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo nmtui
+</code></pre>
+</div>
+
+<p>
+Navigate:
+</p>
+
+<pre class="example" id="org2007e14">
+Edit a connection
+</pre>
+
+<p>
+Select:
+</p>
+
+<pre class="example" id="org54cb967">
+enp0s8
+</pre>
+
+<p>
+Set:
+</p>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">Field</th>
+<th scope="col" class="org-left">Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">IPv4 Method</td>
+<td class="org-left">Manual</td>
+</tr>
+
+<tr>
+<td class="org-left">Address</td>
+<td class="org-left">10.10.10.1/24</td>
+</tr>
+
+<tr>
+<td class="org-left">Gateway</td>
+<td class="org-left">blank</td>
+</tr>
+
+<tr>
+<td class="org-left">DNS</td>
+<td class="org-left">blank</td>
+</tr>
+</tbody>
+</table>
+
+<p>
+DO NOT modify NAT interface.
+</p>
+</div>
+</div>
+<div id="outline-container-orgab95202" class="outline-3">
+<h3 id="orgab95202"><span class="section-number-3">5.9.</span> Restart Networking</h3>
+<div class="outline-text-3" id="text-5-9">
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo systemctl restart NetworkManager
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org9adf498" class="outline-3">
+<h3 id="org9adf498"><span class="section-number-3">5.10.</span> Verify Networking</h3>
+<div class="outline-text-3" id="text-5-10">
+<div class="org-src-container">
+<pre class="src src-bash"><code>ip addr
+</code></pre>
+</div>
+
+<p>
+Expected:
+</p>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-right" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">Interface</th>
+<th scope="col" class="org-right">IP</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">NAT</td>
+<td class="org-right">10.0.2.x</td>
+</tr>
+
+<tr>
+<td class="org-left">Internal</td>
+<td class="org-right">10.10.10.1</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="outline-container-orgd997bc2" class="outline-3">
+<h3 id="orgd997bc2"><span class="section-number-3">5.11.</span> SSH Access from Host</h3>
+<div class="outline-text-3" id="text-5-11">
+<p>
+From host machine:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>ssh -p 2221 hpcadmin@localhost
+</code></pre>
+</div>
+<p>
+If the connection works, port forwarding is configured correctly.
+</p>
+</div>
+</div>
+<div id="outline-container-org386b2ad" class="outline-3">
+<h3 id="org386b2ad"><span class="section-number-3">5.12.</span> System Update and Packages</h3>
+<div class="outline-text-3" id="text-5-12">
+</div>
+<ol class="org-ol">
+<li><a id="org66f5a1d"></a>Update System<br />
+<div class="outline-text-4" id="text-5-12-1">
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo dnf update -y
+</code></pre>
+</div>
+</div>
+</li>
+<li><a id="org681170e"></a>Install Base Packages<br />
+<div class="outline-text-4" id="text-5-12-2">
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo dnf install -y \
+vim wget curl git \
+net-tools bind-utils \
+htop tmux tree \
+gcc gcc-c++ gcc-gfortran \
+make cmake \
+python3 \
+openssh-server
+</code></pre>
+</div>
+
+<p>
+These packages provide:
+</p>
+
+<ul class="org-ul">
+<li>Development tools</li>
+<li>Network utilities</li>
+<li>Monitoring utilities</li>
+<li>Basic administration tools</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+<div id="outline-container-orgbcc1b56" class="outline-3">
+<h3 id="orgbcc1b56"><span class="section-number-3">5.13.</span> Timezone Configuration</h3>
+<div class="outline-text-3" id="text-5-13">
+<p>
+Check timezone:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>timedatectl
+</code></pre>
+</div>
+
+<p>
+Set timezone if needed:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo timedatectl set-timezone Asia/Kolkata
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org4d5e32b" class="outline-3">
+<h3 id="org4d5e32b"><span class="section-number-3">5.14.</span> Configure /etc/hosts</h3>
+<div class="outline-text-3" id="text-5-14">
+<p>
+Edit:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo vim /etc/hosts
+</code></pre>
+</div>
+
+<p>
+Add:
+</p>
+
+<pre class="example" id="orgbdb2d41">
+10.10.10.1   master master.local
+10.10.10.2   login login.local
+10.10.10.11  compute01 compute01.local
+10.10.10.12  compute02 compute02.local
+10.10.10.13  compute03 compute03.local
+</pre>
+<p>
+This allows hostname-based communication between nodes.
+</p>
+</div>
+</div>
+<div id="outline-container-orga881a81" class="outline-3">
+<h3 id="orga881a81"><span class="section-number-3">5.15.</span> Disable Firewall (Temporary)</h3>
+<div class="outline-text-3" id="text-5-15">
+<p>
+For initial setup and testing:
+</p>
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo systemctl disable --now firewalld
+</code></pre>
+</div>
+<p>
+NOTE:
+</p>
+
+<p>
+Firewall rules can be configured properly later after cluster setup is complete.
+</p>
+</div>
+</div>
+<div id="outline-container-org0489a68" class="outline-3">
+<h3 id="org0489a68"><span class="section-number-3">5.16.</span> SELinux Configuration</h3>
+<div class="outline-text-3" id="text-5-16">
+<p>
+Check status:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>getenforce
+</code></pre>
+</div>
+
+<p>
+Temporarily disable enforcing:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo setenforce 0
+</code></pre>
+</div>
+
+<p>
+Persist configuration:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo vim /etc/selinux/config
+</code></pre>
+</div>
+
+<p>
+Modify:
+</p>
+
+<pre class="example" id="org386b31a">
+SELINUX=permissive
+</pre>
+<p>
+This helps avoid permission-related issues during initial cluster setup.
+</p>
+</div>
+</div>
+<div id="outline-container-org23f0d61" class="outline-3">
+<h3 id="org23f0d61"><span class="section-number-3">5.17.</span> Verify Hostname</h3>
+<div class="outline-text-3" id="text-5-17">
+<div class="org-src-container">
+<pre class="src src-bash"><code>hostnamectl
+</code></pre>
+</div>
+
+<p>
+Expected:
+</p>
+
+<pre class="example" id="org919c090">
+Static hostname: master.local
+</pre>
+
+<p>
+If hostname is not updated(showing previous), reboot the machine.
+</p>
+
+<p>
+At this point, the master node setup is complete and ready for cloning or
+further cluster configuration.
+</p>
+</div>
+</div>
+</div>
+<div id="outline-container-org088de12" class="outline-2">
+<h2 id="org088de12"><span class="section-number-2">6.</span> Cloning Nodes</h2>
+<div class="outline-text-2" id="text-6">
+<p>
+Purpose:
+</p>
+
+<ul class="org-ul">
+<li>avoid reinstalling all nodes manually</li>
+<li>simulate real HPC image provisioning workflow</li>
+</ul>
+</div>
+<div id="outline-container-org7e7099b" class="outline-3">
+<h3 id="org7e7099b"><span class="section-number-3">6.1.</span> Create Snapshot</h3>
+<div class="outline-text-3" id="text-6-1">
+<p>
+Power off VM:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo poweroff
+</code></pre>
+</div>
+
+<p>
+Create snapshot in VirtualBox:
+</p>
+
+<pre class="example" id="org94087cb">
+clean-base-master
+</pre>
+</div>
+</div>
+<div id="outline-container-org55e8ef9" class="outline-3">
+<h3 id="org55e8ef9"><span class="section-number-3">6.2.</span> Clone Nodes</h3>
+<div class="outline-text-3" id="text-6-2">
+<p>
+Create FULL CLONES.
+</p>
+
+<p>
+IMPORTANT:
+Enable:
+</p>
+
+<pre class="example" id="org80a1c01">
+Reinitialize the MAC address of all network cards
+</pre>
+</div>
+</div>
+<div id="outline-container-orga1c3bff" class="outline-3">
+<h3 id="orga1c3bff"><span class="section-number-3">6.3.</span> Clone Names</h3>
+<div class="outline-text-3" id="text-6-3">
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">VM Name</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">login</td>
+</tr>
+
+<tr>
+<td class="org-left">compute01</td>
+</tr>
+
+<tr>
+<td class="org-left">compute02</td>
+</tr>
+
+<tr>
+<td class="org-left">compute03</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="outline-container-org4c6686d" class="outline-3">
+<h3 id="org4c6686d"><span class="section-number-3">6.4.</span> Configure Port Forwarding</h3>
+<div class="outline-text-3" id="text-6-4">
+</div>
+<ol class="org-ol">
+<li><a id="orgaaee0ac"></a>Login Node<br />
+<div class="outline-text-4" id="text-6-4-1">
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-right" />
+
+<col  class="org-right" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-right">Host Port</th>
+<th scope="col" class="org-right">Guest Port</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-right">2222</td>
+<td class="org-right">22</td>
+</tr>
+</tbody>
+</table>
+</div>
+</li>
+<li><a id="orgdf4fce9"></a>Compute01<br />
+<div class="outline-text-4" id="text-6-4-2">
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-right" />
+
+<col  class="org-right" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-right">Host Port</th>
+<th scope="col" class="org-right">Guest Port</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-right">2223</td>
+<td class="org-right">22</td>
+</tr>
+</tbody>
+</table>
+</div>
+</li>
+<li><a id="orga4ad7e0"></a>Compute02<br />
+<div class="outline-text-4" id="text-6-4-3">
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-right" />
+
+<col  class="org-right" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-right">Host Port</th>
+<th scope="col" class="org-right">Guest Port</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-right">2224</td>
+<td class="org-right">22</td>
+</tr>
+</tbody>
+</table>
+</div>
+</li>
+<li><a id="org08a2a39"></a>Compute03<br />
+<div class="outline-text-4" id="text-6-4-4">
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-right" />
+
+<col  class="org-right" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-right">Host Port</th>
+<th scope="col" class="org-right">Guest Port</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-right">2225</td>
+<td class="org-right">22</td>
+</tr>
+</tbody>
+</table>
+</div>
+</li>
+</ol>
+</div>
+<div id="outline-container-org11c11d5" class="outline-3">
+<h3 id="org11c11d5"><span class="section-number-3">6.5.</span> Machine ID Regeneration</h3>
+<div class="outline-text-3" id="text-6-5">
+<p>
+IMPORTANT:
+Each cloned Linux machine must have unique machine-id.
+</p>
+</div>
+</div>
+<div id="outline-container-orgb91c9df" class="outline-3">
+<h3 id="orgb91c9df"><span class="section-number-3">6.6.</span> Remove Existing Machine ID</h3>
+<div class="outline-text-3" id="text-6-6">
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo rm -f /etc/machine-id
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orge855847" class="outline-3">
+<h3 id="orge855847"><span class="section-number-3">6.7.</span> Generate New Machine ID</h3>
+<div class="outline-text-3" id="text-6-7">
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo systemd-machine-id-setup
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orgf9fe192" class="outline-3">
+<h3 id="orgf9fe192"><span class="section-number-3">6.8.</span> Verify Machine ID</h3>
+<div class="outline-text-3" id="text-6-8">
+<div class="org-src-container">
+<pre class="src src-bash"><code>cat /etc/machine-id
+</code></pre>
+</div>
+
+<p>
+Ensure every node has unique machine-id.
+</p>
+</div>
+</div>
+<div id="outline-container-org95f0c9d" class="outline-3">
+<h3 id="org95f0c9d"><span class="section-number-3">6.9.</span> Configure Hostname</h3>
+<div class="outline-text-3" id="text-6-9">
+</div>
+<ol class="org-ol">
+<li><a id="org9cefb21"></a>Login Node<br />
+<div class="outline-text-4" id="text-6-9-1">
+<p>
+Edit hostname:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo vim /etc/hostname
+</code></pre>
+</div>
+
+<p>
+Set:
+</p>
+
+<pre class="example" id="org5adc1b1">
+login.local
+</pre>
+
+<p>
+Apply:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo hostnamectl set-hostname login.local
+</code></pre>
+</div>
+</div>
+</li>
+<li><a id="org46ce4be"></a>Compute01<br />
+<div class="outline-text-4" id="text-6-9-2">
+<p>
+Set hostname:
+</p>
+
+<pre class="example" id="orgef1012c">
+compute01.local
+</pre>
+
+<p>
+Apply:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo hostnamectl set-hostname compute01.local
+</code></pre>
+</div>
+</div>
+</li>
+<li><a id="org02c53ea"></a>Compute02<br />
+<div class="outline-text-4" id="text-6-9-3">
+<pre class="example" id="org730dc89">
+compute02.local
+</pre>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo hostnamectl set-hostname compute02.local
+</code></pre>
+</div>
+</div>
+</li>
+<li><a id="orga8b2877"></a>Compute03<br />
+<div class="outline-text-4" id="text-6-9-4">
+<pre class="example" id="org58bbcc0">
+compute03.local
+</pre>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo hostnamectl set-hostname compute03.local
+</code></pre>
+</div>
+</div>
+</li>
+</ol>
+</div>
+<div id="outline-container-org09e07cd" class="outline-3">
+<h3 id="org09e07cd"><span class="section-number-3">6.10.</span> Configure Static Internal IPs</h3>
+<div class="outline-text-3" id="text-6-10">
+<p>
+Launch:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo nmtui
+</code></pre>
+</div>
+
+<p>
+Edit internal adapter:
+</p>
+
+<pre class="example" id="org21c63f7">
+enp0s8
+</pre>
+</div>
+<ol class="org-ol">
+<li><a id="org041caeb"></a>Login Node<br />
+<div class="outline-text-4" id="text-6-10-1">
+<pre class="example" id="org74d383a">
+10.10.10.2/24
+</pre>
+</div>
+</li>
+<li><a id="org17795ff"></a>Compute01<br />
+<div class="outline-text-4" id="text-6-10-2">
+<pre class="example" id="orge0a83e5">
+10.10.10.11/24
+</pre>
+</div>
+</li>
+<li><a id="org32af98b"></a>Compute02<br />
+<div class="outline-text-4" id="text-6-10-3">
+<pre class="example" id="org818a965">
+10.10.10.12/24
+</pre>
+</div>
+</li>
+<li><a id="org98ef5c8"></a>Compute03<br />
+<div class="outline-text-4" id="text-6-10-4">
+<pre class="example" id="org4246b22">
+10.10.10.13/24
+</pre>
+</div>
+</li>
+</ol>
+</div>
+<div id="outline-container-org040bb38" class="outline-3">
+<h3 id="org040bb38"><span class="section-number-3">6.11.</span> Restart Networking</h3>
+<div class="outline-text-3" id="text-6-11">
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo systemctl restart NetworkManager
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orgf09e3ad" class="outline-3">
+<h3 id="orgf09e3ad"><span class="section-number-3">6.12.</span> Verify Networking</h3>
+<div class="outline-text-3" id="text-6-12">
+<div class="org-src-container">
+<pre class="src src-bash"><code>ip addr
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orgabe7732" class="outline-3">
+<h3 id="orgabe7732"><span class="section-number-3">6.13.</span> Verify Routing</h3>
+<div class="outline-text-3" id="text-6-13">
+<div class="org-src-container">
+<pre class="src src-bash"><code>ip route
+</code></pre>
+</div>
+
+<p>
+Expected:
+</p>
+
+<pre class="example" id="orgcadd5bc">
+default via 10.0.2.2 dev enp0s3
+10.10.10.0/24 dev enp0s8
+</pre>
+</div>
+</div>
+<div id="outline-container-org9694cb2" class="outline-3">
+<h3 id="org9694cb2"><span class="section-number-3">6.14.</span> Verify Connectivity</h3>
+<div class="outline-text-3" id="text-6-14">
+</div>
+<ol class="org-ol">
+<li><a id="org1869373"></a>Ping Between Nodes<br />
+<div class="outline-text-4" id="text-6-14-1">
+<div class="org-src-container">
+<pre class="src src-bash"><code>ping master
+</code></pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>ping login
+</code></pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>ping compute01
+</code></pre>
+</div>
+</div>
+</li>
+</ol>
+</div>
+<div id="outline-container-orgb25c900" class="outline-3">
+<h3 id="orgb25c900"><span class="section-number-3">6.15.</span> SSH Verification</h3>
+<div class="outline-text-3" id="text-6-15">
+<p>
+From host:
+</p>
+</div>
+<ol class="org-ol">
+<li><a id="org4ca0e25"></a>Master<br />
+<div class="outline-text-4" id="text-6-15-1">
+<div class="org-src-container">
+<pre class="src src-bash"><code>ssh -p 2221 hpcadmin@localhost
+</code></pre>
+</div>
+</div>
+</li>
+<li><a id="orgfa03690"></a>Login<br />
+<div class="outline-text-4" id="text-6-15-2">
+<div class="org-src-container">
+<pre class="src src-bash"><code>ssh -p 2222 hpcadmin@localhost
+</code></pre>
+</div>
+</div>
+</li>
+<li><a id="org6aa97f4"></a>Compute01<br />
+<div class="outline-text-4" id="text-6-15-3">
+<div class="org-src-container">
+<pre class="src src-bash"><code>ssh -p 2223 hpcadmin@localhost
+</code></pre>
+</div>
+</div>
+</li>
+<li><a id="orgcd459cd"></a>Compute02<br />
+<div class="outline-text-4" id="text-6-15-4">
+<div class="org-src-container">
+<pre class="src src-bash"><code>ssh -p 2224 hpcadmin@localhost
+</code></pre>
+</div>
+</div>
+</li>
+<li><a id="org011d619"></a>Compute03<br />
+<div class="outline-text-4" id="text-6-15-5">
+<div class="org-src-container">
+<pre class="src src-bash"><code>ssh -p 2225 hpcadmin@localhost
+</code></pre>
+</div>
+</div>
+</li>
+</ol>
+</div>
+</div>
+<div id="outline-container-orgc8bf324" class="outline-2">
+<h2 id="orgc8bf324"><span class="section-number-2">7.</span> Shared Infrastructure Services</h2>
+<div class="outline-text-2" id="text-7">
+<p>
+Goal:
+</p>
+
+<p>
+Transform the cluster into a realistic HPC-style shared environment.
+</p>
+
+<p>
+This phase includes:
+</p>
+
+<ul class="org-ul">
+<li>passwordless SSH</li>
+<li>shared home directories</li>
+<li>NFS server/client configuration</li>
+<li>persistent mounts</li>
+<li>multi-node shared filesystem verification</li>
+</ul>
+
+<p>
+By the end of this phase:
+</p>
+
+<ul class="org-ul">
+<li>all nodes share same /home</li>
+<li>users can access same files from all nodes</li>
+<li>cluster behaves like a real HPC environment</li>
+</ul>
+</div>
+<div id="outline-container-orgd2ef0fd" class="outline-3">
+<h3 id="orgd2ef0fd"><span class="section-number-3">7.1.</span> Cluster Role Architecture</h3>
+<div class="outline-text-3" id="text-7-1">
+</div>
+<ol class="org-ol">
+<li><a id="org32a8818"></a>Master Node<br />
+<div class="outline-text-4" id="text-7-1-1">
+<p>
+Purpose:
+</p>
+
+<ul class="org-ul">
+<li>cluster management</li>
+<li>NFS server</li>
+<li>future Slurm controller</li>
+<li>future Munge authority</li>
+<li>future LDAP server</li>
+</ul>
+
+<p>
+Services:
+</p>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">Service</th>
+<th scope="col" class="org-left">Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">nfs-server</td>
+<td class="org-left">shared storage</td>
+</tr>
+
+<tr>
+<td class="org-left">future slurmctld</td>
+<td class="org-left">scheduler controller</td>
+</tr>
+
+<tr>
+<td class="org-left">future munge</td>
+<td class="org-left">authentication</td>
+</tr>
+</tbody>
+</table>
+</div>
+</li>
+<li><a id="orgb3b9e59"></a>Login Node<br />
+<div class="outline-text-4" id="text-7-1-2">
+<p>
+Purpose:
+</p>
+
+<ul class="org-ul">
+<li>user login</li>
+<li>compilation</li>
+<li>job submission</li>
+</ul>
+
+<p>
+Users should:
+</p>
+<ul class="org-ul">
+<li>SSH into login node</li>
+<li>compile programs</li>
+<li>submit jobs using Slurm</li>
+</ul>
+</div>
+</li>
+<li><a id="orgb3bf70d"></a>Compute Nodes<br />
+<div class="outline-text-4" id="text-7-1-3">
+<p>
+Purpose:
+</p>
+
+<ul class="org-ul">
+<li>execute jobs only</li>
+</ul>
+
+<p>
+Future services:
+</p>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">Service</th>
+<th scope="col" class="org-left">Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">slurmd</td>
+<td class="org-left">compute daemon</td>
+</tr>
+
+<tr>
+<td class="org-left">munge</td>
+<td class="org-left">authentication</td>
+</tr>
+</tbody>
+</table>
+</div>
+</li>
+</ol>
+</div>
+<div id="outline-container-org8dc00a0" class="outline-3">
+<h3 id="org8dc00a0"><span class="section-number-3">7.2.</span> Verify User Consistency</h3>
+<div class="outline-text-3" id="text-7-2">
+<p>
+IMPORTANT:
+</p>
+
+<p>
+NFS shared storage requires same UID/GID across all nodes.
+</p>
+
+<p>
+Verify user identity on all nodes:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>id hpcadmin
+</code></pre>
+</div>
+
+<p>
+Expected:
+</p>
+
+<pre class="example" id="orgb93bb32">
+uid=1000(hpcadmin) gid=1000(hpcadmin)
+</pre>
+
+<p>
+All nodes must match.
+</p>
+</div>
+</div>
+<div id="outline-container-org4b29c9d" class="outline-3">
+<h3 id="org4b29c9d"><span class="section-number-3">7.3.</span> Passwordless SSH Configuration</h3>
+<div class="outline-text-3" id="text-7-3">
+<p>
+Purpose:
+</p>
+
+<ul class="org-ul">
+<li>MPI communication</li>
+<li>Slurm execution</li>
+<li>cluster automation</li>
+<li>remote management</li>
+</ul>
+
+<p>
+SSH trust is generated ONLY from login node.
+</p>
+
+<p>
+This mimics real HPC architecture:
+</p>
+
+<pre class="example" id="orgdfe67e5">
+User -&gt; Login Node -&gt; Compute Nodes
+</pre>
+</div>
+</div>
+<div id="outline-container-org7b1d3b1" class="outline-3">
+<h3 id="org7b1d3b1"><span class="section-number-3">7.4.</span> Generate SSH Key on Login Node</h3>
+<div class="outline-text-3" id="text-7-4">
+<p>
+SSH into login node from host:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>ssh -p 2222 hpcadmin@localhost
+</code></pre>
+</div>
+
+<p>
+Generate SSH key:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>ssh-keygen
+</code></pre>
+</div>
+
+<p>
+Press Enter for all prompts.
+</p>
+
+<p>
+Generated files:
+</p>
+
+<pre class="example" id="orgb4cc3ad">
+~/.ssh/id_rsa
+~/.ssh/id_rsa.pub
+</pre>
+</div>
+</div>
+<div id="outline-container-org1bc8758" class="outline-3">
+<h3 id="org1bc8758"><span class="section-number-3">7.5.</span> Copy SSH Keys to Cluster Nodes</h3>
+<div class="outline-text-3" id="text-7-5">
+</div>
+<ol class="org-ol">
+<li><a id="orgce9d132"></a>Master<br />
+<div class="outline-text-4" id="text-7-5-1">
+<div class="org-src-container">
+<pre class="src src-bash"><code>ssh-copy-id hpcadmin@master
+</code></pre>
+</div>
+</div>
+</li>
+<li><a id="org4b62db0"></a>Compute01<br />
+<div class="outline-text-4" id="text-7-5-2">
+<div class="org-src-container">
+<pre class="src src-bash"><code>ssh-copy-id hpcadmin@compute01
+</code></pre>
+</div>
+</div>
+</li>
+<li><a id="org3923c4a"></a>Compute02<br />
+<div class="outline-text-4" id="text-7-5-3">
+<div class="org-src-container">
+<pre class="src src-bash"><code>ssh-copy-id hpcadmin@compute02
+</code></pre>
+</div>
+</div>
+</li>
+<li><a id="orgb39b43b"></a>Compute03<br />
+<div class="outline-text-4" id="text-7-5-4">
+<div class="org-src-container">
+<pre class="src src-bash"><code>ssh-copy-id hpcadmin@compute03
+</code></pre>
+</div>
+</div>
+</li>
+</ol>
+</div>
+<div id="outline-container-org9b62927" class="outline-3">
+<h3 id="org9b62927"><span class="section-number-3">7.6.</span> Verify Passwordless SSH</h3>
+<div class="outline-text-3" id="text-7-6">
+</div>
+<ol class="org-ol">
+<li><a id="orgdcc7cb6"></a>Test Master<br />
+<div class="outline-text-4" id="text-7-6-1">
+<div class="org-src-container">
+<pre class="src src-bash"><code>ssh master hostname
+</code></pre>
+</div>
+
+<p>
+Expected:
+</p>
+
+<pre class="example" id="org1b43d7d">
+master.local
+</pre>
+</div>
+</li>
+<li><a id="org12f3ef7"></a>Test Compute01<br />
+<div class="outline-text-4" id="text-7-6-2">
+<div class="org-src-container">
+<pre class="src src-bash"><code>ssh compute01 hostname
+</code></pre>
+</div>
+
+<p>
+Expected:
+</p>
+
+<pre class="example" id="org235af76">
+compute01.local
+</pre>
+</div>
+</li>
+<li><a id="org7ec555a"></a>Test Compute02<br />
+<div class="outline-text-4" id="text-7-6-3">
+<div class="org-src-container">
+<pre class="src src-bash"><code>ssh compute02 hostname
+</code></pre>
+</div>
+</div>
+</li>
+<li><a id="org5452fca"></a>Test Compute03<br />
+<div class="outline-text-4" id="text-7-6-4">
+<div class="org-src-container">
+<pre class="src src-bash"><code>ssh compute03 hostname
+</code></pre>
+</div>
+
+<p>
+No password prompts should appear.
+</p>
+</div>
+</li>
+</ol>
+</div>
+<div id="outline-container-org7fe458b" class="outline-3">
+<h3 id="org7fe458b"><span class="section-number-3">7.7.</span> HPC Concept — Why Passwordless SSH Matters</h3>
+<div class="outline-text-3" id="text-7-7">
+<p>
+Passwordless SSH becomes essential for:
+</p>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">Feature</th>
+<th scope="col" class="org-left">Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">MPI</td>
+<td class="org-left">remote process launch</td>
+</tr>
+
+<tr>
+<td class="org-left">Slurm</td>
+<td class="org-left">distributed execution</td>
+</tr>
+
+<tr>
+<td class="org-left">automation</td>
+<td class="org-left">orchestration</td>
+</tr>
+
+<tr>
+<td class="org-left">monitoring</td>
+<td class="org-left">remote administration</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="outline-container-org4cfeb17" class="outline-3">
+<h3 id="org4cfeb17"><span class="section-number-3">7.8.</span> NFS Shared Storage Setup</h3>
+<div class="outline-text-3" id="text-7-8">
+<p>
+Purpose:
+</p>
+
+<p>
+Provide shared home directories across all cluster nodes.
+</p>
+
+<p>
+This is a core HPC architecture requirement.
+</p>
+
+<p>
+Without shared storage:
+</p>
+
+<ul class="org-ul">
+<li>source code differs per node</li>
+<li>binaries differ</li>
+<li>scripts unavailable across nodes</li>
+<li>MPI execution becomes difficult</li>
+</ul>
+
+<p>
+Real HPC systems commonly use:
+</p>
+
+<ul class="org-ul">
+<li>NFS</li>
+<li>Lustre</li>
+<li>BeeGFS</li>
+<li>GPFS</li>
+</ul>
+
+<p>
+This lab begins with NFS.
+</p>
+</div>
+</div>
+<div id="outline-container-orgeb1143b" class="outline-3">
+<h3 id="orgeb1143b"><span class="section-number-3">7.9.</span> Install NFS Packages</h3>
+<div class="outline-text-3" id="text-7-9">
+<p>
+Install on ALL nodes:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo dnf install -y nfs-utils
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org9b19555" class="outline-3">
+<h3 id="org9b19555"><span class="section-number-3">7.10.</span> Configure NFS Server on Master</h3>
+<div class="outline-text-3" id="text-7-10">
+<p>
+SSH into master node.
+</p>
+</div>
+</div>
+<div id="outline-container-org7db98d6" class="outline-3">
+<h3 id="org7db98d6"><span class="section-number-3">7.11.</span> Enable NFS Services</h3>
+<div class="outline-text-3" id="text-7-11">
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo systemctl enable --now nfs-server
+</code></pre>
+</div>
+
+<p>
+Verify:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>systemctl status nfs-server
+</code></pre>
+</div>
+
+<p>
+Expected:
+</p>
+
+<pre class="example" id="orgdf132a8">
+active (running)
+</pre>
+</div>
+</div>
+<div id="outline-container-orgd588317" class="outline-3">
+<h3 id="orgd588317"><span class="section-number-3">7.12.</span> Configure NFS Exports</h3>
+<div class="outline-text-3" id="text-7-12">
+<p>
+Edit exports file:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo vim /etc/exports
+</code></pre>
+</div>
+
+<p>
+Add:
+</p>
+
+<pre class="example" id="org0bd74e6">
+/home 10.10.10.0/24(rw,sync,no_root_squash)
+</pre>
+</div>
+</div>
+<div id="outline-container-orgb23eff3" class="outline-3">
+<h3 id="orgb23eff3"><span class="section-number-3">7.13.</span> Export Option Explanation</h3>
+<div class="outline-text-3" id="text-7-13">
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">Option</th>
+<th scope="col" class="org-left">Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">rw</td>
+<td class="org-left">read/write access</td>
+</tr>
+
+<tr>
+<td class="org-left">sync</td>
+<td class="org-left">synchronous writes</td>
+</tr>
+
+<tr>
+<td class="org-left">no_root_squash</td>
+<td class="org-left">preserve root privileges</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="outline-container-org264bfe2" class="outline-3">
+<h3 id="org264bfe2"><span class="section-number-3">7.14.</span> Apply Exports</h3>
+<div class="outline-text-3" id="text-7-14">
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo exportfs -rav
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orgba71754" class="outline-3">
+<h3 id="orgba71754"><span class="section-number-3">7.15.</span> Verify Exports</h3>
+<div class="outline-text-3" id="text-7-15">
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo exportfs -v
+</code></pre>
+</div>
+
+<p>
+Expected export:
+</p>
+
+<pre class="example" id="org53ad128">
+/home 10.10.10.0/24(...)
+</pre>
+</div>
+</div>
+<div id="outline-container-org0fb659f" class="outline-3">
+<h3 id="org0fb659f"><span class="section-number-3">7.16.</span> Configure NFS Clients</h3>
+<div class="outline-text-3" id="text-7-16">
+<p>
+Perform on:
+</p>
+
+<ul class="org-ul">
+<li>login</li>
+<li>compute01</li>
+<li>compute02</li>
+<li>compute03</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-orge7d7458" class="outline-3">
+<h3 id="orge7d7458"><span class="section-number-3">7.17.</span> Backup Existing Home Directory</h3>
+<div class="outline-text-3" id="text-7-17">
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo mv /home /home.local
+</code></pre>
+</div>
+
+<p>
+Purpose:
+</p>
+
+<p>
+Preserve original local home directory.
+</p>
+</div>
+</div>
+<div id="outline-container-orgcbd8cc2" class="outline-3">
+<h3 id="orgcbd8cc2"><span class="section-number-3">7.18.</span> Create New Mount Point</h3>
+<div class="outline-text-3" id="text-7-18">
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo mkdir /home
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org3cfada6" class="outline-3">
+<h3 id="org3cfada6"><span class="section-number-3">7.19.</span> Mount Shared NFS Home</h3>
+<div class="outline-text-3" id="text-7-19">
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo mount master:/home /home
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org9b50bb6" class="outline-3">
+<h3 id="org9b50bb6"><span class="section-number-3">7.20.</span> Verify Mount</h3>
+<div class="outline-text-3" id="text-7-20">
+<div class="org-src-container">
+<pre class="src src-bash"><code>df -h
+</code></pre>
+</div>
+
+<p>
+Expected:
+</p>
+
+<pre class="example" id="orgcceb60f">
+master:/home
+</pre>
+
+<p>
+mounted on:
+</p>
+
+<pre class="example" id="org3ec42d9">
+/home
+</pre>
+</div>
+</div>
+<div id="outline-container-org3d94a03" class="outline-3">
+<h3 id="org3d94a03"><span class="section-number-3">7.21.</span> Verify Shared Filesystem</h3>
+<div class="outline-text-3" id="text-7-21">
+<p>
+From login node:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>touch ~/shared_test
+</code></pre>
+</div>
+
+<p>
+From compute01:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>ls ~
+</code></pre>
+</div>
+
+<p>
+Expected:
+</p>
+
+<pre class="example" id="orgd732130">
+shared_test
+</pre>
+
+<p>
+This confirms successful shared filesystem operation.
+</p>
+</div>
+</div>
+<div id="outline-container-org181a53b" class="outline-3">
+<h3 id="org181a53b"><span class="section-number-3">7.22.</span> Configure Persistent NFS Mounts</h3>
+<div class="outline-text-3" id="text-7-22">
+<p>
+Without this configuration:
+</p>
+
+<ul class="org-ul">
+<li>NFS mount disappears after reboot</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-org25ebf8e" class="outline-3">
+<h3 id="org25ebf8e"><span class="section-number-3">7.23.</span> Configure /etc/fstab</h3>
+<div class="outline-text-3" id="text-7-23">
+<p>
+On ALL client nodes:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo vim /etc/fstab
+</code></pre>
+</div>
+
+<p>
+Add:
+</p>
+
+<pre class="example" id="org908dfcd">
+master:/home   /home   nfs   defaults   0 0
+</pre>
+</div>
+</div>
+<div id="outline-container-orgacf8609" class="outline-3">
+<h3 id="orgacf8609"><span class="section-number-3">7.24.</span> Verify fstab Before Reboot</h3>
+<div class="outline-text-3" id="text-7-24">
+<p>
+IMPORTANT:
+</p>
+
+<p>
+Always validate fstab before rebooting.
+</p>
+
+<p>
+Run:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo mount -a
+</code></pre>
+</div>
+
+<p>
+If no errors appear:
+</p>
+<ul class="org-ul">
+<li>fstab configuration is correct</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-org51ebf50" class="outline-3">
+<h3 id="org51ebf50"><span class="section-number-3">7.25.</span> Reboot Validation Procedure</h3>
+<div class="outline-text-3" id="text-7-25">
+<p>
+Purpose:
+</p>
+
+<p>
+Validate persistent cluster infrastructure after reboot.
+</p>
+
+<p>
+This is important real-world HPC administration practice.
+</p>
+</div>
+</div>
+<div id="outline-container-org71188ba" class="outline-3">
+<h3 id="org71188ba"><span class="section-number-3">7.26.</span> Reboot Order</h3>
+<div class="outline-text-3" id="text-7-26">
+</div>
+<ol class="org-ol">
+<li><a id="orgbda6f22"></a>Reboot Master First<br />
+<div class="outline-text-4" id="text-7-26-1">
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo reboot
+</code></pre>
+</div>
+
+<p>
+Wait until:
+</p>
+<ul class="org-ul">
+<li>SSH becomes available</li>
+<li>NFS server active</li>
+</ul>
+
+<p>
+Verify:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>systemctl status nfs-server
+</code></pre>
+</div>
+</div>
+</li>
+<li><a id="org3400639"></a>Reboot Login Node<br />
+<div class="outline-text-4" id="text-7-26-2">
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo reboot
+</code></pre>
+</div>
+</div>
+</li>
+<li><a id="org61c1893"></a>Reboot Compute Nodes<br />
+<div class="outline-text-4" id="text-7-26-3">
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo reboot
+</code></pre>
+</div>
+
+<p>
+Perform for:
+</p>
+<ul class="org-ul">
+<li>compute01</li>
+<li>compute02</li>
+<li>compute03</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+<div id="outline-container-org353bc99" class="outline-3">
+<h3 id="org353bc99"><span class="section-number-3">7.27.</span> Verify Persistent Mounts After Reboot</h3>
+<div class="outline-text-3" id="text-7-27">
+<p>
+On login node:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>df -h
+</code></pre>
+</div>
+
+<p>
+Expected:
+</p>
+
+<pre class="example" id="org3479eb9">
+master:/home
+</pre>
+
+<p>
+mounted automatically.
+</p>
+</div>
+</div>
+<div id="outline-container-orge813d9f" class="outline-3">
+<h3 id="orge813d9f"><span class="section-number-3">7.28.</span> Verify Active NFS Mount</h3>
+<div class="outline-text-3" id="text-7-28">
+<div class="org-src-container">
+<pre class="src src-bash"><code>mount | grep home
+</code></pre>
+</div>
+
+<p>
+Expected:
+</p>
+
+<pre class="example" id="org5fe15bb">
+master:/home on /home type nfs
+</pre>
+</div>
+</div>
+<div id="outline-container-org5baac79" class="outline-3">
+<h3 id="org5baac79"><span class="section-number-3">7.29.</span> Verify Shared Files After Reboot</h3>
+<div class="outline-text-3" id="text-7-29">
+<div class="org-src-container">
+<pre class="src src-bash"><code>ls ~
+</code></pre>
+</div>
+
+<p>
+Expected:
+</p>
+<ul class="org-ul">
+<li>previously created shared files still visible</li>
+</ul>
+</div>
+</div>
+</div>
+<div id="outline-container-org31081ef" class="outline-2">
+<h2 id="org31081ef"><span class="section-number-2">8.</span> Munge Authentication + Slurm Scheduler</h2>
+<div class="outline-text-2" id="text-8">
+<p>
+Goal:
+</p>
+
+<p>
+Transform the cluster into a scheduler-managed HPC environment.
+</p>
+
+<p>
+This phase includes:
+</p>
+
+<ul class="org-ul">
+<li>Munge authentication</li>
+<li>Slurm controller setup</li>
+<li>Compute node daemon setup</li>
+<li>Scheduler configuration</li>
+<li>Partition creation</li>
+<li>Multi-node execution</li>
+<li>Resource allocation testing</li>
+</ul>
+
+<p>
+By the end of this phase:
+</p>
+
+<ul class="org-ul">
+<li>cluster nodes authenticate securely</li>
+<li>Slurm manages compute resources</li>
+<li>jobs execute across nodes</li>
+<li>scheduler topology becomes operational</li>
+</ul>
+</div>
+<div id="outline-container-org59da9f8" class="outline-3">
+<h3 id="org59da9f8"><span class="section-number-3">8.1.</span> HPC Scheduler Architecture</h3>
+<div class="outline-text-3" id="text-8-1">
+</div>
+<ol class="org-ol">
+<li><a id="org3aa1dab"></a>Master Node<br />
+<div class="outline-text-4" id="text-8-1-1">
+<p>
+Purpose:
+</p>
+
+<ul class="org-ul">
+<li>Slurm controller</li>
+<li>cluster scheduler</li>
+<li>resource manager</li>
+<li>Munge authority</li>
+</ul>
+
+<p>
+Services:
+</p>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">Service</th>
+<th scope="col" class="org-left">Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">munged</td>
+<td class="org-left">cluster authentication</td>
+</tr>
+
+<tr>
+<td class="org-left">slurmctld</td>
+<td class="org-left">scheduler controller</td>
+</tr>
+</tbody>
+</table>
+</div>
+</li>
+<li><a id="org90f3c67"></a>Login Node<br />
+<div class="outline-text-4" id="text-8-1-2">
+<p>
+Purpose:
+</p>
+
+<ul class="org-ul">
+<li>user login</li>
+<li>compilation</li>
+<li>job submission</li>
+</ul>
+
+<p>
+Users should:
+</p>
+
+<ul class="org-ul">
+<li>login here</li>
+<li>compile here</li>
+<li>submit jobs here</li>
+</ul>
+</div>
+</li>
+<li><a id="org0779a37"></a>Compute Nodes<br />
+<div class="outline-text-4" id="text-8-1-3">
+<p>
+Purpose:
+</p>
+
+<ul class="org-ul">
+<li>execute jobs</li>
+</ul>
+
+<p>
+Services:
+</p>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">Service</th>
+<th scope="col" class="org-left">Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">munged</td>
+<td class="org-left">authentication</td>
+</tr>
+
+<tr>
+<td class="org-left">slurmd</td>
+<td class="org-left">compute execution daemon</td>
+</tr>
+</tbody>
+</table>
+</div>
+</li>
+</ol>
+</div>
+<div id="outline-container-orgc2847f4" class="outline-3">
+<h3 id="orgc2847f4"><span class="section-number-3">8.2.</span> IMPORTANT Rocky Linux 10 Issue</h3>
+<div class="outline-text-3" id="text-8-2">
+<p>
+Originally the cluster was created using:
+</p>
+
+<pre class="example" id="org505ff35">
+Rocky Linux 10
+</pre>
+
+<p>
+Problem encountered:
+</p>
+
+<pre class="example" id="org3225305">
+No match for argument: slurm
+</pre>
+
+<p>
+Reason:
+</p>
+
+<ul class="org-ul">
+<li>Rocky Linux 10 HPC ecosystem still immature</li>
+<li>Slurm packages unavailable in standard repos</li>
+<li>OpenHPC EL10 support incomplete</li>
+</ul>
+
+<p>
+Resolution:
+</p>
+
+<ul class="org-ul">
+<li>cluster rebuilt using Rocky Linux 9 Minimal</li>
+</ul>
+
+<p>
+Important HPC lesson:
+</p>
+
+<p>
+Production HPC clusters usually avoid bleeding-edge enterprise releases because:
+</p>
+
+<ul class="org-ul">
+<li>scheduler ecosystems lag behind</li>
+<li>HPC repos may not exist</li>
+<li>compatibility becomes unstable</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-orgc4776b8" class="outline-3">
+<h3 id="orgc4776b8"><span class="section-number-3">8.3.</span> Install EPEL Repository</h3>
+<div class="outline-text-3" id="text-8-3">
+<p>
+Install on ALL nodes:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo dnf install -y epel-release
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orgbb39f3a" class="outline-3">
+<h3 id="orgbb39f3a"><span class="section-number-3">8.4.</span> Enable CRB Repository</h3>
+<div class="outline-text-3" id="text-8-4">
+<p>
+Required on Rocky Linux 9.
+</p>
+
+<p>
+Install on ALL nodes:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo crb enable
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orgcade97f" class="outline-3">
+<h3 id="orgcade97f"><span class="section-number-3">8.5.</span> Install Munge + Slurm Packages</h3>
+<div class="outline-text-3" id="text-8-5">
+<p>
+Install on ALL nodes:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo dnf install -y \
+munge munge-libs \
+slurm slurm-slurmd slurm-slurmctld
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org7a37405" class="outline-3">
+<h3 id="org7a37405"><span class="section-number-3">8.6.</span> Verify Installed Packages</h3>
+<div class="outline-text-3" id="text-8-6">
+</div>
+<ol class="org-ol">
+<li><a id="org775da54"></a>Verify Munge<br />
+<div class="outline-text-4" id="text-8-6-1">
+<div class="org-src-container">
+<pre class="src src-bash"><code>rpm -qa | grep munge
+</code></pre>
+</div>
+
+<p>
+Expected:
+</p>
+
+<pre class="example" id="orgc32915a">
+munge
+munge-libs
+</pre>
+</div>
+</li>
+<li><a id="org106649d"></a>Verify Slurm<br />
+<div class="outline-text-4" id="text-8-6-2">
+<div class="org-src-container">
+<pre class="src src-bash"><code>rpm -qa | grep slurm
+</code></pre>
+</div>
+
+<p>
+Expected:
+</p>
+
+<pre class="example" id="org9e6d01a">
+slurm
+slurm-slurmd
+slurm-slurmctld
+</pre>
+</div>
+</li>
+</ol>
+</div>
+<div id="outline-container-org1fd4529" class="outline-3">
+<h3 id="org1fd4529"><span class="section-number-3">8.7.</span> Verify System Users</h3>
+<div class="outline-text-3" id="text-8-7">
+</div>
+<ol class="org-ol">
+<li><a id="org18773ab"></a>Verify Munge User<br />
+<div class="outline-text-4" id="text-8-7-1">
+<div class="org-src-container">
+<pre class="src src-bash"><code>id munge
+</code></pre>
+</div>
+</div>
+</li>
+<li><a id="orgfb4faef"></a>Verify Slurm User<br />
+<div class="outline-text-4" id="text-8-7-2">
+<div class="org-src-container">
+<pre class="src src-bash"><code>id slurm
+</code></pre>
+</div>
+</div>
+</li>
+</ol>
+</div>
+<div id="outline-container-org4353c6d" class="outline-3">
+<h3 id="org4353c6d"><span class="section-number-3">8.8.</span> IMPORTANT Issue Encountered — Missing slurm User</h3>
+<div class="outline-text-3" id="text-8-8">
+<p>
+Problem:
+</p>
+
+<pre class="example" id="org1b588e3">
+id: ‘slurm’: no such user
+</pre>
+
+<p>
+Reason:
+</p>
+
+<p>
+Some Slurm packages on Rocky Linux do not automatically create the slurm user.
+</p>
+
+<p>
+Resolution:
+</p>
+
+<p>
+Create manually on ALL nodes.
+</p>
+</div>
+</div>
+<div id="outline-container-org4e87d78" class="outline-3">
+<h3 id="org4e87d78"><span class="section-number-3">8.9.</span> Create Slurm Group</h3>
+<div class="outline-text-3" id="text-8-9">
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo groupadd slurm
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org013066f" class="outline-3">
+<h3 id="org013066f"><span class="section-number-3">8.10.</span> Create Slurm User</h3>
+<div class="outline-text-3" id="text-8-10">
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo useradd -r -g slurm -s /sbin/nologin slurm
+</code></pre>
+</div>
+
+<p>
+Explanation:
+</p>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">Option</th>
+<th scope="col" class="org-left">Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">-r</td>
+<td class="org-left">system account</td>
+</tr>
+
+<tr>
+<td class="org-left">-g slurm</td>
+<td class="org-left">primary group</td>
+</tr>
+
+<tr>
+<td class="org-left">-s /sbin/nologin</td>
+<td class="org-left">disable shell login</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="outline-container-orgb454e37" class="outline-3">
+<h3 id="orgb454e37"><span class="section-number-3">8.11.</span> Verify Slurm User</h3>
+<div class="outline-text-3" id="text-8-11">
+<div class="org-src-container">
+<pre class="src src-bash"><code>id slurm
+</code></pre>
+</div>
+
+<p>
+Expected:
+</p>
+
+<pre class="example" id="org8699c68">
+uid=...
+gid=...
+</pre>
+</div>
+</div>
+<div id="outline-container-org3f6e2b9" class="outline-3">
+<h3 id="org3f6e2b9"><span class="section-number-3">8.12.</span> IMPORTANT HPC Security Concept</h3>
+<div class="outline-text-3" id="text-8-12">
+<p>
+Cluster daemons should not run permanently as root.
+</p>
+
+<p>
+Therefore:
+</p>
+
+<ul class="org-ul">
+<li>Munge runs as munge user</li>
+<li>Slurm runs as slurm user</li>
+</ul>
+
+<p>
+This is standard enterprise daemon security practice.
+</p>
+</div>
+</div>
+<div id="outline-container-org14234e5" class="outline-3">
+<h3 id="org14234e5"><span class="section-number-3">8.13.</span> Configure Munge Authentication</h3>
+<div class="outline-text-3" id="text-8-13">
+<p>
+Purpose:
+</p>
+
+<p>
+Create secure trust relationship between all cluster nodes.
+</p>
+
+<p>
+IMPORTANT:
+</p>
+
+<p>
+All nodes MUST use the same:
+</p>
+
+<pre class="example" id="org8893c8d">
+/etc/munge/munge.key
+</pre>
+
+<p>
+This key acts as the cluster-wide shared secret.
+</p>
+</div>
+</div>
+<div id="outline-container-orgf7c9626" class="outline-3">
+<h3 id="orgf7c9626"><span class="section-number-3">8.14.</span> Generate Munge Key on Master</h3>
+<div class="outline-text-3" id="text-8-14">
+<p>
+ONLY on master node:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo /usr/sbin/create-munge-key
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orgd9b0ce3" class="outline-3">
+<h3 id="orgd9b0ce3"><span class="section-number-3">8.15.</span> Verify Munge Key</h3>
+<div class="outline-text-3" id="text-8-15">
+<div class="org-src-container">
+<pre class="src src-bash"><code>ls -l /etc/munge/munge.key
+</code></pre>
+</div>
+
+<p>
+Expected:
+</p>
+
+<pre class="example" id="org153b6e9">
+-rw-------
+</pre>
+
+<p>
+owned by:
+</p>
+
+<pre class="example" id="org365e058">
+munge munge
+</pre>
+</div>
+</div>
+<div id="outline-container-orgde4ca88" class="outline-3">
+<h3 id="orgde4ca88"><span class="section-number-3">8.16.</span> IMPORTANT Mistake Encountered — Munge Key Generated on All Nodes</h3>
+<div class="outline-text-3" id="text-8-16">
+<p>
+Problem:
+</p>
+
+<p>
+Munge key accidentally generated independently on all nodes.
+</p>
+
+<p>
+Result:
+</p>
+
+<p>
+Nodes could not authenticate each other.
+</p>
+
+<p>
+Important HPC lesson:
+</p>
+
+<p>
+Munge works using a:
+</p>
+
+<pre class="example" id="orgb69b813">
+shared trust model
+</pre>
+
+<p>
+All nodes MUST share identical munge.key.
+</p>
+</div>
+</div>
+<div id="outline-container-org38a7129" class="outline-3">
+<h3 id="org38a7129"><span class="section-number-3">8.17.</span> Correct Munge Key Distribution</h3>
+<div class="outline-text-3" id="text-8-17">
+</div>
+<ol class="org-ol">
+<li><a id="org1d5d543"></a>Copy Key Temporarily<br />
+<div class="outline-text-4" id="text-8-17-1">
+<p>
+On master:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo cp /etc/munge/munge.key /tmp/
+</code></pre>
+</div>
+</div>
+</li>
+<li><a id="orgeb6adb8"></a>Temporary Permission Adjustment<br />
+<div class="outline-text-4" id="text-8-17-2">
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo chmod 644 /tmp/munge.key
+</code></pre>
+</div>
+
+<p>
+Purpose:
+</p>
+
+<p>
+Allow normal user SCP transfer.
+</p>
+</div>
+</li>
+</ol>
+</div>
+<div id="outline-container-org737f91a" class="outline-3">
+<h3 id="org737f91a"><span class="section-number-3">8.18.</span> IMPORTANT SSH Root Login Issue</h3>
+<div class="outline-text-3" id="text-8-18">
+<p>
+Problem encountered:
+</p>
+
+<pre class="example" id="org9443764">
+Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password)
+</pre>
+
+<p>
+Reason:
+</p>
+
+<p>
+Using:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo scp ...
+</code></pre>
+</div>
+
+<p>
+attempted root SSH login.
+</p>
+
+<p>
+Rocky Linux disables direct root SSH login by default.
+</p>
+
+<p>
+Resolution:
+</p>
+
+<p>
+Use normal user SCP.
+</p>
+</div>
+</div>
+<div id="outline-container-orgd654179" class="outline-3">
+<h3 id="orgd654179"><span class="section-number-3">8.19.</span> Copy Munge Key to Login Node</h3>
+<div class="outline-text-3" id="text-8-19">
+<div class="org-src-container">
+<pre class="src src-bash"><code>scp /tmp/munge.key login:/tmp/
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org1abde9a" class="outline-3">
+<h3 id="org1abde9a"><span class="section-number-3">8.20.</span> Copy Munge Key to Compute01</h3>
+<div class="outline-text-3" id="text-8-20">
+<div class="org-src-container">
+<pre class="src src-bash"><code>scp /tmp/munge.key compute01:/tmp/
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org433338a" class="outline-3">
+<h3 id="org433338a"><span class="section-number-3">8.21.</span> Copy Munge Key to Compute02</h3>
+<div class="outline-text-3" id="text-8-21">
+<div class="org-src-container">
+<pre class="src src-bash"><code>scp /tmp/munge.key compute02:/tmp/
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org42f8d50" class="outline-3">
+<h3 id="org42f8d50"><span class="section-number-3">8.22.</span> Copy Munge Key to Compute03</h3>
+<div class="outline-text-3" id="text-8-22">
+<div class="org-src-container">
+<pre class="src src-bash"><code>scp /tmp/munge.key compute03:/tmp/
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org4bfbf34" class="outline-3">
+<h3 id="org4bfbf34"><span class="section-number-3">8.23.</span> Remove Temporary Key Copy</h3>
+<div class="outline-text-3" id="text-8-23">
+<p>
+On master:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo rm -f /tmp/munge.key
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org784fb5c" class="outline-3">
+<h3 id="org784fb5c"><span class="section-number-3">8.24.</span> Install Munge Key on Client Nodes</h3>
+<div class="outline-text-3" id="text-8-24">
+<p>
+Perform on:
+</p>
+
+<ul class="org-ul">
+<li>login</li>
+<li>compute01</li>
+<li>compute02</li>
+<li>compute03</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-org32cc460" class="outline-3">
+<h3 id="org32cc460"><span class="section-number-3">8.25.</span> Stop Munge Service</h3>
+<div class="outline-text-3" id="text-8-25">
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo systemctl stop munge
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orged4a68c" class="outline-3">
+<h3 id="orged4a68c"><span class="section-number-3">8.26.</span> Install Key</h3>
+<div class="outline-text-3" id="text-8-26">
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo mv /tmp/munge.key /etc/munge/
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orgdc4b84d" class="outline-3">
+<h3 id="orgdc4b84d"><span class="section-number-3">8.27.</span> Fix Ownership</h3>
+<div class="outline-text-3" id="text-8-27">
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo chown munge:munge /etc/munge/munge.key
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org0b4cd18" class="outline-3">
+<h3 id="org0b4cd18"><span class="section-number-3">8.28.</span> Fix Permissions</h3>
+<div class="outline-text-3" id="text-8-28">
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo chmod 400 /etc/munge/munge.key
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org9f028d6" class="outline-3">
+<h3 id="org9f028d6"><span class="section-number-3">8.29.</span> Start Munge</h3>
+<div class="outline-text-3" id="text-8-29">
+<p>
+On ALL nodes:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo systemctl enable --now munge
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org1525a59" class="outline-3">
+<h3 id="org1525a59"><span class="section-number-3">8.30.</span> IMPORTANT Issue Encountered — Munge Not Running on Master</h3>
+<div class="outline-text-3" id="text-8-30">
+<p>
+Problem:
+</p>
+
+<pre class="example" id="org64b837f">
+munge: Error: Failed to access "/var/run/munge/munge.socket.2"
+</pre>
+
+<p>
+Reason:
+</p>
+
+<p>
+Munge service never started on master.
+</p>
+
+<p>
+Resolution:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo systemctl enable --now munge
+</code></pre>
+</div>
+
+<p>
+Important lesson:
+</p>
+
+<p>
+Difference between:
+</p>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">State</th>
+<th scope="col" class="org-left">Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">inactive</td>
+<td class="org-left">service not started</td>
+</tr>
+
+<tr>
+<td class="org-left">failed</td>
+<td class="org-left">service crashed</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="outline-container-orgf7de11b" class="outline-3">
+<h3 id="orgf7de11b"><span class="section-number-3">8.31.</span> Verify Munge Service</h3>
+<div class="outline-text-3" id="text-8-31">
+<div class="org-src-container">
+<pre class="src src-bash"><code>systemctl status munge
+</code></pre>
+</div>
+
+<p>
+Expected:
+</p>
+
+<pre class="example" id="org75592c4">
+active (running)
+</pre>
+</div>
+</div>
+<div id="outline-container-org9e6b00e" class="outline-3">
+<h3 id="org9e6b00e"><span class="section-number-3">8.32.</span> Verify Munge Authentication</h3>
+<div class="outline-text-3" id="text-8-32">
+<p>
+From master:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>munge -n | ssh compute01 unmunge
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org0d33f8e" class="outline-3">
+<h3 id="org0d33f8e"><span class="section-number-3">8.33.</span> Test Compute02</h3>
+<div class="outline-text-3" id="text-8-33">
+<div class="org-src-container">
+<pre class="src src-bash"><code>munge -n | ssh compute02 unmunge
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org6430ea0" class="outline-3">
+<h3 id="org6430ea0"><span class="section-number-3">8.34.</span> Test Compute03</h3>
+<div class="outline-text-3" id="text-8-34">
+<div class="org-src-container">
+<pre class="src src-bash"><code>munge -n | ssh compute03 unmunge
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orgbfda07e" class="outline-3">
+<h3 id="orgbfda07e"><span class="section-number-3">8.35.</span> Test Login Node</h3>
+<div class="outline-text-3" id="text-8-35">
+<div class="org-src-container">
+<pre class="src src-bash"><code>munge -n | ssh login unmunge
+</code></pre>
+</div>
+
+<p>
+Expected:
+</p>
+
+<pre class="example" id="org1dfcf4c">
+STATUS: Success
+</pre>
+</div>
+</div>
+<div id="outline-container-orgda7a2e2" class="outline-3">
+<h3 id="orgda7a2e2"><span class="section-number-3">8.36.</span> HPC Concepts Learned</h3>
+<div class="outline-text-3" id="text-8-36">
+<p>
+Munge introduced:
+</p>
+
+<ul class="org-ul">
+<li>cluster-wide authentication</li>
+<li>distributed trust model</li>
+<li>shared secret authentication</li>
+<li>daemon security</li>
+<li>inter-node trust validation</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-orgf117705" class="outline-3">
+<h3 id="orgf117705"><span class="section-number-3">8.37.</span> Configure Slurm Scheduler</h3>
+<div class="outline-text-3" id="text-8-37">
+<p>
+Purpose:
+</p>
+
+<p>
+Enable centralized resource scheduling.
+</p>
+
+<p>
+IMPORTANT:
+</p>
+
+<pre class="example" id="orgb03eac5">
+/etc/slurm/slurm.conf
+</pre>
+
+<p>
+must be IDENTICAL on ALL nodes.
+</p>
+</div>
+</div>
+<div id="outline-container-org73ee4cc" class="outline-3">
+<h3 id="org73ee4cc"><span class="section-number-3">8.38.</span> IMPORTANT Issue Encountered — Default localhost Configuration</h3>
+<div class="outline-text-3" id="text-8-38">
+<p>
+Problem:
+</p>
+
+<pre class="example" id="org4b45ac1">
+sinfo
+-&gt; localhost
+</pre>
+
+<p>
+Reason:
+</p>
+
+<p>
+Default example slurm.conf remained active.
+</p>
+
+<p>
+Resolution:
+</p>
+
+<p>
+Replace configuration with custom cluster topology.
+</p>
+
+<p>
+Important HPC lesson:
+</p>
+
+<p>
+Incorrect topology configuration is one of the most common Slurm admin problems.
+</p>
+</div>
+</div>
+<div id="outline-container-org5acfb15" class="outline-3">
+<h3 id="org5acfb15"><span class="section-number-3">8.39.</span> Create Slurm Configuration</h3>
+<div class="outline-text-3" id="text-8-39">
+<p>
+On master:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo vim /etc/slurm/slurm.conf
+</code></pre>
+</div>
+
+<p>
+Replace ENTIRE file with:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-ini"><code>ClusterName=hpccluster
+SlurmctldHost=master
+
+MpiDefault=none
+ProctrackType=proctrack/cgroup
+ReturnToService=2
+
+SlurmctldPidFile=/run/slurmctld.pid
+SlurmdPidFile=/run/slurmd.pid
+
+SlurmdSpoolDir=/var/spool/slurmd
+StateSaveLocation=/var/spool/slurmctld
+
+SlurmUser=slurm
+
+SwitchType=switch/none
+TaskPlugin=task/affinity
+
+SchedulerType=sched/backfill
+
+SelectType=select/cons_tres
+SelectTypeParameters=CR_Core
+
+AuthType=auth/munge
+
+NodeName=compute01 CPUs=2 State=UNKNOWN
+NodeName=compute02 CPUs=2 State=UNKNOWN
+NodeName=compute03 CPUs=2 State=UNKNOWN
+
+PartitionName=debug Nodes=ALL Default=YES MaxTime=INFINITE State=UP
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org2522096" class="outline-3">
+<h3 id="org2522096"><span class="section-number-3">8.40.</span> Configuration Explanation</h3>
+<div class="outline-text-3" id="text-8-40">
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">Parameter</th>
+<th scope="col" class="org-left">Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">ClusterName</td>
+<td class="org-left">cluster identifier</td>
+</tr>
+
+<tr>
+<td class="org-left">SlurmctldHost</td>
+<td class="org-left">controller node</td>
+</tr>
+
+<tr>
+<td class="org-left">NodeName</td>
+<td class="org-left">compute nodes</td>
+</tr>
+
+<tr>
+<td class="org-left">CPUs=2</td>
+<td class="org-left">available CPUs</td>
+</tr>
+
+<tr>
+<td class="org-left">PartitionName</td>
+<td class="org-left">scheduler queue</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="outline-container-org18b7abf" class="outline-3">
+<h3 id="org18b7abf"><span class="section-number-3">8.41.</span> Create Slurm Runtime Directories</h3>
+<div class="outline-text-3" id="text-8-41">
+</div>
+<ol class="org-ol">
+<li><a id="org269e5a6"></a>On Master<br />
+<div class="outline-text-4" id="text-8-41-1">
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo mkdir -p /var/spool/slurmctld
+</code></pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo mkdir -p /var/spool/slurmd
+</code></pre>
+</div>
+</div>
+</li>
+</ol>
+</div>
+<div id="outline-container-orgd1e3a20" class="outline-3">
+<h3 id="orgd1e3a20"><span class="section-number-3">8.42.</span> Set Ownership</h3>
+<div class="outline-text-3" id="text-8-42">
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo chown slurm:slurm /var/spool/slurmctld
+</code></pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo chown slurm:slurm /var/spool/slurmd
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org59d0657" class="outline-3">
+<h3 id="org59d0657"><span class="section-number-3">8.43.</span> Create slurmd Directories on Compute Nodes</h3>
+<div class="outline-text-3" id="text-8-43">
+</div>
+<ol class="org-ol">
+<li><a id="orgb0e2ac1"></a>Compute01<br />
+<div class="outline-text-4" id="text-8-43-1">
+<div class="org-src-container">
+<pre class="src src-bash"><code>ssh compute01 sudo -S mkdir -p /var/spool/slurmd
+</code></pre>
+</div>
+</div>
+</li>
+<li><a id="orgceafb87"></a>Compute02<br />
+<div class="outline-text-4" id="text-8-43-2">
+<div class="org-src-container">
+<pre class="src src-bash"><code>ssh compute02 sudo -S mkdir -p /var/spool/slurmd
+</code></pre>
+</div>
+</div>
+</li>
+<li><a id="orgb3e3197"></a>Compute03<br />
+<div class="outline-text-4" id="text-8-43-3">
+<div class="org-src-container">
+<pre class="src src-bash"><code>ssh compute03 sudo -S mkdir -p /var/spool/slurmd
+</code></pre>
+</div>
+</div>
+</li>
+</ol>
+</div>
+<div id="outline-container-orga3e0438" class="outline-3">
+<h3 id="orga3e0438"><span class="section-number-3">8.44.</span> IMPORTANT sudo Over SSH Issue</h3>
+<div class="outline-text-3" id="text-8-44">
+<p>
+Problem:
+</p>
+
+<pre class="example" id="orgfcb2e1b">
+sudo: a terminal is required to read the password
+</pre>
+
+<p>
+Resolution:
+</p>
+
+<p>
+Use:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo -S
+</code></pre>
+</div>
+
+<p>
+Important Linux administration concept:
+</p>
+
+<p>
+sudo over non-interactive SSH requires stdin password handling.
+</p>
+</div>
+</div>
+<div id="outline-container-org45b7279" class="outline-3">
+<h3 id="org45b7279"><span class="section-number-3">8.45.</span> Fix Ownership on Compute Nodes</h3>
+<div class="outline-text-3" id="text-8-45">
+</div>
+<ol class="org-ol">
+<li><a id="org8d0303d"></a>Compute01<br />
+<div class="outline-text-4" id="text-8-45-1">
+<div class="org-src-container">
+<pre class="src src-bash"><code>ssh compute01 sudo -S chown slurm:slurm /var/spool/slurmd
+</code></pre>
+</div>
+</div>
+</li>
+<li><a id="org8b6a217"></a>Compute02<br />
+<div class="outline-text-4" id="text-8-45-2">
+<div class="org-src-container">
+<pre class="src src-bash"><code>ssh compute02 sudo -S chown slurm:slurm /var/spool/slurmd
+</code></pre>
+</div>
+</div>
+</li>
+<li><a id="orge9b253a"></a>Compute03<br />
+<div class="outline-text-4" id="text-8-45-3">
+<div class="org-src-container">
+<pre class="src src-bash"><code>ssh compute03 sudo -S chown slurm:slurm /var/spool/slurmd
+</code></pre>
+</div>
+</div>
+</li>
+</ol>
+</div>
+<div id="outline-container-org394b7ba" class="outline-3">
+<h3 id="org394b7ba"><span class="section-number-3">8.46.</span> Verify Runtime Directories</h3>
+<div class="outline-text-3" id="text-8-46">
+<div class="org-src-container">
+<pre class="src src-bash"><code>ls -ld /var/spool/slurmctld
+</code></pre>
+</div>
+
+<p>
+Expected:
+</p>
+
+<pre class="example" id="org0fee986">
+slurm slurm
+</pre>
+</div>
+</div>
+<div id="outline-container-org5a70da7" class="outline-3">
+<h3 id="org5a70da7"><span class="section-number-3">8.47.</span> Distribute slurm.conf</h3>
+<div class="outline-text-3" id="text-8-47">
+</div>
+<ol class="org-ol">
+<li><a id="org94acd19"></a>Login<br />
+<div class="outline-text-4" id="text-8-47-1">
+<div class="org-src-container">
+<pre class="src src-bash"><code>scp /etc/slurm/slurm.conf login:/tmp/
+</code></pre>
+</div>
+</div>
+</li>
+<li><a id="orgd09b7f3"></a>Compute01<br />
+<div class="outline-text-4" id="text-8-47-2">
+<div class="org-src-container">
+<pre class="src src-bash"><code>scp /etc/slurm/slurm.conf compute01:/tmp/
+</code></pre>
+</div>
+</div>
+</li>
+<li><a id="orgd314636"></a>Compute02<br />
+<div class="outline-text-4" id="text-8-47-3">
+<div class="org-src-container">
+<pre class="src src-bash"><code>scp /etc/slurm/slurm.conf compute02:/tmp/
+</code></pre>
+</div>
+</div>
+</li>
+<li><a id="org2f135c8"></a>Compute03<br />
+<div class="outline-text-4" id="text-8-47-4">
+<div class="org-src-container">
+<pre class="src src-bash"><code>scp /etc/slurm/slurm.conf compute03:/tmp/
+</code></pre>
+</div>
+</div>
+</li>
+</ol>
+</div>
+<div id="outline-container-org96a7b1a" class="outline-3">
+<h3 id="org96a7b1a"><span class="section-number-3">8.48.</span> Install Configuration on Nodes</h3>
+<div class="outline-text-3" id="text-8-48">
+<p>
+On ALL nodes:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo mv /tmp/slurm.conf /etc/slurm/slurm.conf
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org723c3a6" class="outline-3">
+<h3 id="org723c3a6"><span class="section-number-3">8.49.</span> Start Slurm Controller</h3>
+<div class="outline-text-3" id="text-8-49">
+<p>
+ONLY on master:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo systemctl enable --now slurmctld
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org9ade1e3" class="outline-3">
+<h3 id="org9ade1e3"><span class="section-number-3">8.50.</span> Verify Controller</h3>
+<div class="outline-text-3" id="text-8-50">
+<div class="org-src-container">
+<pre class="src src-bash"><code>systemctl status slurmctld
+</code></pre>
+</div>
+
+<p>
+Expected:
+</p>
+
+<pre class="example" id="orgaa78d57">
+active (running)
+</pre>
+</div>
+</div>
+<div id="outline-container-org0182adb" class="outline-3">
+<h3 id="org0182adb"><span class="section-number-3">8.51.</span> Start slurmd on Compute Nodes</h3>
+<div class="outline-text-3" id="text-8-51">
+<p>
+On:
+</p>
+<ul class="org-ul">
+<li>compute01</li>
+<li>compute02</li>
+<li>compute03</li>
+</ul>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo systemctl enable --now slurmd
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org775f6cc" class="outline-3">
+<h3 id="org775f6cc"><span class="section-number-3">8.52.</span> Verify slurmd</h3>
+<div class="outline-text-3" id="text-8-52">
+<div class="org-src-container">
+<pre class="src src-bash"><code>systemctl status slurmd
+</code></pre>
+</div>
+
+<p>
+Expected:
+</p>
+
+<pre class="example" id="org9d534e7">
+active (running)
+</pre>
+</div>
+</div>
+<div id="outline-container-orgf9183fe" class="outline-3">
+<h3 id="orgf9183fe"><span class="section-number-3">8.53.</span> Reconfigure Slurm</h3>
+<div class="outline-text-3" id="text-8-53">
+<p>
+On master:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo scontrol reconfigure
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orgdffccb5" class="outline-3">
+<h3 id="orgdffccb5"><span class="section-number-3">8.54.</span> IMPORTANT Issue Encountered — Nodes in DRAIN State</h3>
+<div class="outline-text-3" id="text-8-54">
+<p>
+Problem:
+</p>
+
+<p>
+Nodes entered:
+</p>
+
+<pre class="example" id="org89ccf03">
+DRAIN
+</pre>
+
+<p>
+after CPU topology changes.
+</p>
+
+<p>
+Reason:
+</p>
+
+<p>
+Slurm detected mismatch between:
+</p>
+<ul class="org-ul">
+<li>configured CPUs</li>
+<li>detected hardware topology</li>
+</ul>
+
+<p>
+Resolution:
+</p>
+
+<p>
+Clear stale slurmd state.
+</p>
+</div>
+</div>
+<div id="outline-container-orgdc9b570" class="outline-3">
+<h3 id="orgdc9b570"><span class="section-number-3">8.55.</span> Stop slurmd</h3>
+<div class="outline-text-3" id="text-8-55">
+<p>
+On compute nodes:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo systemctl stop slurmd
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orgeb705db" class="outline-3">
+<h3 id="orgeb705db"><span class="section-number-3">8.56.</span> Remove Old State</h3>
+<div class="outline-text-3" id="text-8-56">
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo rm -rf /var/spool/slurmd/*
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orge49ac3f" class="outline-3">
+<h3 id="orge49ac3f"><span class="section-number-3">8.57.</span> Restart slurmd</h3>
+<div class="outline-text-3" id="text-8-57">
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo systemctl start slurmd
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org632ea79" class="outline-3">
+<h3 id="org632ea79"><span class="section-number-3">8.58.</span> Resume Nodes</h3>
+<div class="outline-text-3" id="text-8-58">
+<p>
+On master:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo scontrol update NodeName=compute01 State=RESUME
+</code></pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo scontrol update NodeName=compute02 State=RESUME
+</code></pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo scontrol update NodeName=compute03 State=RESUME
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org906e106" class="outline-3">
+<h3 id="org906e106"><span class="section-number-3">8.59.</span> Verify Cluster Status</h3>
+<div class="outline-text-3" id="text-8-59">
+<div class="org-src-container">
+<pre class="src src-bash"><code>sinfo
+</code></pre>
+</div>
+
+<p>
+Expected:
+</p>
+
+<pre class="example" id="orge949f65">
+PARTITION AVAIL TIMELIMIT NODES STATE NODELIST
+debug* up infinite 3 idle compute[01-03]
+</pre>
+</div>
+</div>
+<div id="outline-container-org67bd400" class="outline-3">
+<h3 id="org67bd400"><span class="section-number-3">8.60.</span> Verify Node Details</h3>
+<div class="outline-text-3" id="text-8-60">
+<div class="org-src-container">
+<pre class="src src-bash"><code>scontrol show nodes
+</code></pre>
+</div>
+
+<p>
+This displays:
+</p>
+
+<ul class="org-ul">
+<li>CPU information</li>
+<li>memory</li>
+<li>node states</li>
+<li>scheduler topology</li>
+<li>resource allocation</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-org8ed52cb" class="outline-3">
+<h3 id="org8ed52cb"><span class="section-number-3">8.61.</span> Test Slurm Execution</h3>
+<div class="outline-text-3" id="text-8-61">
+</div>
+<ol class="org-ol">
+<li><a id="orga0bc3ed"></a>Single Node Test<br />
+<div class="outline-text-4" id="text-8-61-1">
+<p>
+From login node:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>srun hostname
+</code></pre>
+</div>
+
+<p>
+Expected:
+</p>
+
+<pre class="example" id="orga9f6f77">
+compute01.local
+</pre>
+</div>
+</li>
+</ol>
+</div>
+<div id="outline-container-org78c97e2" class="outline-3">
+<h3 id="org78c97e2"><span class="section-number-3">8.62.</span> Multi-node Execution</h3>
+<div class="outline-text-3" id="text-8-62">
+<div class="org-src-container">
+<pre class="src src-bash"><code>srun -N 3 hostname
+</code></pre>
+</div>
+
+<p>
+Expected:
+</p>
+
+<pre class="example" id="org5ddde58">
+compute01.local
+compute02.local
+compute03.local
+</pre>
+</div>
+</div>
+<div id="outline-container-orge82cdd1" class="outline-3">
+<h3 id="orge82cdd1"><span class="section-number-3">8.63.</span> Multi-task Multi-node Execution</h3>
+<div class="outline-text-3" id="text-8-63">
+<div class="org-src-container">
+<pre class="src src-bash"><code>srun -N 3 -n 6 hostname
+</code></pre>
+</div>
+
+<p>
+This verifies:
+</p>
+
+<ul class="org-ul">
+<li>task distribution</li>
+<li>multi-node scheduling</li>
+<li>CPU allocation</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-org85b5579" class="outline-3">
+<h3 id="org85b5579"><span class="section-number-3">8.64.</span> Multi-core Single-node Execution</h3>
+<div class="outline-text-3" id="text-8-64">
+<div class="org-src-container">
+<pre class="src src-bash"><code>srun -N 1 -n 2 hostname
+</code></pre>
+</div>
+
+<p>
+Expected:
+</p>
+
+<pre class="example" id="orge068e29">
+compute01.local
+compute01.local
+</pre>
+</div>
+</div>
+<div id="outline-container-org89d2244" class="outline-3">
+<h3 id="org89d2244"><span class="section-number-3">8.65.</span> IMPORTANT Slurm Scheduling Concept</h3>
+<div class="outline-text-3" id="text-8-65">
+<p>
+Earlier:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>srun -N 1 -n 2 hostname
+</code></pre>
+</div>
+
+<p>
+failed because nodes initially had:
+</p>
+
+<pre class="example" id="orgb56496d">
+CPUs=1
+</pre>
+
+<p>
+After increasing VM CPUs and updating slurm.conf:
+</p>
+
+<pre class="example" id="org8b15abe">
+CPUs=2
+</pre>
+
+<p>
+the scheduler successfully allocated 2 tasks on a single node.
+</p>
+
+<p>
+Important HPC lesson:
+</p>
+
+<p>
+Slurm strictly enforces:
+</p>
+<ul class="org-ul">
+<li>CPU limits</li>
+<li>task allocation</li>
+<li>topology constraints</li>
+<li>resource consistency</li>
+</ul>
+</div>
+</div>
+</div>
+<div id="outline-container-orgfcee875" class="outline-2">
+<h2 id="orgfcee875"><span class="section-number-2">9.</span> Shared Software Filesystem (/apps) + HPC Software Stack</h2>
+<div class="outline-text-2" id="text-9">
+<p>
+Goal:
+</p>
+
+<p>
+Create a dedicated shared software filesystem for:
+</p>
+
+<ul class="org-ul">
+<li>Spack</li>
+<li>compilers</li>
+<li>MPI stacks</li>
+<li>scientific applications</li>
+<li>modulefiles</li>
+<li>HPC software hierarchy</li>
+</ul>
+
+<p>
+This phase transitions the cluster from:
+</p>
+
+<pre class="example" id="org6b7d138">
+basic scheduler infrastructure
+</pre>
+
+<p>
+to:
+</p>
+
+<pre class="example" id="org2f24b39">
+realistic HPC software environment
+</pre>
+</div>
+<div id="outline-container-org543c65e" class="outline-3">
+<h3 id="org543c65e"><span class="section-number-3">9.1.</span> Why Separate /apps Filesystem?</h3>
+<div class="outline-text-3" id="text-9-1">
+<p>
+Initially:
+</p>
+
+<ul class="org-ul">
+<li>each VM had a 30 GB local disk</li>
+<li>/home was exported from master over NFS</li>
+</ul>
+
+<p>
+Concern encountered:
+</p>
+
+<pre class="example" id="org75511de">
+Shared /home only had ~30 GB available.
+Spack and HPC software stacks can become very large.
+</pre>
+
+<p>
+Important HPC storage concept:
+</p>
+
+<p>
+Real HPC clusters usually separate:
+</p>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">Filesystem</th>
+<th scope="col" class="org-left">Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">/home</td>
+<td class="org-left">user files</td>
+</tr>
+
+<tr>
+<td class="org-left">/apps</td>
+<td class="org-left">software stack</td>
+</tr>
+
+<tr>
+<td class="org-left">/scratch</td>
+<td class="org-left">temporary runtime data</td>
+</tr>
+
+<tr>
+<td class="org-left">/archive</td>
+<td class="org-left">long-term storage</td>
+</tr>
+</tbody>
+</table>
+
+<p>
+Therefore a dedicated:
+</p>
+
+<pre class="example" id="org29856ae">
+/apps
+</pre>
+
+<p>
+filesystem was created.
+</p>
+
+<p>
+This is significantly closer to real HPC architecture.
+</p>
+</div>
+</div>
+<div id="outline-container-orgccbc573" class="outline-3">
+<h3 id="orgccbc573"><span class="section-number-3">9.2.</span> IMPORTANT Storage Architecture Concept</h3>
+<div class="outline-text-3" id="text-9-2">
+<p>
+Each VM still has its own independent local storage.
+</p>
+
+<p>
+Example:
+</p>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">Node</th>
+<th scope="col" class="org-left">Local Disk</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">master</td>
+<td class="org-left">30 GB</td>
+</tr>
+
+<tr>
+<td class="org-left">login</td>
+<td class="org-left">30 GB</td>
+</tr>
+
+<tr>
+<td class="org-left">compute01</td>
+<td class="org-left">30 GB</td>
+</tr>
+
+<tr>
+<td class="org-left">compute02</td>
+<td class="org-left">30 GB</td>
+</tr>
+
+<tr>
+<td class="org-left">compute03</td>
+<td class="org-left">30 GB</td>
+</tr>
+</tbody>
+</table>
+
+<p>
+When:
+</p>
+
+<pre class="example" id="org6c5eef9">
+master:/home
+</pre>
+
+<p>
+was mounted via NFS:
+</p>
+
+<ul class="org-ul">
+<li>compute node local /home became hidden</li>
+<li>but local disks still exist</li>
+</ul>
+
+<p>
+Only the exported filesystem becomes shared.
+</p>
+
+<p>
+Therefore:
+</p>
+
+<pre class="example" id="org394c907">
+/apps
+</pre>
+
+<p>
+was created as a dedicated shared software layer.
+</p>
+</div>
+</div>
+<div id="outline-container-org9103f71" class="outline-3">
+<h3 id="org9103f71"><span class="section-number-3">9.3.</span> Add New Virtual Disk to Master</h3>
+<div class="outline-text-3" id="text-9-3">
+<p>
+A second virtual disk was attached ONLY to:
+</p>
+
+<pre class="example" id="orga582d1c">
+master
+</pre>
+
+<p>
+Purpose:
+</p>
+
+<ul class="org-ul">
+<li>centralized software storage</li>
+<li>shared application filesystem</li>
+<li>Spack software stack</li>
+</ul>
+
+<p>
+Disk size selected:
+</p>
+
+<pre class="example" id="orgbe3e533">
+60 GB
+</pre>
+
+<p>
+Disk type:
+</p>
+
+<pre class="example" id="org7329713">
+VDI (Dynamically Allocated)
+</pre>
+</div>
+</div>
+<div id="outline-container-org8cd04af" class="outline-3">
+<h3 id="org8cd04af"><span class="section-number-3">9.4.</span> Verify New Disk Detection</h3>
+<div class="outline-text-3" id="text-9-4">
+<p>
+After booting master:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>lsblk
+</code></pre>
+</div>
+
+<p>
+Expected:
+</p>
+
+<pre class="example" id="org29f8e54">
+sda    30G
+sdb    60G
+</pre>
+
+<p>
+Important:
+</p>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">Device</th>
+<th scope="col" class="org-left">Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">sda</td>
+<td class="org-left">OS disk</td>
+</tr>
+
+<tr>
+<td class="org-left">sdb</td>
+<td class="org-left">New apps disk</td>
+</tr>
+</tbody>
+</table>
+
+<p>
+Only:
+</p>
+
+<pre class="example" id="orgc9e0562">
+sdb
+</pre>
+
+<p>
+was modified.
+</p>
+</div>
+</div>
+<div id="outline-container-org155528e" class="outline-3">
+<h3 id="org155528e"><span class="section-number-3">9.5.</span> Create GPT Partition Table</h3>
+<div class="outline-text-3" id="text-9-5">
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo fdisk /dev/sdb
+</code></pre>
+</div>
+
+<p>
+Inside fdisk:
+</p>
+
+<p>
+Create GPT label:
+</p>
+
+<pre class="example" id="org8cd95fc">
+g
+</pre>
+
+<p>
+Create partition:
+</p>
+
+<pre class="example" id="org72891fa">
+n
+</pre>
+
+<p>
+Accept defaults.
+</p>
+
+<p>
+Write changes:
+</p>
+
+<pre class="example" id="orgf1a9f66">
+w
+</pre>
+</div>
+</div>
+<div id="outline-container-orgc756f11" class="outline-3">
+<h3 id="orgc756f11"><span class="section-number-3">9.6.</span> Verify Partition</h3>
+<div class="outline-text-3" id="text-9-6">
+<div class="org-src-container">
+<pre class="src src-bash"><code>lsblk
+</code></pre>
+</div>
+
+<p>
+Expected:
+</p>
+
+<pre class="example" id="orgd20b6be">
+sdb
+└── sdb1
+</pre>
+</div>
+</div>
+<div id="outline-container-org035373d" class="outline-3">
+<h3 id="org035373d"><span class="section-number-3">9.7.</span> Create XFS Filesystem</h3>
+<div class="outline-text-3" id="text-9-7">
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo mkfs.xfs /dev/sdb1
+</code></pre>
+</div>
+
+<p>
+Why XFS?
+</p>
+
+<ul class="org-ul">
+<li>default enterprise filesystem</li>
+<li>highly scalable</li>
+<li>excellent for large filesystems</li>
+<li>commonly used in HPC</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-org60ab06c" class="outline-3">
+<h3 id="org60ab06c"><span class="section-number-3">9.8.</span> Create Mount Point</h3>
+<div class="outline-text-3" id="text-9-8">
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo mkdir -p /apps
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orge2fa41f" class="outline-3">
+<h3 id="orge2fa41f"><span class="section-number-3">9.9.</span> Get Filesystem UUID</h3>
+<div class="outline-text-3" id="text-9-9">
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo blkid /dev/sdb1
+</code></pre>
+</div>
+
+<p>
+Example:
+</p>
+
+<pre class="example" id="orge88cbb3">
+UUID="xxxxxxxx-xxxx-xxxx"
+</pre>
+</div>
+</div>
+<div id="outline-container-org4a7c1ac" class="outline-3">
+<h3 id="org4a7c1ac"><span class="section-number-3">9.10.</span> Configure Persistent Mount</h3>
+<div class="outline-text-3" id="text-9-10">
+<p>
+Edit:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo vim /etc/fstab
+</code></pre>
+</div>
+
+<p>
+Add:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-fstab"><code>UUID=YOUR_UUID_HERE   /apps   xfs   defaults   0 0
+</code></pre>
+</div>
+
+<p>
+Important Linux administration concept:
+</p>
+
+<p>
+UUIDs are preferred over:
+</p>
+
+<pre class="example" id="org9dc507c">
+/dev/sdb1
+</pre>
+
+<p>
+because device names can change after reboot.
+</p>
+</div>
+</div>
+<div id="outline-container-org14cff56" class="outline-3">
+<h3 id="org14cff56"><span class="section-number-3">9.11.</span> Mount Filesystem</h3>
+<div class="outline-text-3" id="text-9-11">
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo mount -a
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orgb53de78" class="outline-3">
+<h3 id="orgb53de78"><span class="section-number-3">9.12.</span> Verify Mount</h3>
+<div class="outline-text-3" id="text-9-12">
+<div class="org-src-container">
+<pre class="src src-bash"><code>df -h
+</code></pre>
+</div>
+
+<p>
+Expected:
+</p>
+
+<pre class="example" id="orge9d75dc">
+/apps
+</pre>
+
+<p>
+mounted with approximately:
+</p>
+
+<pre class="example" id="org9544f43">
+60 GB
+</pre>
+</div>
+</div>
+<div id="outline-container-org5b1edba" class="outline-3">
+<h3 id="org5b1edba"><span class="section-number-3">9.13.</span> Configure Ownership</h3>
+<div class="outline-text-3" id="text-9-13">
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo chown hpcadmin:hpcadmin /apps
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orga5edc0e" class="outline-3">
+<h3 id="orga5edc0e"><span class="section-number-3">9.14.</span> Create Shared HPC Software Hierarchy</h3>
+<div class="outline-text-3" id="text-9-14">
+<div class="org-src-container">
+<pre class="src src-bash"><code>mkdir -p /apps/{spack,modulefiles,software,sources}
+</code></pre>
+</div>
+
+<p>
+Resulting structure:
+</p>
+
+<pre class="example" id="orgb796f1e">
+/apps
+├── spack
+├── modulefiles
+├── software
+└── sources
+</pre>
+</div>
+</div>
+<div id="outline-container-orgded7c58" class="outline-3">
+<h3 id="orgded7c58"><span class="section-number-3">9.15.</span> HPC Software Hierarchy Concept</h3>
+<div class="outline-text-3" id="text-9-15">
+<p>
+Purpose of directories:
+</p>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">Directory</th>
+<th scope="col" class="org-left">Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">spack</td>
+<td class="org-left">Spack package manager</td>
+</tr>
+
+<tr>
+<td class="org-left">modulefiles</td>
+<td class="org-left">custom modulefiles</td>
+</tr>
+
+<tr>
+<td class="org-left">software</td>
+<td class="org-left">installed software</td>
+</tr>
+
+<tr>
+<td class="org-left">sources</td>
+<td class="org-left">downloaded sources</td>
+</tr>
+</tbody>
+</table>
+
+<p>
+This is similar to production HPC software layouts.
+</p>
+</div>
+</div>
+<div id="outline-container-org210005f" class="outline-3">
+<h3 id="org210005f"><span class="section-number-3">9.16.</span> Export /apps via NFS</h3>
+<div class="outline-text-3" id="text-9-16">
+<p>
+Edit exports file:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo vim /etc/exports
+</code></pre>
+</div>
+
+<p>
+Add:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-exports"><code>/apps 10.10.10.0/24(rw,sync,no_root_squash)
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orgf71728b" class="outline-3">
+<h3 id="orgf71728b"><span class="section-number-3">9.17.</span> Apply NFS Exports</h3>
+<div class="outline-text-3" id="text-9-17">
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo exportfs -rav
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org604aa5f" class="outline-3">
+<h3 id="org604aa5f"><span class="section-number-3">9.18.</span> Verify Exports</h3>
+<div class="outline-text-3" id="text-9-18">
+<div class="org-src-container">
+<pre class="src src-bash"><code>showmount -e localhost
+</code></pre>
+</div>
+
+<p>
+Expected:
+</p>
+
+<pre class="example" id="org0ca0ee8">
+/apps
+/home
+</pre>
+</div>
+</div>
+<div id="outline-container-org88bdcb3" class="outline-3">
+<h3 id="org88bdcb3"><span class="section-number-3">9.19.</span> Create Mount Points on Client Nodes</h3>
+<div class="outline-text-3" id="text-9-19">
+<p>
+On:
+</p>
+<ul class="org-ul">
+<li>login</li>
+<li>compute01</li>
+<li>compute02</li>
+<li>compute03</li>
+</ul>
+
+<p>
+Create:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo mkdir -p /apps
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org3f42d5d" class="outline-3">
+<h3 id="org3f42d5d"><span class="section-number-3">9.20.</span> Configure Persistent NFS Mounts</h3>
+<div class="outline-text-3" id="text-9-20">
+<p>
+Edit:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo vim /etc/fstab
+</code></pre>
+</div>
+
+<p>
+Add:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-fstab"><code>master:/apps   /apps   nfs   defaults,_netdev   0 0
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orgda5757a" class="outline-3">
+<h3 id="orgda5757a"><span class="section-number-3">9.21.</span> Mount Shared /apps Filesystem</h3>
+<div class="outline-text-3" id="text-9-21">
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo mount -a
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org7c5e198" class="outline-3">
+<h3 id="org7c5e198"><span class="section-number-3">9.22.</span> Verify Shared Mount</h3>
+<div class="outline-text-3" id="text-9-22">
+<div class="org-src-container">
+<pre class="src src-bash"><code>df -h
+</code></pre>
+</div>
+
+<p>
+Expected:
+</p>
+
+<pre class="example" id="org1220189">
+master:/apps
+</pre>
+
+<p>
+mounted on all nodes.
+</p>
+</div>
+</div>
+<div id="outline-container-org595e4d8" class="outline-3">
+<h3 id="org595e4d8"><span class="section-number-3">9.23.</span> Verify Shared Filesystem Functionality</h3>
+<div class="outline-text-3" id="text-9-23">
+<p>
+On master:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>touch /apps/testfile
+</code></pre>
+</div>
+
+<p>
+On compute node:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>ls /apps
+</code></pre>
+</div>
+
+<p>
+Expected:
+</p>
+
+<pre class="example" id="orgfe9762d">
+testfile
+</pre>
+
+<p>
+This verifies:
+</p>
+
+<ul class="org-ul">
+<li>shared software filesystem</li>
+<li>NFS functionality</li>
+<li>cluster-wide software visibility</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-org22a0583" class="outline-3">
+<h3 id="org22a0583"><span class="section-number-3">9.24.</span> HPC Architecture After /apps Setup</h3>
+<div class="outline-text-3" id="text-9-24">
+<p>
+Current cluster storage architecture:
+</p>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">Filesystem</th>
+<th scope="col" class="org-left">Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">/home</td>
+<td class="org-left">user files</td>
+</tr>
+
+<tr>
+<td class="org-left">/apps</td>
+<td class="org-left">software stack</td>
+</tr>
+
+<tr>
+<td class="org-left">local disks</td>
+<td class="org-left">local runtime storage</td>
+</tr>
+</tbody>
+</table>
+
+<p>
+This resembles real HPC environments significantly more closely.
+</p>
+</div>
+</div>
+<div id="outline-container-orge500b1c" class="outline-3">
+<h3 id="orge500b1c"><span class="section-number-3">9.25.</span> PHASE 1G — Spack Software Stack + MPI Runtime Validation</h3>
+<div class="outline-text-3" id="text-9-25">
+<p>
+Goal:
+</p>
+
+<p>
+Create centralized HPC software stack using:
+</p>
+
+<ul class="org-ul">
+<li>Spack</li>
+<li>shared software filesystem</li>
+<li>shared compilers</li>
+<li>shared MPI stack</li>
+<li>scheduler-aware runtime execution</li>
+</ul>
+
+<p>
+This phase validates:
+</p>
+
+<ul class="org-ul">
+<li>software distribution</li>
+<li>multinode execution</li>
+<li>Slurm integration</li>
+<li>MPI runtime functionality</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-orgd7c2229" class="outline-3">
+<h3 id="orgd7c2229"><span class="section-number-3">9.26.</span> IMPORTANT HPC Software Stack Concept</h3>
+<div class="outline-text-3" id="text-9-26">
+<p>
+Instead of:
+</p>
+
+<pre class="example" id="org978ddb2">
+dnf install openmpi
+</pre>
+
+<p>
+a centralized HPC software stack was created.
+</p>
+
+<p>
+Benefits:
+</p>
+
+<ul class="org-ul">
+<li>software installed once</li>
+<li>accessible cluster-wide</li>
+<li>compiler hierarchy support</li>
+<li>reproducible builds</li>
+<li>module-based software environments</li>
+</ul>
+
+<p>
+This approach is significantly closer to real HPC centers.
+</p>
+</div>
+</div>
+<div id="outline-container-org57a40fb" class="outline-3">
+<h3 id="org57a40fb"><span class="section-number-3">9.27.</span> Install Development Tools</h3>
+<div class="outline-text-3" id="text-9-27">
+<p>
+Installed manually on ALL nodes:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo dnf groupinstall -y "Development Tools"
+</code></pre>
+</div>
+
+<p>
+Purpose:
+</p>
+
+<p>
+Provides:
+</p>
+
+<ul class="org-ul">
+<li>gcc</li>
+<li>g++</li>
+<li>gfortran</li>
+<li>make</li>
+<li>linker tools</li>
+<li>development environment</li>
+</ul>
+
+<p>
+Important note:
+</p>
+
+<p>
+System compilers are still required even when using Spack.
+</p>
+</div>
+</div>
+<div id="outline-container-orgbe16511" class="outline-3">
+<h3 id="orgbe16511"><span class="section-number-3">9.28.</span> Clone Spack into Shared Filesystem</h3>
+<div class="outline-text-3" id="text-9-28">
+<p>
+Move to:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>cd /apps
+</code></pre>
+</div>
+
+<p>
+Clone Spack:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>git clone https://github.com/spack/spack.git
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org3d1f1d7" class="outline-3">
+<h3 id="org3d1f1d7"><span class="section-number-3">9.29.</span> Enter Spack Directory</h3>
+<div class="outline-text-3" id="text-9-29">
+<div class="org-src-container">
+<pre class="src src-bash"><code>cd spack
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orgf63f583" class="outline-3">
+<h3 id="orgf63f583"><span class="section-number-3">9.30.</span> Initialize Spack Environment</h3>
+<div class="outline-text-3" id="text-9-30">
+<div class="org-src-container">
+<pre class="src src-bash"><code>source share/spack/setup-env.sh
+</code></pre>
+</div>
+
+<p>
+Purpose:
+</p>
+
+<p>
+Adds:
+</p>
+
+<ul class="org-ul">
+<li>spack command</li>
+<li>environment variables</li>
+<li>shell integration</li>
+</ul>
+
+<p>
+to current shell session.
+</p>
+</div>
+</div>
+<div id="outline-container-org73de31f" class="outline-3">
+<h3 id="org73de31f"><span class="section-number-3">9.31.</span> Clone Additional Spack Repository</h3>
+<div class="outline-text-3" id="text-9-31">
+<div class="org-src-container">
+<pre class="src src-bash"><code>git clone https://github.com/spack/spack-packages.git
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org5aed8f4" class="outline-3">
+<h3 id="org5aed8f4"><span class="section-number-3">9.32.</span> Configure Spack Repository</h3>
+<div class="outline-text-3" id="text-9-32">
+<div class="org-src-container">
+<pre class="src src-bash"><code>spack repo set --destination "$(pwd)/spack-packages" builtin
+</code></pre>
+</div>
+
+<p>
+Purpose:
+</p>
+
+<p>
+Configure additional package repository support.
+</p>
+</div>
+</div>
+<div id="outline-container-org3c52440" class="outline-3">
+<h3 id="org3c52440"><span class="section-number-3">9.33.</span> Verify Spack Functionality</h3>
+<div class="outline-text-3" id="text-9-33">
+<div class="org-src-container">
+<pre class="src src-bash"><code>spack info gcc
+</code></pre>
+</div>
+
+<p>
+Expected:
+</p>
+
+<p>
+Detailed GCC package information.
+</p>
+
+<p>
+This verifies:
+</p>
+
+<ul class="org-ul">
+<li>Spack environment working</li>
+<li>package repository functional</li>
+<li>package metadata accessible</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-org4f32c12" class="outline-3">
+<h3 id="org4f32c12"><span class="section-number-3">9.34.</span> IMPORTANT HPC Software Stack Concept</h3>
+<div class="outline-text-3" id="text-9-34">
+<p>
+Spack operates as:
+</p>
+
+<pre class="example" id="org16cbe0a">
+source-based HPC package manager
+</pre>
+
+<p>
+Unlike:
+</p>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">Package Manager</th>
+<th scope="col" class="org-left">Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">dnf</td>
+<td class="org-left">operating system</td>
+</tr>
+
+<tr>
+<td class="org-left">Spack</td>
+<td class="org-left">HPC software ecosystem</td>
+</tr>
+</tbody>
+</table>
+
+<p>
+Production HPC systems commonly separate:
+</p>
+
+<ul class="org-ul">
+<li>OS packages</li>
+<li>scientific software stacks</li>
+</ul>
+
+<p>
+exactly like this setup.
+</p>
+</div>
+</div>
+<div id="outline-container-org31608ba" class="outline-3">
+<h3 id="org31608ba"><span class="section-number-3">9.35.</span> Install GCC Using Spack</h3>
+<div class="outline-text-3" id="text-9-35">
+<p>
+Install GCC version:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>spack install gcc@13.4.0
+</code></pre>
+</div>
+
+<p>
+Purpose:
+</p>
+
+<p>
+Create dedicated HPC compiler stack.
+</p>
+
+<p>
+Important concept:
+</p>
+
+<p>
+Production HPC systems frequently maintain multiple compiler versions simultaneously.
+</p>
+
+<p>
+Example:
+</p>
+
+<pre class="example" id="orgd82088a">
+gcc@11
+gcc@12
+gcc@13
+intel
+nvhpc
+</pre>
+</div>
+</div>
+<div id="outline-container-orgf725a41" class="outline-3">
+<h3 id="orgf725a41"><span class="section-number-3">9.36.</span> Load Installed GCC Compiler</h3>
+<div class="outline-text-3" id="text-9-36">
+<div class="org-src-container">
+<pre class="src src-bash"><code>spack load gcc@13.4.0
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orgcf4e483" class="outline-3">
+<h3 id="orgcf4e483"><span class="section-number-3">9.37.</span> Verify Loaded Compiler</h3>
+<div class="outline-text-3" id="text-9-37">
+<div class="org-src-container">
+<pre class="src src-bash"><code>which gcc
+</code></pre>
+</div>
+
+<p>
+Expected:
+</p>
+
+<p>
+Spack-managed GCC path.
+</p>
+</div>
+</div>
+<div id="outline-container-orga3ee49c" class="outline-3">
+<h3 id="orga3ee49c"><span class="section-number-3">9.38.</span> Install OpenMPI Using Spack</h3>
+<div class="outline-text-3" id="text-9-38">
+<div class="org-src-container">
+<pre class="src src-bash"><code>spack install openmpi
+</code></pre>
+</div>
+
+<p>
+Purpose:
+</p>
+
+<p>
+Create shared MPI runtime stack.
+</p>
+
+<p>
+Important HPC concept:
+</p>
+
+<p>
+MPI stacks are usually tightly coupled with compiler toolchains.
+</p>
+</div>
+</div>
+<div id="outline-container-orgb249dfc" class="outline-3">
+<h3 id="orgb249dfc"><span class="section-number-3">9.39.</span> Load OpenMPI Environment</h3>
+<div class="outline-text-3" id="text-9-39">
+<div class="org-src-container">
+<pre class="src src-bash"><code>spack load openmpi
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org5caa2fc" class="outline-3">
+<h3 id="org5caa2fc"><span class="section-number-3">9.40.</span> Verify MPI Compiler Wrapper</h3>
+<div class="outline-text-3" id="text-9-40">
+<div class="org-src-container">
+<pre class="src src-bash"><code>which mpicc
+</code></pre>
+</div>
+
+<p>
+Expected:
+</p>
+
+<p>
+Spack OpenMPI compiler wrapper path.
+</p>
+</div>
+</div>
+<div id="outline-container-org4a1a2d0" class="outline-3">
+<h3 id="org4a1a2d0"><span class="section-number-3">9.41.</span> IMPORTANT MPI Wrapper Concept</h3>
+<div class="outline-text-3" id="text-9-41">
+<pre class="example" id="org2b76911">
+mpicc
+</pre>
+
+<p>
+is NOT a compiler itself.
+</p>
+
+<p>
+It is a wrapper that automatically injects:
+</p>
+
+<ul class="org-ul">
+<li>MPI headers</li>
+<li>MPI libraries</li>
+<li>runtime link flags</li>
+</ul>
+
+<p>
+around GCC.
+</p>
+
+<p>
+This is a critical HPC build concept.
+</p>
+</div>
+</div>
+<div id="outline-container-org152eeef" class="outline-3">
+<h3 id="org152eeef"><span class="section-number-3">9.42.</span> Create MPI Sum Program</h3>
+<div class="outline-text-3" id="text-9-42">
+<p>
+Create source file:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>vim mpi_sum.c
+</code></pre>
+</div>
+
+<p>
+Program purpose:
+</p>
+
+<ul class="org-ul">
+<li>validate MPI runtime</li>
+<li>validate multinode execution</li>
+<li>validate scheduler-aware MPI execution</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-orgf72a238" class="outline-3">
+<h3 id="orgf72a238"><span class="section-number-3">9.43.</span> Compile MPI Program</h3>
+<div class="outline-text-3" id="text-9-43">
+<div class="org-src-container">
+<pre class="src src-bash"><code>mpicc mpi_sum.c -o mpi_sum
+</code></pre>
+</div>
+
+<p>
+This validates:
+</p>
+
+<ul class="org-ul">
+<li>MPI compiler wrappers</li>
+<li>compiler environment</li>
+<li>MPI header visibility</li>
+<li>MPI runtime linking</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-org0df87ef" class="outline-3">
+<h3 id="org0df87ef"><span class="section-number-3">9.44.</span> IMPORTANT Shared Filesystem Advantage</h3>
+<div class="outline-text-3" id="text-9-44">
+<p>
+Because compilation occurred inside shared:
+</p>
+
+<pre class="example" id="orge2197e0">
+/apps
+</pre>
+
+<p>
+or shared home:
+</p>
+
+<ul class="org-ul">
+<li>binary became visible cluster-wide</li>
+<li>no recompilation required on compute nodes</li>
+</ul>
+
+<p>
+This is one of the major advantages of shared HPC software stacks.
+</p>
+</div>
+</div>
+<div id="outline-container-org9290a1b" class="outline-3">
+<h3 id="org9290a1b"><span class="section-number-3">9.45.</span> Create Slurm Batch Script</h3>
+<div class="outline-text-3" id="text-9-45">
+<p>
+Create script:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>vim script.sh
+</code></pre>
+</div>
+
+<p>
+Submit script purpose:
+</p>
+
+<ul class="org-ul">
+<li>validate Slurm scheduling</li>
+<li>validate multinode MPI execution</li>
+<li>validate scheduler-aware runtime launch</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-org88abaaa" class="outline-3">
+<h3 id="org88abaaa"><span class="section-number-3">9.46.</span> Submit MPI Job</h3>
+<div class="outline-text-3" id="text-9-46">
+<div class="org-src-container">
+<pre class="src src-bash"><code>sbatch script.sh
+</code></pre>
+</div>
+
+<p>
+This validates:
+</p>
+
+<ul class="org-ul">
+<li>Slurm scheduler</li>
+<li>job allocation</li>
+<li>distributed runtime execution</li>
+<li>MPI integration with Slurm</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-org9c3ce53" class="outline-3">
+<h3 id="org9c3ce53"><span class="section-number-3">9.47.</span> Verify Job Execution</h3>
+<div class="outline-text-3" id="text-9-47">
+<p>
+Check queue:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>squeue --me
+</code></pre>
+</div>
+
+<p>
+Check output files.
+</p>
+
+<p>
+Expected:
+</p>
+
+<ul class="org-ul">
+<li>successful MPI execution</li>
+<li>distributed ranks</li>
+<li>correct computed result</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="date">Date: 2026-03-14 Sat 00:35</p>
+<p class="author">Author: Cisco Ramon</p>
+<p class="date">Created: 2026-05-14 Thu 15:09</p>
+</div>
+</body>
+</html>
