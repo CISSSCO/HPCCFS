@@ -2940,4 +2940,893 @@ Expected:
 - successful MPI execution
 - distributed ranks
 - correct computed result
+* Centralized Identity Management using OpenLDAP + nslcd
 
+Goal:
+
+Transform the cluster from:
+
+#+begin_example
+local-user-only infrastructure
+#+end_example
+
+into:
+
+#+begin_example
+centralized multi-user HPC environment
+#+end_example
+
+using:
+
+- OpenLDAP
+- nslcd
+- NSS
+- PAM
+
+This phase introduces centralized user management for the HPC cluster.
+
+After completion:
+
+- users are created once centrally
+- login node recognizes LDAP users
+- compute nodes recognize LDAP users
+- centralized authentication works cluster-wide
+- automatic home directory creation works
+- Slurm can later use centralized identities
+
+** Important Architecture
+
+Cluster roles:
+
+| Node | Role |
+|-------+------|
+| master | LDAP server |
+| login | LDAP client |
+| compute01 | LDAP client |
+| compute02 | LDAP client |
+| compute03 | LDAP client |
+
+Important concept:
+
+#+begin_example
+Only master runs LDAP SERVER (slapd).
+
+Login and compute nodes run LDAP CLIENTS (nslcd).
+#+end_example
+
+** Important Linux Authentication Concepts
+
+Before starting, understand the layers.
+
+| Component | Purpose |
+|------------+----------|
+| LDAP | centralized user database |
+| NSS | user/group lookup |
+| PAM | authentication |
+| nslcd | bridge between Linux and LDAP |
+
+Authentication flow:
+
+#+begin_example
+SSH Login
+   ↓
+PAM
+   ↓
+nslcd
+   ↓
+LDAP server
+#+end_example
+
+** Install OpenLDAP Server on Master Node
+
+Run ONLY on:
+
+#+begin_example
+master
+#+end_example
+
+Install LDAP packages:
+
+#+begin_src bash
+sudo dnf install -y \
+openldap \
+openldap-servers \
+openldap-clients
+#+end_src
+
+Package explanation:
+
+| Package | Purpose |
+|----------+----------|
+| openldap | LDAP utilities |
+| openldap-servers | slapd server daemon |
+| openldap-clients | ldapsearch, ldapadd etc |
+
+** Enable LDAP Server
+
+Run ONLY on:
+
+#+begin_example
+master
+#+end_example
+
+Enable and start slapd:
+
+#+begin_src bash
+sudo systemctl enable --now slapd
+#+end_src
+
+Verify:
+
+#+begin_src bash
+systemctl status slapd
+#+end_src
+
+Expected:
+
+#+begin_example
+active (running)
+#+end_example
+
+** Generate LDAP Admin Password Hash
+
+Run ONLY on:
+
+#+begin_example
+master
+#+end_example
+
+Generate secure LDAP admin password hash:
+
+#+begin_src bash
+slappasswd
+#+end_src
+
+Enter desired password.
+
+Example:
+
+#+begin_example
+cluster123
+#+end_example
+
+Example output:
+
+#+begin_example
+{SSHA}xxxxxxxxxxxxxxxx
+#+end_example
+
+Important:
+
+#+begin_example
+Copy this hash carefully.
+#+end_example
+
+It will be used in LDAP database configuration.
+
+** Configure LDAP Database
+
+Run ONLY on:
+
+#+begin_example
+master
+#+end_example
+
+Create LDAP database configuration file:
+
+#+begin_src bash
+vim ~/db.ldif
+#+end_src
+
+Paste:
+
+#+begin_src ldif
+dn: olcDatabase={2}mdb,cn=config
+changetype: modify
+replace: olcSuffix
+olcSuffix: dc=hpc,dc=local
+
+dn: olcDatabase={2}mdb,cn=config
+changetype: modify
+replace: olcRootDN
+olcRootDN: cn=Manager,dc=hpc,dc=local
+
+dn: olcDatabase={2}mdb,cn=config
+changetype: modify
+replace: olcRootPW
+olcRootPW: PASTE_HASH_HERE
+#+end_src
+
+Replace:
+
+#+begin_example
+PASTE_HASH_HERE
+#+end_example
+
+with the hash generated using:
+
+#+begin_example
+slappasswd
+#+end_example
+
+** Important LDAP Concepts
+
+LDAP uses a hierarchical tree called:
+
+#+begin_example
+DIT — Directory Information Tree
+#+end_example
+
+Example structure:
+
+#+begin_example
+dc=hpc,dc=local
+ ├── ou=People
+ └── ou=Groups
+#+end_example
+
+Meaning of terms:
+
+| Term | Meaning |
+|-------+---------|
+| dc | domain component |
+| ou | organizational unit |
+| cn | common name |
+
+** Apply LDAP Database Configuration
+
+Run ONLY on:
+
+#+begin_example
+master
+#+end_example
+
+Apply configuration:
+
+#+begin_src bash
+sudo ldapmodify -Y EXTERNAL -H ldapi:/// \
+-f ~/db.ldif
+#+end_src
+
+Expected:
+
+#+begin_example
+modifying entry
+#+end_example
+
+** Import LDAP Schemas
+
+Schemas define:
+
+- user attributes
+- group attributes
+- UNIX account structure
+
+Run ONLY on:
+
+#+begin_example
+master
+#+end_example
+
+Import cosine schema:
+
+#+begin_src bash
+sudo ldapadd -Y EXTERNAL -H ldapi:/// \
+-f /etc/openldap/schema/cosine.ldif
+#+end_src
+
+Import nis schema:
+
+#+begin_src bash
+sudo ldapadd -Y EXTERNAL -H ldapi:/// \
+-f /etc/openldap/schema/nis.ldif
+#+end_src
+
+Import inetorgperson schema:
+
+#+begin_src bash
+sudo ldapadd -Y EXTERNAL -H ldapi:/// \
+-f /etc/openldap/schema/inetorgperson.ldif
+#+end_src
+
+Schema explanation:
+
+| Schema | Purpose |
+|---------+----------|
+| cosine | basic directory attributes |
+| nis | UNIX/Linux account support |
+| inetorgperson | user/person identity support |
+
+** Create LDAP Base Tree
+
+Run ONLY on:
+
+#+begin_example
+master
+#+end_example
+
+Create base LDAP tree:
+
+#+begin_src bash
+vim ~/base.ldif
+#+end_src
+
+Paste:
+
+#+begin_src ldif
+dn: dc=hpc,dc=local
+objectClass: top
+objectClass: dcObject
+objectClass: organization
+o: HPC Cluster
+dc: hpc
+
+dn: ou=People,dc=hpc,dc=local
+objectClass: organizationalUnit
+ou: People
+
+dn: ou=Groups,dc=hpc,dc=local
+objectClass: organizationalUnit
+ou: Groups
+#+end_src
+
+Apply tree:
+
+#+begin_src bash
+ldapadd -x \
+-D "cn=Manager,dc=hpc,dc=local" \
+-W \
+-f ~/base.ldif
+#+end_src
+
+Enter LDAP admin password.
+
+** Verify LDAP Tree
+
+Run ONLY on:
+
+#+begin_example
+master
+#+end_example
+
+Verify tree:
+
+#+begin_src bash
+ldapsearch -x -b "dc=hpc,dc=local"
+#+end_src
+
+Expected:
+
+- dc=hpc,dc=local
+- ou=People
+- ou=Groups
+
+** Create LDAP Group
+
+Run ONLY on:
+
+#+begin_example
+master
+#+end_example
+
+Create group file:
+
+#+begin_src bash
+vim ~/group.ldif
+#+end_src
+
+Paste:
+
+#+begin_src ldif
+dn: cn=hpcusers,ou=Groups,dc=hpc,dc=local
+objectClass: posixGroup
+cn: hpcusers
+gidNumber: 10000
+#+end_src
+
+Add group:
+
+#+begin_src bash
+ldapadd -x \
+-D "cn=Manager,dc=hpc,dc=local" \
+-W \
+-f ~/group.ldif
+#+end_src
+
+** Create LDAP User Password Hash
+
+Run ONLY on:
+
+#+begin_example
+master
+#+end_example
+
+Generate password hash:
+
+#+begin_src bash
+slappasswd
+#+end_src
+
+Example password:
+
+#+begin_example
+test123
+#+end_example
+
+Copy generated hash carefully.
+
+** Create LDAP User
+
+Run ONLY on:
+
+#+begin_example
+master
+#+end_example
+
+Create user file:
+
+#+begin_src bash
+vim ~/user.ldif
+#+end_src
+
+Paste:
+
+#+begin_src ldif
+dn: uid=testUser,ou=People,dc=hpc,dc=local
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+cn: Test User
+sn: User
+uid: testUser
+uidNumber: 10001
+gidNumber: 10000
+homeDirectory: /home/testUser
+loginShell: /bin/bash
+userPassword: PASTE_HASH_HERE
+#+end_src
+
+Replace:
+
+#+begin_example
+PASTE_HASH_HERE
+#+end_example
+
+with actual hash from:
+
+#+begin_example
+slappasswd
+#+end_example
+
+Add user:
+
+#+begin_src bash
+ldapadd -x \
+-D "cn=Manager,dc=hpc,dc=local" \
+-W \
+-f ~/user.ldif
+#+end_src
+
+** Important LDAP User Attributes
+
+| Attribute | Purpose |
+|------------+----------|
+| uid | username |
+| uidNumber | UNIX UID |
+| gidNumber | primary group |
+| homeDirectory | user home |
+| loginShell | login shell |
+| cn | common name |
+| sn | surname |
+
+** Verify LDAP User
+
+Run ONLY on:
+
+#+begin_example
+master
+#+end_example
+
+Verify user:
+
+#+begin_src bash
+ldapsearch -x \
+-b "dc=hpc,dc=local" uid=testUser
+#+end_src
+
+Expected:
+- LDAP user entry
+
+** Configure LDAP Client on Login Node
+
+Now begin client-side integration.
+
+Run ONLY on:
+
+#+begin_example
+login
+#+end_example
+
+Install LDAP client packages:
+
+#+begin_src bash
+sudo dnf install -y \
+openldap-clients \
+nss-pam-ldapd
+#+end_src
+
+** Configure nslcd
+
+Run ONLY on:
+
+#+begin_example
+login
+#+end_example
+
+Create configuration:
+
+#+begin_src bash
+sudo vim /etc/nslcd.conf
+#+end_src
+
+Paste:
+
+#+begin_src conf
+uid nslcd
+gid ldap
+
+uri ldap://master
+base dc=hpc,dc=local
+#+end_src
+
+Explanation:
+
+| Parameter | Purpose |
+|------------+----------|
+| uri | LDAP server |
+| base | LDAP search root |
+
+Secure configuration:
+
+#+begin_src bash
+sudo chmod 600 /etc/nslcd.conf
+#+end_src
+
+** Enable nslcd
+
+Run ONLY on:
+
+#+begin_example
+login
+#+end_example
+
+Enable service:
+
+#+begin_src bash
+sudo systemctl enable --now nslcd
+#+end_src
+
+Verify:
+
+#+begin_src bash
+systemctl status nslcd
+#+end_src
+
+Expected:
+
+#+begin_example
+active (running)
+#+end_example
+
+** Verify LDAP Connectivity
+
+Run ONLY on:
+
+#+begin_example
+login
+#+end_example
+
+Test LDAP communication:
+
+#+begin_src bash
+ldapsearch -x \
+-H ldap://master \
+-b "dc=hpc,dc=local" uid=testUser
+#+end_src
+
+Expected:
+- LDAP user entry
+
+This verifies:
+- login node can communicate with master LDAP server
+
+** Configure NSS
+
+Run ONLY on:
+
+#+begin_example
+login
+#+end_example
+
+Edit:
+
+#+begin_src bash
+sudo vim /etc/nsswitch.conf
+#+end_src
+
+Modify lines:
+
+#+begin_src text
+passwd: files ldap
+group: files ldap
+shadow: files ldap
+#+end_src
+
+Important:
+
+#+begin_example
+This tells Linux:
+check local files first, then LDAP.
+#+end_example
+
+** Restart nslcd
+
+Run ONLY on:
+
+#+begin_example
+login
+#+end_example
+
+Restart service:
+
+#+begin_src bash
+sudo systemctl restart nslcd
+#+end_src
+
+** Verify LDAP User Resolution
+
+Run ONLY on:
+
+#+begin_example
+login
+#+end_example
+
+Test centralized user lookup:
+
+#+begin_src bash
+getent passwd testUser
+#+end_src
+
+Expected:
+
+#+begin_example
+testUser:x:10001:10000:Test User:/home/testUser:/bin/bash
+#+end_example
+
+Important concept:
+
+#+begin_example
+This proves Linux itself recognizes LDAP users.
+#+end_example
+
+This is one of the most important LDAP verification steps.
+
+** Install Automatic Home Directory Support
+
+Run ONLY on:
+
+#+begin_example
+login
+#+end_example
+
+Install package:
+
+#+begin_src bash
+sudo dnf install -y oddjob-mkhomedir
+#+end_src
+
+Enable service:
+
+#+begin_src bash
+sudo systemctl enable --now oddjobd
+#+end_src
+
+Purpose:
+
+#+begin_example
+Automatically creates user home directory
+during first successful login.
+#+end_example
+
+** Configure PAM Authentication
+
+Run ONLY on:
+
+#+begin_example
+login
+#+end_example
+
+Edit:
+
+#+begin_src bash
+sudo vim /etc/pam.d/system-auth
+#+end_src
+
+Add LDAP lines in appropriate sections.
+
+Add in auth section:
+
+#+begin_src text
+auth        sufficient    pam_ldap.so use_first_pass
+#+end_src
+
+Add in account section:
+
+#+begin_src text
+account     sufficient    pam_ldap.so
+#+end_src
+
+Add in password section:
+
+#+begin_src text
+password    sufficient    pam_ldap.so use_authtok
+#+end_src
+
+Add in session section:
+
+#+begin_src text
+session     optional      pam_ldap.so
+session     optional      pam_mkhomedir.so
+#+end_src
+
+Important:
+
+#+begin_example
+Do NOT remove pam_unix.so lines.
+#+end_example
+
+** Configure Second PAM File
+
+Run ONLY on:
+
+#+begin_example
+login
+#+end_example
+
+Edit:
+
+#+begin_src bash
+sudo vim /etc/pam.d/password-auth
+#+end_src
+
+Add SAME LDAP PAM lines.
+
+Reason:
+
+#+begin_example
+Different login methods use different PAM stacks.
+#+end_example
+
+** Restart Services
+
+Run ONLY on:
+
+#+begin_example
+login
+#+end_example
+
+Restart services:
+
+#+begin_src bash
+sudo systemctl restart nslcd
+sudo systemctl restart oddjobd
+#+end_src
+
+** Verify LDAP Authentication
+
+Run ONLY on:
+
+#+begin_example
+login
+#+end_example
+
+Test login:
+
+#+begin_src bash
+su - testUser
+#+end_src
+
+Enter LDAP password.
+
+Expected:
+
+#+begin_example
+Creating directory '/home/testUser'
+#+end_example
+
+Successful login indicates:
+
+- LDAP authentication working
+- PAM integration working
+- automatic home directory creation working
+
+** Verify User Home
+
+Run ONLY on:
+
+#+begin_example
+login
+#+end_example
+
+After login:
+
+#+begin_src bash
+pwd
+#+end_src
+
+Expected:
+
+#+begin_example
+/home/testUser
+#+end_example
+
+** Current Cluster State After LDAP Setup
+
+Cluster now contains:
+
+| Component | Status |
+|------------+---------|
+| OpenLDAP server | working |
+| centralized users | working |
+| centralized authentication | working |
+| nslcd integration | working |
+| NSS integration | working |
+| PAM authentication | working |
+| automatic home creation | working |
+
+** Important Debugging Commands
+
+Verify LDAP tree:
+
+#+begin_src bash
+ldapsearch -x -b "dc=hpc,dc=local"
+#+end_src
+
+Verify LDAP user:
+
+#+begin_src bash
+ldapsearch -x -b "dc=hpc,dc=local" uid=testUser
+#+end_src
+
+Verify LDAP authentication:
+
+#+begin_src bash
+ldapwhoami -x \
+-D "uid=testUser,ou=People,dc=hpc,dc=local" \
+-W \
+-H ldap://master
+#+end_src
+
+Verify Linux user resolution:
+
+#+begin_src bash
+getent passwd testUser
+#+end_src
+
+Verify nslcd service:
+
+#+begin_src bash
+systemctl status nslcd
+#+end_src
+
+** Important Architecture Understanding
+
+Master node:
+- provides centralized identity database
+
+Login/compute nodes:
+- authenticate users
+- resolve LDAP users
+- create user sessions
+
+This separation is fundamental in distributed authentication systems.
