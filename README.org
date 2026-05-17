@@ -11,30 +11,138 @@
 #+SETUPFILE: https://fniessen.github.io/org-html-themes/org/html-theme-readtheorg.setup
 #+HTML_HEAD: <style> pre.src { font-size: 15px !important;} code { font-size: 15px !important;} </style>
 
+* Abstract
+
+This documentation presents the complete setup and configuration of a
+lightweight High Performance Computing (HPC) cluster environment using
+Rocky Linux and VirtualBox. The guide covers practical implementation
+of core HPC infrastructure components including shared storage, Slurm
+workload management, LDAP-based centralized authentication, MPI runtime
+environment, and centralized software stack management using Spack.
+
+The cluster environment supports multinode job execution, centralized
+software distribution, distributed MPI applications, and scheduler-aware
+runtime execution. The setup follows real-world HPC concepts while
+remaining suitable for learning, experimentation, and practical hands-on
+training.
+
+* Preface
+
+This documentation was prepared with the assistance of AI tools for:
+
+- structuring
+- explanations
+- formatting
+- workflow organization
+- command documentation
+- concept explanation
+
+However, the complete HPC cluster setup, configuration, testing,
+debugging, and validation were performed manually on a real working
+cluster environment.
+
+Every major component documented in this guide was configured and tested
+practically, including:
+
+- cluster networking
+- shared storage
+- NFS configuration
+- Slurm workload manager
+- LDAP authentication
+- centralized user management
+- Spack software stack
+- MPI runtime environment
+- multinode execution
+- scheduler-aware MPI jobs
+
+All commands, workflows, scripts, and execution procedures were tested
+successfully from start to end.
+
+This guide is designed for:
+
+- students
+- beginners
+- HPC enthusiasts
+- Linux learners
+- system administrators
+- researchers
+
+who want practical hands-on experience in:
+
+- Linux cluster administration
+- HPC infrastructure setup
+- distributed systems
+- centralized authentication
+- workload scheduling
+- parallel programming
+- MPI execution
+- software stack management
+
+The primary goal of this documentation is not only to provide commands,
+but also to explain the concepts behind real HPC environments in a
+simple, practical, and beginner-friendly manner.
+
+The setup presented here follows real-world HPC center practices while
+remaining accessible for learning, experimentation, and self-study.
+
 * Introduction
 
-This guide explains how to build a small HPC cluster from scratch using
-VirtualBox and Rocky Linux.
+High Performance Computing (HPC) clusters are distributed computing
+systems designed to execute computational workloads across multiple
+machines simultaneously. Instead of relying on a single system, HPC
+clusters combine multiple compute nodes to provide higher computational
+capacity, scalability, and parallel execution capability.
 
-The setup is designed for learning and experimentation. The overall structure
-is inspired by real HPC environments and supercomputers, but everything is
-kept lightweight so it can run on a normal laptop or workstation.
+Modern HPC environments are widely used in:
 
-The goal is to create a working cluster environment where you can practice:
+- scientific simulations
+- engineering workloads
+- computational chemistry
+- artificial intelligence
+- machine learning
+- weather modeling
+- large-scale data analysis
 
-- Linux system administration
-- Slurm job scheduling
-- MPI/OpenMP execution
-- Cluster networking
-- Shared storage setup
-- User management
-- Software installation
-- HPC monitoring and automation
+A typical HPC cluster contains several important components working
+together:
 
-This is not a theoretical HPC book. The focus is completely practical.
+| Component | Purpose |
+|------------+----------|
+| Login Node | User access and job submission |
+| Compute Nodes | Execute computational workloads |
+| Shared Storage | Shared user data and software |
+| Scheduler | Resource allocation and job management |
+| MPI Runtime | Distributed parallel execution |
+| Authentication System | Centralized user management |
 
-Throughout this guide, we will gradually build the cluster node-by-node and
-configure each component manually.
+This guide focuses on building these components step-by-step in a small
+virtualized environment using:
+
+- Rocky Linux
+- VirtualBox
+- Slurm
+- OpenMPI
+- LDAP
+- NFS
+- Spack
+
+Although the setup is lightweight and designed for learning purposes,
+the overall architecture closely follows concepts used in production HPC
+centers and supercomputers.
+
+Throughout this documentation, readers will gradually configure:
+
+- cluster networking
+- shared storage
+- centralized authentication
+- workload scheduling
+- distributed software stacks
+- MPI-based parallel execution
+- scheduler-aware job execution
+
+The final environment provides a fully working multinode HPC cluster
+capable of running distributed parallel applications across multiple
+compute nodes.
 
 * Cluster Architecture
 The cluster consists of five virtual machines connected using an internal
@@ -1437,7 +1545,7 @@ id slurm
 Problem:
 
 #+begin_example
-id: ‘slurm’: no such user
+id: 'slurm': no such user
 #+end_example
 
 Reason:
@@ -2189,7 +2297,7 @@ Slurm strictly enforces:
 - topology constraints
 - resource consistency
   
-* Shared Software Filesystem (/apps) + HPC Software Stack
+* Shared Software Filesystem (/apps)
 
 Goal:
 
@@ -2614,7 +2722,7 @@ Current cluster storage architecture:
 
 This resembles real HPC environments significantly more closely.
 
-** PHASE 1G — Spack Software Stack + MPI Runtime Validation
+* Spack Software Stack + MPI Runtime Validation
 
 Goal:
 
@@ -2633,6 +2741,17 @@ This phase validates:
 - Slurm integration
 - MPI runtime functionality
 
+After completing this section you will be able to:
+
+- install HPC software using Spack
+- manage multiple compiler versions
+- manage multiple MPI versions
+- load software dynamically
+- compile MPI applications
+- execute distributed jobs using Slurm
+- monitor and debug jobs
+- understand performance metrics
+
 ** IMPORTANT HPC Software Stack Concept
 
 Instead of:
@@ -2650,8 +2769,48 @@ Benefits:
 - compiler hierarchy support
 - reproducible builds
 - module-based software environments
+- centralized software management
 
 This approach is significantly closer to real HPC centers.
+
+In production HPC environments:
+
+- operating system packages are separated
+- scientific software stack is separated
+- compiler stacks are separated
+- MPI stacks are separated
+
+This separation improves:
+
+- portability
+- reproducibility
+- scalability
+- maintenance
+
+** IMPORTANT Shared Filesystem Concept
+
+The cluster uses:
+
+#+begin_example
+/apps
+#+end_example
+
+as shared application storage.
+
+Because:
+
+#+begin_example
+/apps
+#+end_example
+
+is mounted cluster-wide through NFS:
+
+- software installed once becomes visible everywhere
+- compute nodes automatically access installed software
+- users share common software stack
+- recompilation is unnecessary on compute nodes
+
+This is one of the MOST important HPC architecture concepts.
 
 ** Install Development Tools
 
@@ -2670,19 +2829,50 @@ Provides:
 - gfortran
 - make
 - linker tools
+- build utilities
 - development environment
 
 Important note:
 
+#+begin_example
 System compilers are still required even when using Spack.
+#+end_example
 
-** Clone Spack into Shared Filesystem
+Reason:
 
-Move to:
+Spack builds software from source code and therefore still requires:
+
+- assembler
+- linker
+- basic compiler toolchain
+
+** Move into Shared Application Filesystem
+
+Run on:
+
+#+begin_example
+master
+#+end_example
+
+Move into shared applications directory:
 
 #+begin_src bash
 cd /apps
 #+end_src
+
+Verify:
+
+#+begin_src bash
+pwd
+#+end_src
+
+Expected:
+
+#+begin_example
+/apps
+#+end_example
+
+** Clone Spack into Shared Filesystem
 
 Clone Spack:
 
@@ -2690,13 +2880,35 @@ Clone Spack:
 git clone https://github.com/spack/spack.git
 #+end_src
 
+Expected:
+
+#+begin_example
+/apps/spack
+#+end_example
+
+This creates centralized package manager installation.
+
 ** Enter Spack Directory
 
 #+begin_src bash
 cd spack
 #+end_src
 
+Verify:
+
+#+begin_src bash
+pwd
+#+end_src
+
+Expected:
+
+#+begin_example
+/apps/spack
+#+end_example
+
 ** Initialize Spack Environment
+
+Initialize Spack:
 
 #+begin_src bash
 source share/spack/setup-env.sh
@@ -2707,16 +2919,81 @@ Purpose:
 Adds:
 
 - spack command
-- environment variables
 - shell integration
+- environment variables
+- package management environment
 
 to current shell session.
 
+Without initialization:
+
+- spack command will not work
+- spack load will fail
+- software environments will not activate
+
+** IMPORTANT Shell Environment Concept
+
+#+begin_example
+source
+#+end_example
+
+does NOT execute script normally.
+
+Instead:
+
+#+begin_example
+it modifies current shell environment
+#+end_example
+
+This is extremely important in:
+
+- Spack
+- modules
+- MPI environments
+- compiler environments
+
+** Make Spack Permanent
+
+To avoid sourcing manually every session:
+
+Edit:
+
+#+begin_src bash
+vim ~/.bashrc
+#+end_src
+
+Add:
+
+#+begin_src bash
+source /apps/spack/share/spack/setup-env.sh
+#+end_src
+
+Reload shell:
+
+#+begin_src bash
+source ~/.bashrc
+#+end_src
+
+Verify:
+
+#+begin_src bash
+spack --version
+#+end_src
+
+Expected:
+- Spack version information
+
 ** Clone Additional Spack Repository
+
+Clone repository:
 
 #+begin_src bash
 git clone https://github.com/spack/spack-packages.git
 #+end_src
+
+Purpose:
+
+Adds additional package definitions.
 
 ** Configure Spack Repository
 
@@ -2726,7 +3003,15 @@ spack repo set --destination "$(pwd)/spack-packages" builtin
 
 Purpose:
 
-Configure additional package repository support.
+Configure additional repository support.
+
+This allows:
+
+- package metadata
+- package recipes
+- software definitions
+
+to become visible to Spack.
 
 ** Verify Spack Functionality
 
@@ -2766,6 +3051,47 @@ Production HPC systems commonly separate:
 
 exactly like this setup.
 
+** IMPORTANT Spack Build Concept
+
+When installing software using Spack:
+
+#+begin_example
+software is compiled from source
+#+end_example
+
+Advantages:
+
+- architecture optimization
+- compiler flexibility
+- dependency control
+- reproducibility
+- variant support
+
+Disadvantages:
+
+- longer installation time
+
+** Detect Available Compilers
+
+Before installing software:
+
+#+begin_src bash
+spack compiler find
+#+end_src
+
+Purpose:
+
+Detect system compilers available for building software.
+
+Verify detected compilers:
+
+#+begin_src bash
+spack compilers
+#+end_src
+
+Expected:
+- compiler list
+
 ** Install GCC Using Spack
 
 Install GCC version:
@@ -2778,7 +3104,13 @@ Purpose:
 
 Create dedicated HPC compiler stack.
 
-Important concept:
+This may take considerable time because:
+
+- GCC itself is compiled from source
+- dependencies are built
+- optimization occurs
+
+** IMPORTANT Multiple Compiler Version Concept
 
 Production HPC systems frequently maintain multiple compiler versions simultaneously.
 
@@ -2790,6 +3122,29 @@ gcc@12
 gcc@13
 intel
 nvhpc
+clang
+#+end_example
+
+Reasons:
+
+- application compatibility
+- compiler ABI differences
+- reproducibility
+- benchmark consistency
+
+** Verify Installed Software
+
+List installed packages:
+
+#+begin_src bash
+spack find
+#+end_src
+
+Expected example:
+
+#+begin_example
+==> 1 installed package
+gcc@13.4.0
 #+end_example
 
 ** Load Installed GCC Compiler
@@ -2798,17 +3153,68 @@ nvhpc
 spack load gcc@13.4.0
 #+end_src
 
-** Verify Loaded Compiler
+Purpose:
+
+Activate compiler environment.
+
+Verify compiler path:
 
 #+begin_src bash
 which gcc
 #+end_src
 
 Expected:
+- Spack GCC path
 
-Spack-managed GCC path.
+Verify version:
+
+#+begin_src bash
+gcc --version
+#+end_src
+
+Expected:
+- GCC 13.4.0
+
+** IMPORTANT Runtime Environment Concept
+
+When software is loaded:
+
+- PATH changes
+- LD_LIBRARY_PATH changes
+- MANPATH changes
+
+This allows applications to locate:
+
+- executables
+- shared libraries
+- runtime dependencies
+
+automatically.
+
+** Register Newly Installed Compiler
+
+After installing GCC:
+
+#+begin_src bash
+spack compiler find
+#+end_src
+
+Purpose:
+
+Allow Spack to use newly installed GCC for future package builds.
+
+Verify:
+
+#+begin_src bash
+spack compilers
+#+end_src
+
+Expected:
+- new GCC compiler entry
 
 ** Install OpenMPI Using Spack
+
+Install MPI runtime:
 
 #+begin_src bash
 spack install openmpi
@@ -2818,9 +3224,109 @@ Purpose:
 
 Create shared MPI runtime stack.
 
-Important HPC concept:
+This installation includes:
 
-MPI stacks are usually tightly coupled with compiler toolchains.
+- MPI runtime
+- MPI compiler wrappers
+- MPI libraries
+- distributed runtime environment
+
+** IMPORTANT MPI Compiler Dependency Concept
+
+MPI stacks are tightly coupled with compiler toolchains.
+
+Example:
+
+#+begin_example
+openmpi built using gcc@13
+#+end_example
+
+This is important because:
+
+- ABI compatibility matters
+- runtime compatibility matters
+- mixed compiler environments may fail
+
+** Verify Installed Software Tree
+
+Show dependency tree:
+
+#+begin_src bash
+spack find -d
+#+end_src
+
+Purpose:
+
+Displays:
+
+- dependency hierarchy
+- compiler hierarchy
+- runtime dependencies
+
+Example:
+
+#+begin_example
+openmpi
+   ^gcc@13.4.0
+#+end_example
+
+** IMPORTANT Spack Spec Concept
+
+Every Spack installation contains:
+
+- package version
+- compiler information
+- dependency tree
+- unique installation hash
+
+Example:
+
+#+begin_example
+openmpi@5.0.7%gcc@13.4.0
+#+end_example
+
+Meaning:
+
+| Component | Meaning |
+|------------+----------|
+| openmpi | package |
+| 5.0.7 | package version |
+| gcc@13.4.0 | compiler used |
+
+** IMPORTANT Hash-Based Software Loading
+
+Sometimes multiple builds of same version exist because of:
+
+- different compilers
+- different variants
+- different dependencies
+
+Spack assigns:
+
+#+begin_example
+unique hashes
+#+end_example
+
+View hashes:
+
+#+begin_src bash
+spack find -l
+#+end_src
+
+Expected:
+
+#+begin_example
+abc1234 gcc@13.4.0
+xyz5678 openmpi@5.0.7
+#+end_example
+
+Load using hash:
+
+#+begin_src bash
+spack load /xyz5678
+#+end_src
+
+This is extremely common in production HPC systems.
 
 ** Load OpenMPI Environment
 
@@ -2828,15 +3334,23 @@ MPI stacks are usually tightly coupled with compiler toolchains.
 spack load openmpi
 #+end_src
 
-** Verify MPI Compiler Wrapper
+Verify:
 
 #+begin_src bash
 which mpicc
 #+end_src
 
 Expected:
+- Spack OpenMPI wrapper path
 
-Spack OpenMPI compiler wrapper path.
+Verify MPI runtime:
+
+#+begin_src bash
+mpirun --version
+#+end_src
+
+Expected:
+- OpenMPI version information
 
 ** IMPORTANT MPI Wrapper Concept
 
@@ -2850,13 +3364,42 @@ It is a wrapper that automatically injects:
 
 - MPI headers
 - MPI libraries
-- runtime link flags
+- runtime linker flags
 
 around GCC.
 
 This is a critical HPC build concept.
 
-** Create MPI Sum Program
+** Verify Loaded Software
+
+Display loaded packages:
+
+#+begin_src bash
+spack find --loaded
+#+end_src
+
+Unload OpenMPI:
+
+#+begin_src bash
+spack unload openmpi
+#+end_src
+
+Unload all software:
+
+#+begin_src bash
+spack unload --all
+#+end_src
+
+Verify:
+
+#+begin_src bash
+spack find --loaded
+#+end_src
+
+Expected:
+- no loaded packages
+
+** Create MPI Performance Validation Program
 
 Create source file:
 
@@ -2864,82 +3407,629 @@ Create source file:
 vim mpi_sum.c
 #+end_src
 
-Program purpose:
+Purpose:
 
 - validate MPI runtime
 - validate multinode execution
-- validate scheduler-aware MPI execution
+- validate scheduler-aware execution
+- compare serial vs parallel runtime
+- demonstrate reduction operations
+- calculate speedup
+- calculate efficiency
+
+Paste:
+
+#+begin_src c
+#include <mpi.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#define N 1000000000
+
+double serial_sum()
+{
+    double sum = 0.0;
+
+    for(long long int i = 0; i < N; i++)
+    {
+        sum += i;
+    }
+
+    return sum;
+}
+
+int main(int argc, char *argv[])
+{
+    int rank, size;
+
+    long long int start_index;
+    long long int end_index;
+    long long int chunk;
+
+    double local_sum = 0.0;
+    double global_sum = 0.0;
+
+    double serial_start;
+    double serial_end;
+
+    double parallel_start;
+    double parallel_end;
+
+    MPI_Init(&argc, &argv);
+
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+    if(rank == 0)
+    {
+        serial_start = MPI_Wtime();
+
+        double serial_result = serial_sum();
+
+        serial_end = MPI_Wtime();
+
+        printf("\n");
+        printf("========== SERIAL COMPUTATION ==========\n");
+        printf("Sum = %.0f\n", serial_result);
+        printf("Time taken = %f seconds\n",
+               serial_end - serial_start);
+    }
+
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    chunk = N / size;
+
+    start_index = rank * chunk;
+
+    if(rank == size - 1)
+        end_index = N;
+    else
+        end_index = start_index + chunk;
+
+    parallel_start = MPI_Wtime();
+
+    for(long long int i = start_index;
+        i < end_index;
+        i++)
+    {
+        local_sum += i;
+    }
+
+    MPI_Reduce(&local_sum,
+               &global_sum,
+               1,
+               MPI_DOUBLE,
+               MPI_SUM,
+               0,
+               MPI_COMM_WORLD);
+
+    parallel_end = MPI_Wtime();
+
+    if(rank == 0)
+    {
+        double parallel_time =
+            parallel_end - parallel_start;
+
+        double serial_time =
+            serial_end - serial_start;
+
+        printf("\n");
+        printf("========== PARALLEL COMPUTATION ==========\n");
+        printf("Processes used = %d\n", size);
+        printf("Sum = %.0f\n", global_sum);
+        printf("Time taken = %f seconds\n",
+               parallel_time);
+
+        printf("\n");
+        printf("========== PERFORMANCE ==========\n");
+        printf("Speedup = %f\n",
+               serial_time / parallel_time);
+
+        printf("Efficiency = %f\n",
+               (serial_time / parallel_time) / size);
+    }
+
+    MPI_Finalize();
+
+    return 0;
+}
+#+end_src
+
+** IMPORTANT MPI Reduction Concept
+
+This program uses:
+
+#+begin_example
+MPI_Reduce()
+#+end_example
+
+Purpose:
+
+Combine partial sums from all MPI ranks into:
+
+#+begin_example
+single global result
+#+end_example
+
+Flow:
+
+#+begin_example
+local sums
+    ↓
+MPI_Reduce
+    ↓
+global sum
+#+end_example
+
+This is one of the MOST important MPI collective communication operations.
+
+** IMPORTANT Parallel Execution Concept
+
+Serial execution:
+
+#+begin_example
+single process computes entire workload
+#+end_example
+
+Parallel execution:
+
+#+begin_example
+multiple MPI ranks divide workload
+#+end_example
+
+Example:
+
+| Rank  | Work         |
+|-------+--------------|
+| rank0 | 0 --> 25%    |
+| rank1 | 25% --> 50%  |
+| rank2 | 50% --> 75%  |
+| rank3 | 75% --> 100% |
+
+Advantages:
+
+- reduced execution time
+- distributed workload
+- scalable computation
+
+** Load Software Before Compilation
+
+Initialize Spack:
+
+#+begin_src bash
+source /apps/spack/share/spack/setup-env.sh
+#+end_src
+
+Load compiler:
+
+#+begin_src bash
+spack load gcc@13.4.0
+#+end_src
+
+Load MPI runtime:
+
+#+begin_src bash
+spack load openmpi
+#+end_src
+
+Verify:
+
+#+begin_src bash
+which mpicc
+#+end_src
+
+Expected:
+- MPI compiler wrapper path
 
 ** Compile MPI Program
+
+Compile:
 
 #+begin_src bash
 mpicc mpi_sum.c -o mpi_sum
 #+end_src
 
+Verify executable:
+
+#+begin_src bash
+ls
+#+end_src
+
+Expected:
+
+#+begin_example
+mpi_sum
+#+end_example
+
+** IMPORTANT MPI Compilation Concept
+
+MPI programs are compiled using:
+
+#+begin_src bash
+mpicc
+#+end_src
+
+instead of:
+
+#+begin_src bash
+gcc
+#+end_src
+
+because MPI wrapper automatically injects:
+
+- MPI headers
+- MPI libraries
+- linker flags
+
+** Interactive MPI Runtime Validation
+
+Run interactively:
+
+#+begin_src bash
+mpirun -np 4 ./mpi_sum
+#+end_src
+
+Expected:
+
+#+begin_example
+========== SERIAL COMPUTATION ==========
+...
+
+========== PARALLEL COMPUTATION ==========
+...
+
+========== PERFORMANCE ==========
+...
+#+end_example
+
 This validates:
 
-- MPI compiler wrappers
-- compiler environment
-- MPI header visibility
-- MPI runtime linking
+- MPI runtime
+- MPI communication
+- reduction operations
+- distributed execution
 
 ** IMPORTANT Shared Filesystem Advantage
 
-Because compilation occurred inside shared:
+Because:
+
+- source code
+- executable
+- software stack
+
+exist on shared filesystem:
 
 #+begin_example
 /apps
+or
+/home
 #+end_example
 
-or shared home:
+compute nodes automatically access:
 
-- binary became visible cluster-wide
-- no recompilation required on compute nodes
+- compiled binaries
+- runtime libraries
+- MPI stack
 
-This is one of the major advantages of shared HPC software stacks.
+without recompilation.
+
+This is one of the major HPC architecture advantages.
 
 ** Create Slurm Batch Script
 
-Create script:
+Create batch script:
 
 #+begin_src bash
-vim script.sh
+vim submit.sh
 #+end_src
 
-Submit script purpose:
+Paste:
 
-- validate Slurm scheduling
-- validate multinode MPI execution
-- validate scheduler-aware runtime launch
+#+begin_src bash
+#!/bin/bash
+#SBATCH -N 3
+#SBATCH --ntasks-per-node=1
+#SBATCH --job-name=test
+#SBATCH --output=%J.out
+#SBATCH --error=%J.err
+#SBATCH --time=01:00:00
+##SBATCH --nodelist=compute03,compute01
+
+source /apps/spack/share/spack/setup-env.sh
+
+spack load openmpi
+
+mpirun -np $SLURM_NTASKS ./$1
+#+end_src
+
+Make executable:
+
+#+begin_src bash
+chmod +x submit.sh
+#+end_src
+
+** IMPORTANT Slurm Script Explanation
+
+| Line | Purpose |
+|-------+----------|
+| #SBATCH -N 3 | request 3 nodes |
+| --ntasks-per-node=1 | one MPI rank per node |
+| --job-name=test | job name |
+| --output=%J.out | stdout file |
+| --error=%J.err | stderr file |
+| --time=01:00:00 | walltime limit |
+
+** IMPORTANT Runtime Environment Section
+
+Inside batch script:
+
+#+begin_src bash
+source /apps/spack/share/spack/setup-env.sh
+#+end_src
+
+initializes Spack environment.
+
+#+begin_src bash
+spack load openmpi
+#+end_src
+
+loads MPI runtime stack.
+
+Without these:
+
+- mpirun may fail
+- MPI libraries may not load
+- runtime linker errors may occur
+
+** IMPORTANT Slurm Runtime Variable
+
+#+begin_src bash
+$SLURM_NTASKS
+#+end_src
+
+contains:
+
+#+begin_example
+total MPI process count allocated by Slurm
+#+end_example
+
+Example:
+
+| Nodes | Tasks per node | Total |
+|-------+-----------------+-------|
+| 3 | 1 | 3 |
+
+Therefore:
+
+#+begin_src bash
+mpirun -np $SLURM_NTASKS
+#+end_src
+
+automatically launches correct number of MPI ranks.
 
 ** Submit MPI Job
 
+Submit job:
+
 #+begin_src bash
-sbatch script.sh
+sbatch submit.sh mpi_sum
 #+end_src
+
+Expected:
+
+#+begin_example
+Submitted batch job 101
+#+end_example
 
 This validates:
 
 - Slurm scheduler
-- job allocation
-- distributed runtime execution
-- MPI integration with Slurm
+- distributed allocation
+- multinode MPI execution
+- scheduler-aware runtime launch
 
-** Verify Job Execution
+** Monitor Jobs
 
-Check queue:
+Check user jobs:
 
 #+begin_src bash
 squeue --me
 #+end_src
 
-Check output files.
+Expected:
+
+#+begin_example
+JOBID PARTITION NAME USER ST TIME NODES NODELIST(REASON)
+#+end_example
+
+** IMPORTANT Job States
+
+| State | Meaning |
+|--------+----------|
+| PD | pending |
+| R | running |
+| CG | completing |
+| CD | completed |
+| F | failed |
+
+** View Detailed Job Information
+
+Show detailed job info:
+
+#+begin_src bash
+scontrol show job <jobid>
+#+end_src
+
+Example:
+
+#+begin_src bash
+scontrol show job 101
+#+end_src
+
+Displays:
+
+- allocated nodes
+- CPUs
+- runtime
+- scheduling information
+- execution directory
+- output locations
+
+** Check Cluster Status
+
+Check cluster nodes:
+
+#+begin_src bash
+sinfo
+#+end_src
 
 Expected:
 
-- successful MPI execution
-- distributed ranks
-- correct computed result
+#+begin_example
+debug* up infinite 3 idle compute[01-03]
+#+end_example
+
+** IMPORTANT Node States
+
+| State | Meaning |
+|--------+----------|
+| idle | available |
+| alloc | allocated |
+| mix | partially used |
+| drain | unavailable |
+| down | offline |
+
+** Check Output Files
+
+After completion:
+
+#+begin_src bash
+ls
+#+end_src
+
+Expected:
+
+#+begin_example
+101.out
+101.err
+#+end_example
+
+View output:
+
+#+begin_src bash
+cat 101.out
+#+end_src
+
+Expected:
+
+- serial runtime
+- parallel runtime
+- speedup
+- efficiency
+
+** IMPORTANT HPC Performance Metrics
+
+The program calculates:
+
+| Metric | Meaning |
+|---------+----------|
+| Speedup | serial_time / parallel_time |
+| Efficiency | speedup / processes |
+
+Ideal values:
+
+| Metric | Ideal |
+|---------+-------|
+| Speedup | near process count |
+| Efficiency | near 1.0 |
+
+Real systems experience:
+
+- communication overhead
+- synchronization cost
+- MPI latency
+- reduction overhead
+
+** Cancel Jobs
+
+Cancel job:
+
+#+begin_src bash
+scancel <jobid>
+#+end_src
+
+Example:
+
+#+begin_src bash
+scancel 101
+#+end_src
+
+Cancel all user jobs:
+
+#+begin_src bash
+scancel -u $USER
+#+end_src
+
+** Interactive Slurm Execution
+
+Launch interactive shell:
+
+#+begin_src bash
+srun --pty bash
+#+end_src
+
+Distributed hostname test:
+
+#+begin_src bash
+srun -N 3 -n 3 hostname
+#+end_src
+
+Expected:
+- hostnames from allocated nodes
+
+This validates:
+
+- scheduler allocation
+- distributed execution
+- runtime communication
+
+** IMPORTANT HPC Workflow
+
+Typical HPC workflow:
+
+#+begin_example
+Load software
+    ↓
+Compile application
+    ↓
+Prepare Slurm script
+    ↓
+Submit job
+    ↓
+Monitor execution
+    ↓
+Analyze outputs
+#+end_example
+
+** IMPORTANT Production HPC Concept
+
+Production HPC systems usually separate:
+
+- operating system packages
+- scientific software stack
+- compiler stack
+- MPI runtime stack
+- scheduler integration
+
+exactly like this setup.
+
+This architecture provides:
+
+- reproducibility
+- scalability
+- centralized administration
+- software consistency
+- runtime portability 
 * Centralized Identity Management using OpenLDAP + nslcd
 
 Goal:
@@ -3154,7 +4244,7 @@ slappasswd
 LDAP uses a hierarchical tree called:
 
 #+begin_example
-DIT — Directory Information Tree
+DIT -- Directory Information Tree
 #+end_example
 
 Example structure:

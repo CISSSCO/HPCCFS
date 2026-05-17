@@ -1,0 +1,6805 @@
+% Created 2026-05-18 Mon 00:55
+% Intended LaTeX compiler: pdflatex
+\documentclass[11pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage{wrapfig}
+\usepackage{rotating}
+\usepackage[normalem]{ulem}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{capt-of}
+\usepackage{hyperref}
+\author{Cisco Ramon}
+\date{\textit{{[}2026-03-14 Sat 00:35]}}
+\title{ClusterSetup}
+\hypersetup{
+ pdfauthor={Cisco Ramon},
+ pdftitle={ClusterSetup},
+ pdfkeywords={},
+ pdfsubject={Building a mini HPC cluster environment using Rocky Linux, VirtualBox, Slurm, MPI, and OpenMP},
+ pdfcreator={},
+ pdflang={English}}
+\begin{document}
+
+\maketitle
+\setcounter{tocdepth}{2}
+\tableofcontents
+
+\section{Abstract}
+\label{sec:org655bf0b}
+
+This documentation presents the complete setup and configuration of a
+lightweight High Performance Computing (HPC) cluster environment using
+Rocky Linux and VirtualBox. The guide covers practical implementation
+of core HPC infrastructure components including shared storage, Slurm
+workload management, LDAP-based centralized authentication, MPI runtime
+environment, and centralized software stack management using Spack.
+
+The cluster environment supports multinode job execution, centralized
+software distribution, distributed MPI applications, and scheduler-aware
+runtime execution. The setup follows real-world HPC concepts while
+remaining suitable for learning, experimentation, and practical hands-on
+training.
+\section{Preface}
+\label{sec:org0922185}
+
+This documentation was prepared with the assistance of AI tools for:
+
+\begin{itemize}
+\item structuring
+\item explanations
+\item formatting
+\item workflow organization
+\item command documentation
+\item concept explanation
+\end{itemize}
+
+However, the complete HPC cluster setup, configuration, testing,
+debugging, and validation were performed manually on a real working
+cluster environment.
+
+Every major component documented in this guide was configured and tested
+practically, including:
+
+\begin{itemize}
+\item cluster networking
+\item shared storage
+\item NFS configuration
+\item Slurm workload manager
+\item LDAP authentication
+\item centralized user management
+\item Spack software stack
+\item MPI runtime environment
+\item multinode execution
+\item scheduler-aware MPI jobs
+\end{itemize}
+
+All commands, workflows, scripts, and execution procedures were tested
+successfully from start to end.
+
+This guide is designed for:
+
+\begin{itemize}
+\item students
+\item beginners
+\item HPC enthusiasts
+\item Linux learners
+\item system administrators
+\item researchers
+\end{itemize}
+
+who want practical hands-on experience in:
+
+\begin{itemize}
+\item Linux cluster administration
+\item HPC infrastructure setup
+\item distributed systems
+\item centralized authentication
+\item workload scheduling
+\item parallel programming
+\item MPI execution
+\item software stack management
+\end{itemize}
+
+The primary goal of this documentation is not only to provide commands,
+but also to explain the concepts behind real HPC environments in a
+simple, practical, and beginner-friendly manner.
+
+The setup presented here follows real-world HPC center practices while
+remaining accessible for learning, experimentation, and self-study.
+\section{Introduction}
+\label{sec:org336f2d4}
+
+High Performance Computing (HPC) clusters are distributed computing
+systems designed to execute computational workloads across multiple
+machines simultaneously. Instead of relying on a single system, HPC
+clusters combine multiple compute nodes to provide higher computational
+capacity, scalability, and parallel execution capability.
+
+Modern HPC environments are widely used in:
+
+\begin{itemize}
+\item scientific simulations
+\item engineering workloads
+\item computational chemistry
+\item artificial intelligence
+\item machine learning
+\item weather modeling
+\item large-scale data analysis
+\end{itemize}
+
+A typical HPC cluster contains several important components working
+together:
+
+\begin{center}
+\begin{tabular}{ll}
+Component & Purpose\\
+\hline
+Login Node & User access and job submission\\
+Compute Nodes & Execute computational workloads\\
+Shared Storage & Shared user data and software\\
+Scheduler & Resource allocation and job management\\
+MPI Runtime & Distributed parallel execution\\
+Authentication System & Centralized user management\\
+\end{tabular}
+\end{center}
+
+This guide focuses on building these components step-by-step in a small
+virtualized environment using:
+
+\begin{itemize}
+\item Rocky Linux
+\item VirtualBox
+\item Slurm
+\item OpenMPI
+\item LDAP
+\item NFS
+\item Spack
+\end{itemize}
+
+Although the setup is lightweight and designed for learning purposes,
+the overall architecture closely follows concepts used in production HPC
+centers and supercomputers.
+
+Throughout this documentation, readers will gradually configure:
+
+\begin{itemize}
+\item cluster networking
+\item shared storage
+\item centralized authentication
+\item workload scheduling
+\item distributed software stacks
+\item MPI-based parallel execution
+\item scheduler-aware job execution
+\end{itemize}
+
+The final environment provides a fully working multinode HPC cluster
+capable of running distributed parallel applications across multiple
+compute nodes.
+\section{Cluster Architecture}
+\label{sec:org1a56ecb}
+The cluster consists of five virtual machines connected using an internal
+network.
+
+\begin{verbatim}
+                 HOST MACHINE
+                       |
+         ssh -p XXXX localhost
+                       |
+               [ NAT Adapter ]
+                       |
+ ------------------------------------------------
+ |               INTERNAL NETWORK               |
+ |                  "hpcnet"                    |
+ ------------------------------------------------
+
+master      10.10.10.1
+login       10.10.10.2
+compute01   10.10.10.11
+compute02   10.10.10.12
+compute03   10.10.10.13
+\end{verbatim}
+\section{Node Details}
+\label{sec:orgac5a6aa}
+\subsection{Node Role}
+\label{sec:org9bad384}
+\begin{enumerate}
+\item Master Node
+\label{sec:orgd77f7af}
+
+The master node manages the overall cluster.
+
+Main responsibilities:
+
+\begin{itemize}
+\item Slurm controller
+\item NFS server
+\item LDAP server
+\item Monitoring tools
+\item Shared software stack
+\item Cluster configuration
+\end{itemize}
+\item Login Node
+\label{sec:orga96020c}
+
+The login node is the access point for users.
+
+Typical tasks performed here:
+
+\begin{itemize}
+\item SSH login
+\item Code compilation
+\item Job submission
+\item Accessing shared storage
+\end{itemize}
+\item Compute Nodes
+\label{sec:orgc5bf93e}
+
+Compute nodes run the actual workloads.
+
+These nodes are mainly used for:
+
+\begin{itemize}
+\item MPI jobs
+\item OpenMP jobs
+\item Batch workloads
+\item Parallel execution
+\end{itemize}
+\end{enumerate}
+\subsection{Networking Setup}
+\label{sec:orgca84245}
+
+Two network adapters are used for each VM.
+\begin{enumerate}
+\item NAT Adapter
+\label{sec:org6b133eb}
+
+Used for:
+
+\begin{itemize}
+\item Internet access
+\item Package installation
+\item SSH access from host system
+\end{itemize}
+\item Internal Network
+\label{sec:orgd5dced2}
+
+Used for communication between cluster nodes.
+
+Network name:
+
+\begin{verbatim}
+hpcnet
+\end{verbatim}
+
+This network is isolated and only used inside the cluster.
+\end{enumerate}
+\subsection{Static IP Addressing}
+\label{sec:org72b688a}
+
+Each node uses a fixed IP address.
+
+\begin{center}
+\begin{tabular}{llrr}
+VM Name & Hostname & Internal IP & SSH Port\\
+\hline
+master & master.local & 10.10.10.1 & 2221\\
+login & login.local & 10.10.10.2 & 2222\\
+compute01 & compute01.local & 10.10.10.11 & 2223\\
+compute02 & compute02.local & 10.10.10.12 & 2224\\
+compute03 & compute03.local & 10.10.10.13 & 2225\\
+\end{tabular}
+\end{center}
+
+Example SSH access:
+
+\begin{verbatim}
+ssh -p 2221 hpcuser@localhost
+\end{verbatim}
+\section{Resource Allocation}
+\label{sec:orgeaa6043}
+The following configuration is enough for a lightweight HPC lab.
+You can increase resources later depending on your host system.
+\subsection{Master Node}
+\label{sec:orgfaf671e}
+
+\begin{center}
+\begin{tabular}{ll}
+Resource & Value\\
+\hline
+RAM & 2 GB\\
+CPU & 2\\
+Disk & 30 GB\\
+\end{tabular}
+\end{center}
+\subsection{Login Node}
+\label{sec:org6123a1d}
+
+\begin{center}
+\begin{tabular}{ll}
+Resource & Value\\
+\hline
+RAM & 2 GB\\
+CPU & 2\\
+Disk & 25 GB\\
+\end{tabular}
+\end{center}
+\subsection{Compute Nodes}
+\label{sec:org2088a2b}
+
+\begin{center}
+\begin{tabular}{ll}
+Resource & Value\\
+\hline
+RAM & 2 GB\\
+CPU & 2\\
+Disk & 20 GB\\
+\end{tabular}
+\end{center}
+\section{Master Node Setup}
+\label{sec:org6ab5079}
+This section covers the complete setup of the master node. The master node
+acts as the central management node of the cluster.
+
+Main responsibilities:
+
+\begin{itemize}
+\item Cluster management
+\item Shared storage
+\item Slurm controller
+\item Monitoring services
+\item User authentication
+\item Software management
+\end{itemize}
+\subsection{Install VirtualBox on Manjaro}
+\label{sec:orgc5cfe6b}
+I'm using Manjaro (Arch) as my base system.
+\begin{enumerate}
+\item Update packages
+\label{sec:org62e12f6}
+\begin{verbatim}
+sudo pacman -Syu
+\end{verbatim}
+\item Install VirtualBox and host modules
+\label{sec:orgfe52bd0}
+\begin{verbatim}
+sudo pacman -S virtualbox virtualbox-host-modules-arch
+\end{verbatim}
+\item Install VirtualBox extension pack
+\label{sec:orgd99ab01}
+\begin{verbatim}
+sudo pacman -S virtualbox-ext-oracle
+\end{verbatim}
+\item Load VirtualBox kernel module
+\label{sec:org7912882}
+\begin{verbatim}
+sudo modprobe vboxdrv
+\end{verbatim}
+\item Add current user to VirtualBox group
+\label{sec:org94ad536}
+\begin{verbatim}
+sudo usermod -aG vboxusers $USER
+\end{verbatim}
+\item Reboot the system
+\label{sec:orgc98affe}
+\begin{verbatim}
+sudo reboot
+\end{verbatim}
+\end{enumerate}
+\subsection{Download Rocky Linux}
+\label{sec:org81e9205}
+
+Download Rocky Linux Minimal ISO:
+
+\url{https://rockylinux.org/download}
+
+Choose:
+
+\begin{itemize}
+\item x86\_64
+\item Minimal ISO
+\end{itemize}
+
+The minimal installation keeps the environment lightweight and avoids
+unnecessary packages.
+\subsection{Create Master VM}
+\label{sec:org871d0f6}
+Open VirtualBox and create a new virtual machine.
+\begin{enumerate}
+\item VM Name
+\label{sec:org689f699}
+
+\begin{verbatim}
+master
+\end{verbatim}
+\item Type
+\label{sec:orge0455bd}
+
+\begin{verbatim}
+Linux
+Red Hat (64-bit)
+\end{verbatim}
+\item Hardware
+\label{sec:org6ff9e08}
+
+\begin{center}
+\begin{tabular}{ll}
+Setting & Value\\
+\hline
+RAM & 2046 MB\\
+CPU & 2\\
+Disk & 30 GB\\
+\end{tabular}
+\end{center}
+\item Disk Type
+\label{sec:orgc7b6114}
+
+\begin{verbatim}
+VDI
+Dynamically Allocated
+\end{verbatim}
+
+This configuration is enough for a lightweight HPC lab environment.
+\end{enumerate}
+\subsection{Network Configuration}
+\label{sec:org79bcf8d}
+
+\begin{enumerate}
+\item Adapter 1
+\label{sec:org0c847c4}
+
+\begin{verbatim}
+Attached to: NAT
+\end{verbatim}
+Used for:
+
+\begin{itemize}
+\item Internet access
+\item Package installation
+\item SSH access from host machine
+\end{itemize}
+\item NAT Port Forwarding
+\label{sec:orga042610}
+Open:
+
+\begin{verbatim}
+Settings -> Network -> Adapter 1 -> Advanced -> Port Forwarding
+\end{verbatim}
+
+\begin{center}
+\begin{tabular}{llrr}
+Name & Protocol & Host Port & Guest Port\\
+\hline
+ssh & TCP & 2221 & 22\\
+\end{tabular}
+\end{center}
+\item Adapter 2
+\label{sec:org5b1e7cb}
+
+\begin{verbatim}
+Attached to: Internal Network
+\end{verbatim}
+
+Internal Network Name:
+
+\begin{verbatim}
+hpcnet
+\end{verbatim}
+
+IMPORTANT:
+All nodes MUST use the same internal network name.
+This network is used for communication between cluster nodes.
+\end{enumerate}
+\subsection{Rocky Linux Installation}
+\label{sec:orgfc97699}
+
+Choose:
+
+\begin{verbatim}
+Minimal Install
+\end{verbatim}
+\begin{enumerate}
+\item Network and Hostname
+\label{sec:orgfe77ef4}
+
+Enable BOTH network adapters.
+
+Set hostname:
+
+\begin{verbatim}
+master.local
+\end{verbatim}
+\item User Creation
+\label{sec:org88707c4}
+Create an administrative user during installation.
+
+\begin{center}
+\begin{tabular}{ll}
+Field & Value\\
+\hline
+Username & hpcadmin\\
+Administrator & YES\\
+\end{tabular}
+\end{center}
+After installation, log into the VM.
+\end{enumerate}
+\subsection{Initial System Verification}
+\label{sec:org1ad7e2d}
+\begin{enumerate}
+\item Check Interfaces
+\label{sec:orgc478e2c}
+
+\begin{verbatim}
+ip addr
+\end{verbatim}
+
+Expected:
+
+\begin{itemize}
+\item NAT interface should receive:
+\begin{itemize}
+\item 10.0.2.15
+\end{itemize}
+\item Internal interface should exist but may not yet have static IP
+\end{itemize}
+\end{enumerate}
+\subsection{Configure Static Internal Network}
+\label{sec:org93f9d84}
+\begin{enumerate}
+\item Check Device Names
+\label{sec:org0191ab3}
+
+\begin{verbatim}
+nmcli device status
+\end{verbatim}
+
+Expected:
+
+\begin{center}
+\begin{tabular}{ll}
+Interface & Purpose\\
+\hline
+enp0s3 & NAT\\
+enp0s8 & Internal Network\\
+\end{tabular}
+\end{center}
+\end{enumerate}
+\subsection{Configure Internal Interface}
+\label{sec:org6387459}
+
+Launch NetworkManager TUI:
+
+\begin{verbatim}
+sudo nmtui
+\end{verbatim}
+
+Navigate:
+
+\begin{verbatim}
+Edit a connection
+\end{verbatim}
+
+Select:
+
+\begin{verbatim}
+enp0s8
+\end{verbatim}
+
+Set:
+
+\begin{center}
+\begin{tabular}{ll}
+Field & Value\\
+\hline
+IPv4 Method & Manual\\
+Address & 10.10.10.1/24\\
+Gateway & blank\\
+DNS & blank\\
+\end{tabular}
+\end{center}
+
+DO NOT modify NAT interface.
+\subsection{Restart Networking}
+\label{sec:org035a90a}
+
+\begin{verbatim}
+sudo systemctl restart NetworkManager
+\end{verbatim}
+\subsection{Verify Networking}
+\label{sec:org746bba0}
+
+\begin{verbatim}
+ip addr
+\end{verbatim}
+
+Expected:
+
+\begin{center}
+\begin{tabular}{lr}
+Interface & IP\\
+\hline
+NAT & 10.0.2.x\\
+Internal & 10.10.10.1\\
+\end{tabular}
+\end{center}
+\subsection{SSH Access from Host}
+\label{sec:orgbcddf2d}
+
+From host machine:
+
+\begin{verbatim}
+ssh -p 2221 hpcadmin@localhost
+\end{verbatim}
+If the connection works, port forwarding is configured correctly.
+\subsection{System Update and Packages}
+\label{sec:org7aac554}
+\begin{enumerate}
+\item Update System
+\label{sec:orgbaa317b}
+
+\begin{verbatim}
+sudo dnf update -y
+\end{verbatim}
+\item Install Base Packages
+\label{sec:orgfb94766}
+
+\begin{verbatim}
+sudo dnf install -y \
+vim wget curl git \
+net-tools bind-utils \
+htop tmux tree \
+gcc gcc-c++ gcc-gfortran \
+make cmake \
+python3 \
+openssh-server
+\end{verbatim}
+
+These packages provide:
+
+\begin{itemize}
+\item Development tools
+\item Network utilities
+\item Monitoring utilities
+\item Basic administration tools
+\end{itemize}
+\end{enumerate}
+\subsection{Timezone Configuration}
+\label{sec:org97197a6}
+Check timezone:
+
+\begin{verbatim}
+timedatectl
+\end{verbatim}
+
+Set timezone if needed:
+
+\begin{verbatim}
+sudo timedatectl set-timezone Asia/Kolkata
+\end{verbatim}
+\subsection{Configure /etc/hosts}
+\label{sec:org0afa325}
+
+Edit:
+
+\begin{verbatim}
+sudo vim /etc/hosts
+\end{verbatim}
+
+Add:
+
+\begin{verbatim}
+10.10.10.1   master master.local
+10.10.10.2   login login.local
+10.10.10.11  compute01 compute01.local
+10.10.10.12  compute02 compute02.local
+10.10.10.13  compute03 compute03.local
+\end{verbatim}
+This allows hostname-based communication between nodes.
+\subsection{Disable Firewall (Temporary)}
+\label{sec:org864cd37}
+For initial setup and testing:
+\begin{verbatim}
+sudo systemctl disable --now firewalld
+\end{verbatim}
+NOTE:
+
+Firewall rules can be configured properly later after cluster setup is complete.
+\subsection{SELinux Configuration}
+\label{sec:org414c29e}
+
+Check status:
+
+\begin{verbatim}
+getenforce
+\end{verbatim}
+
+Temporarily disable enforcing:
+
+\begin{verbatim}
+sudo setenforce 0
+\end{verbatim}
+
+Persist configuration:
+
+\begin{verbatim}
+sudo vim /etc/selinux/config
+\end{verbatim}
+
+Modify:
+
+\begin{verbatim}
+SELINUX=permissive
+\end{verbatim}
+This helps avoid permission-related issues during initial cluster setup.
+\subsection{Verify Hostname}
+\label{sec:orge3570f7}
+\begin{verbatim}
+hostnamectl
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+Static hostname: master.local
+\end{verbatim}
+
+If hostname is not updated(showing previous), reboot the machine.
+
+At this point, the master node setup is complete and ready for cloning or
+further cluster configuration.
+\section{Cloning Nodes}
+\label{sec:org67f09d2}
+
+Purpose:
+
+\begin{itemize}
+\item avoid reinstalling all nodes manually
+\item simulate real HPC image provisioning workflow
+\end{itemize}
+\subsection{Create Snapshot}
+\label{sec:org1d5a192}
+
+Power off VM:
+
+\begin{verbatim}
+sudo poweroff
+\end{verbatim}
+
+Create snapshot in VirtualBox:
+
+\begin{verbatim}
+clean-base-master
+\end{verbatim}
+\subsection{Clone Nodes}
+\label{sec:orgd2e0b48}
+
+Create FULL CLONES.
+
+IMPORTANT:
+Enable:
+
+\begin{verbatim}
+Reinitialize the MAC address of all network cards
+\end{verbatim}
+\subsection{Clone Names}
+\label{sec:org826ee12}
+
+\begin{center}
+\begin{tabular}{l}
+VM Name\\
+\hline
+login\\
+compute01\\
+compute02\\
+compute03\\
+\end{tabular}
+\end{center}
+\subsection{Configure Port Forwarding}
+\label{sec:org5c8ceae}
+
+\begin{enumerate}
+\item Login Node
+\label{sec:org0580410}
+
+\begin{center}
+\begin{tabular}{rr}
+Host Port & Guest Port\\
+\hline
+2222 & 22\\
+\end{tabular}
+\end{center}
+\item Compute01
+\label{sec:orge08d88f}
+
+\begin{center}
+\begin{tabular}{rr}
+Host Port & Guest Port\\
+\hline
+2223 & 22\\
+\end{tabular}
+\end{center}
+\item Compute02
+\label{sec:org5b60512}
+
+\begin{center}
+\begin{tabular}{rr}
+Host Port & Guest Port\\
+\hline
+2224 & 22\\
+\end{tabular}
+\end{center}
+\item Compute03
+\label{sec:orgb5ceda6}
+
+\begin{center}
+\begin{tabular}{rr}
+Host Port & Guest Port\\
+\hline
+2225 & 22\\
+\end{tabular}
+\end{center}
+\end{enumerate}
+\subsection{Machine ID Regeneration}
+\label{sec:org4c28d7e}
+
+IMPORTANT:
+Each cloned Linux machine must have unique machine-id.
+\subsection{Remove Existing Machine ID}
+\label{sec:org61fb939}
+
+\begin{verbatim}
+sudo rm -f /etc/machine-id
+\end{verbatim}
+\subsection{Generate New Machine ID}
+\label{sec:orge31158b}
+
+\begin{verbatim}
+sudo systemd-machine-id-setup
+\end{verbatim}
+\subsection{Verify Machine ID}
+\label{sec:orga0481c1}
+
+\begin{verbatim}
+cat /etc/machine-id
+\end{verbatim}
+
+Ensure every node has unique machine-id.
+\subsection{Configure Hostname}
+\label{sec:orgf47d11f}
+
+\begin{enumerate}
+\item Login Node
+\label{sec:orgd47f907}
+
+Edit hostname:
+
+\begin{verbatim}
+sudo vim /etc/hostname
+\end{verbatim}
+
+Set:
+
+\begin{verbatim}
+login.local
+\end{verbatim}
+
+Apply:
+
+\begin{verbatim}
+sudo hostnamectl set-hostname login.local
+\end{verbatim}
+\item Compute01
+\label{sec:org201a9d9}
+
+Set hostname:
+
+\begin{verbatim}
+compute01.local
+\end{verbatim}
+
+Apply:
+
+\begin{verbatim}
+sudo hostnamectl set-hostname compute01.local
+\end{verbatim}
+\item Compute02
+\label{sec:org6bd8453}
+
+\begin{verbatim}
+compute02.local
+\end{verbatim}
+
+\begin{verbatim}
+sudo hostnamectl set-hostname compute02.local
+\end{verbatim}
+\item Compute03
+\label{sec:org15e1649}
+
+\begin{verbatim}
+compute03.local
+\end{verbatim}
+
+\begin{verbatim}
+sudo hostnamectl set-hostname compute03.local
+\end{verbatim}
+\end{enumerate}
+\subsection{Configure Static Internal IPs}
+\label{sec:orgc913ab6}
+
+Launch:
+
+\begin{verbatim}
+sudo nmtui
+\end{verbatim}
+
+Edit internal adapter:
+
+\begin{verbatim}
+enp0s8
+\end{verbatim}
+\begin{enumerate}
+\item Login Node
+\label{sec:orga297790}
+
+\begin{verbatim}
+10.10.10.2/24
+\end{verbatim}
+\item Compute01
+\label{sec:org1e6ec75}
+
+\begin{verbatim}
+10.10.10.11/24
+\end{verbatim}
+\item Compute02
+\label{sec:org3f24430}
+
+\begin{verbatim}
+10.10.10.12/24
+\end{verbatim}
+\item Compute03
+\label{sec:orgcafe311}
+
+\begin{verbatim}
+10.10.10.13/24
+\end{verbatim}
+\end{enumerate}
+\subsection{Restart Networking}
+\label{sec:org2d009dc}
+
+\begin{verbatim}
+sudo systemctl restart NetworkManager
+\end{verbatim}
+\subsection{Verify Networking}
+\label{sec:orgc88af87}
+
+\begin{verbatim}
+ip addr
+\end{verbatim}
+\subsection{Verify Routing}
+\label{sec:orgaaa7811}
+
+\begin{verbatim}
+ip route
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+default via 10.0.2.2 dev enp0s3
+10.10.10.0/24 dev enp0s8
+\end{verbatim}
+\subsection{Verify Connectivity}
+\label{sec:org02626d0}
+
+\begin{enumerate}
+\item Ping Between Nodes
+\label{sec:org28efc86}
+
+\begin{verbatim}
+ping master
+\end{verbatim}
+
+\begin{verbatim}
+ping login
+\end{verbatim}
+
+\begin{verbatim}
+ping compute01
+\end{verbatim}
+\end{enumerate}
+\subsection{SSH Verification}
+\label{sec:org9ed8145}
+
+From host:
+\begin{enumerate}
+\item Master
+\label{sec:orga28423e}
+
+\begin{verbatim}
+ssh -p 2221 hpcadmin@localhost
+\end{verbatim}
+\item Login
+\label{sec:orgfb6e58d}
+
+\begin{verbatim}
+ssh -p 2222 hpcadmin@localhost
+\end{verbatim}
+\item Compute01
+\label{sec:org1f9a479}
+
+\begin{verbatim}
+ssh -p 2223 hpcadmin@localhost
+\end{verbatim}
+\item Compute02
+\label{sec:orgd81c075}
+
+\begin{verbatim}
+ssh -p 2224 hpcadmin@localhost
+\end{verbatim}
+\item Compute03
+\label{sec:org49dbb6d}
+
+\begin{verbatim}
+ssh -p 2225 hpcadmin@localhost
+\end{verbatim}
+\end{enumerate}
+\section{Shared Infrastructure Services}
+\label{sec:org232eb27}
+
+Goal:
+
+Transform the cluster into a realistic HPC-style shared environment.
+
+This phase includes:
+
+\begin{itemize}
+\item passwordless SSH
+\item shared home directories
+\item NFS server/client configuration
+\item persistent mounts
+\item multi-node shared filesystem verification
+\end{itemize}
+
+By the end of this phase:
+
+\begin{itemize}
+\item all nodes share same /home
+\item users can access same files from all nodes
+\item cluster behaves like a real HPC environment
+\end{itemize}
+\subsection{Cluster Role Architecture}
+\label{sec:org2917e0a}
+
+\begin{enumerate}
+\item Master Node
+\label{sec:org0a27785}
+
+Purpose:
+
+\begin{itemize}
+\item cluster management
+\item NFS server
+\item future Slurm controller
+\item future Munge authority
+\item future LDAP server
+\end{itemize}
+
+Services:
+
+\begin{center}
+\begin{tabular}{ll}
+Service & Purpose\\
+\hline
+nfs-server & shared storage\\
+future slurmctld & scheduler controller\\
+future munge & authentication\\
+\end{tabular}
+\end{center}
+\item Login Node
+\label{sec:orgeb68175}
+
+Purpose:
+
+\begin{itemize}
+\item user login
+\item compilation
+\item job submission
+\end{itemize}
+
+Users should:
+\begin{itemize}
+\item SSH into login node
+\item compile programs
+\item submit jobs using Slurm
+\end{itemize}
+\item Compute Nodes
+\label{sec:org65085e5}
+
+Purpose:
+
+\begin{itemize}
+\item execute jobs only
+\end{itemize}
+
+Future services:
+
+\begin{center}
+\begin{tabular}{ll}
+Service & Purpose\\
+\hline
+slurmd & compute daemon\\
+munge & authentication\\
+\end{tabular}
+\end{center}
+\end{enumerate}
+\subsection{Verify User Consistency}
+\label{sec:org8af1055}
+
+IMPORTANT:
+
+NFS shared storage requires same UID/GID across all nodes.
+
+Verify user identity on all nodes:
+
+\begin{verbatim}
+id hpcadmin
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+uid=1000(hpcadmin) gid=1000(hpcadmin)
+\end{verbatim}
+
+All nodes must match.
+\subsection{Passwordless SSH Configuration}
+\label{sec:orgc5133d3}
+
+Purpose:
+
+\begin{itemize}
+\item MPI communication
+\item Slurm execution
+\item cluster automation
+\item remote management
+\end{itemize}
+
+SSH trust is generated ONLY from login node.
+
+This mimics real HPC architecture:
+
+\begin{verbatim}
+User -> Login Node -> Compute Nodes
+\end{verbatim}
+\subsection{Generate SSH Key on Login Node}
+\label{sec:orgb8ada1e}
+
+SSH into login node from host:
+
+\begin{verbatim}
+ssh -p 2222 hpcadmin@localhost
+\end{verbatim}
+
+Generate SSH key:
+
+\begin{verbatim}
+ssh-keygen
+\end{verbatim}
+
+Press Enter for all prompts.
+
+Generated files:
+
+\begin{verbatim}
+~/.ssh/id_rsa
+~/.ssh/id_rsa.pub
+\end{verbatim}
+\subsection{Copy SSH Keys to Cluster Nodes}
+\label{sec:org2d30546}
+
+\begin{enumerate}
+\item Master
+\label{sec:orgd6c35e8}
+
+\begin{verbatim}
+ssh-copy-id hpcadmin@master
+\end{verbatim}
+\item Compute01
+\label{sec:org356488f}
+
+\begin{verbatim}
+ssh-copy-id hpcadmin@compute01
+\end{verbatim}
+\item Compute02
+\label{sec:orgeb0b8ad}
+
+\begin{verbatim}
+ssh-copy-id hpcadmin@compute02
+\end{verbatim}
+\item Compute03
+\label{sec:org115058f}
+
+\begin{verbatim}
+ssh-copy-id hpcadmin@compute03
+\end{verbatim}
+\end{enumerate}
+\subsection{Verify Passwordless SSH}
+\label{sec:org13f21f8}
+
+\begin{enumerate}
+\item Test Master
+\label{sec:orgc1defd1}
+
+\begin{verbatim}
+ssh master hostname
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+master.local
+\end{verbatim}
+\item Test Compute01
+\label{sec:orgb31f6fb}
+
+\begin{verbatim}
+ssh compute01 hostname
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+compute01.local
+\end{verbatim}
+\item Test Compute02
+\label{sec:org161c91d}
+
+\begin{verbatim}
+ssh compute02 hostname
+\end{verbatim}
+\item Test Compute03
+\label{sec:org273dcee}
+
+\begin{verbatim}
+ssh compute03 hostname
+\end{verbatim}
+
+No password prompts should appear.
+\end{enumerate}
+\subsection{HPC Concept — Why Passwordless SSH Matters}
+\label{sec:orga510511}
+
+Passwordless SSH becomes essential for:
+
+\begin{center}
+\begin{tabular}{ll}
+Feature & Purpose\\
+\hline
+MPI & remote process launch\\
+Slurm & distributed execution\\
+automation & orchestration\\
+monitoring & remote administration\\
+\end{tabular}
+\end{center}
+\subsection{NFS Shared Storage Setup}
+\label{sec:org15f9cb2}
+
+Purpose:
+
+Provide shared home directories across all cluster nodes.
+
+This is a core HPC architecture requirement.
+
+Without shared storage:
+
+\begin{itemize}
+\item source code differs per node
+\item binaries differ
+\item scripts unavailable across nodes
+\item MPI execution becomes difficult
+\end{itemize}
+
+Real HPC systems commonly use:
+
+\begin{itemize}
+\item NFS
+\item Lustre
+\item BeeGFS
+\item GPFS
+\end{itemize}
+
+This lab begins with NFS.
+\subsection{Install NFS Packages}
+\label{sec:orgc662057}
+
+Install on ALL nodes:
+
+\begin{verbatim}
+sudo dnf install -y nfs-utils
+\end{verbatim}
+\subsection{Configure NFS Server on Master}
+\label{sec:org2580ea6}
+
+SSH into master node.
+\subsection{Enable NFS Services}
+\label{sec:org802857f}
+
+\begin{verbatim}
+sudo systemctl enable --now nfs-server
+\end{verbatim}
+
+Verify:
+
+\begin{verbatim}
+systemctl status nfs-server
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+active (running)
+\end{verbatim}
+\subsection{Configure NFS Exports}
+\label{sec:orga4b6a23}
+
+Edit exports file:
+
+\begin{verbatim}
+sudo vim /etc/exports
+\end{verbatim}
+
+Add:
+
+\begin{verbatim}
+/home 10.10.10.0/24(rw,sync,no_root_squash)
+\end{verbatim}
+\subsection{Export Option Explanation}
+\label{sec:org309b362}
+
+\begin{center}
+\begin{tabular}{ll}
+Option & Meaning\\
+\hline
+rw & read/write access\\
+sync & synchronous writes\\
+no\_root\_squash & preserve root privileges\\
+\end{tabular}
+\end{center}
+\subsection{Apply Exports}
+\label{sec:org852fc96}
+
+\begin{verbatim}
+sudo exportfs -rav
+\end{verbatim}
+\subsection{Verify Exports}
+\label{sec:org2a8dd86}
+
+\begin{verbatim}
+sudo exportfs -v
+\end{verbatim}
+
+Expected export:
+
+\begin{verbatim}
+/home 10.10.10.0/24(...)
+\end{verbatim}
+\subsection{Configure NFS Clients}
+\label{sec:orge71620d}
+
+Perform on:
+
+\begin{itemize}
+\item login
+\item compute01
+\item compute02
+\item compute03
+\end{itemize}
+\subsection{Backup Existing Home Directory}
+\label{sec:org6ad613d}
+
+\begin{verbatim}
+sudo mv /home /home.local
+\end{verbatim}
+
+Purpose:
+
+Preserve original local home directory.
+\subsection{Create New Mount Point}
+\label{sec:org99ad4b3}
+
+\begin{verbatim}
+sudo mkdir /home
+\end{verbatim}
+\subsection{Mount Shared NFS Home}
+\label{sec:org750bda8}
+
+\begin{verbatim}
+sudo mount master:/home /home
+\end{verbatim}
+\subsection{Verify Mount}
+\label{sec:org614969a}
+
+\begin{verbatim}
+df -h
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+master:/home
+\end{verbatim}
+
+mounted on:
+
+\begin{verbatim}
+/home
+\end{verbatim}
+\subsection{Verify Shared Filesystem}
+\label{sec:org7325dfb}
+
+From login node:
+
+\begin{verbatim}
+touch ~/shared_test
+\end{verbatim}
+
+From compute01:
+
+\begin{verbatim}
+ls ~
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+shared_test
+\end{verbatim}
+
+This confirms successful shared filesystem operation.
+\subsection{Configure Persistent NFS Mounts}
+\label{sec:orgf79fcd8}
+
+Without this configuration:
+
+\begin{itemize}
+\item NFS mount disappears after reboot
+\end{itemize}
+\subsection{Configure /etc/fstab}
+\label{sec:org247787b}
+
+On ALL client nodes:
+
+\begin{verbatim}
+sudo vim /etc/fstab
+\end{verbatim}
+
+Add:
+
+\begin{verbatim}
+master:/home   /home   nfs   defaults   0 0
+\end{verbatim}
+\subsection{Verify fstab Before Reboot}
+\label{sec:orgd251531}
+
+IMPORTANT:
+
+Always validate fstab before rebooting.
+
+Run:
+
+\begin{verbatim}
+sudo mount -a
+\end{verbatim}
+
+If no errors appear:
+\begin{itemize}
+\item fstab configuration is correct
+\end{itemize}
+\subsection{Reboot Validation Procedure}
+\label{sec:org56e63c1}
+
+Purpose:
+
+Validate persistent cluster infrastructure after reboot.
+
+This is important real-world HPC administration practice.
+\subsection{Reboot Order}
+\label{sec:orgb9a1e8d}
+
+\begin{enumerate}
+\item Reboot Master First
+\label{sec:org6dafbf5}
+
+\begin{verbatim}
+sudo reboot
+\end{verbatim}
+
+Wait until:
+\begin{itemize}
+\item SSH becomes available
+\item NFS server active
+\end{itemize}
+
+Verify:
+
+\begin{verbatim}
+systemctl status nfs-server
+\end{verbatim}
+\item Reboot Login Node
+\label{sec:orgf0a4c65}
+
+\begin{verbatim}
+sudo reboot
+\end{verbatim}
+\item Reboot Compute Nodes
+\label{sec:org807aeab}
+
+\begin{verbatim}
+sudo reboot
+\end{verbatim}
+
+Perform for:
+\begin{itemize}
+\item compute01
+\item compute02
+\item compute03
+\end{itemize}
+\end{enumerate}
+\subsection{Verify Persistent Mounts After Reboot}
+\label{sec:orgb99ca94}
+
+On login node:
+
+\begin{verbatim}
+df -h
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+master:/home
+\end{verbatim}
+
+mounted automatically.
+\subsection{Verify Active NFS Mount}
+\label{sec:orgad75112}
+
+\begin{verbatim}
+mount | grep home
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+master:/home on /home type nfs
+\end{verbatim}
+\subsection{Verify Shared Files After Reboot}
+\label{sec:org16aa651}
+
+\begin{verbatim}
+ls ~
+\end{verbatim}
+
+Expected:
+\begin{itemize}
+\item previously created shared files still visible
+\end{itemize}
+\section{Munge Authentication + Slurm Scheduler}
+\label{sec:org4591d9f}
+
+Goal:
+
+Transform the cluster into a scheduler-managed HPC environment.
+
+This phase includes:
+
+\begin{itemize}
+\item Munge authentication
+\item Slurm controller setup
+\item Compute node daemon setup
+\item Scheduler configuration
+\item Partition creation
+\item Multi-node execution
+\item Resource allocation testing
+\end{itemize}
+
+By the end of this phase:
+
+\begin{itemize}
+\item cluster nodes authenticate securely
+\item Slurm manages compute resources
+\item jobs execute across nodes
+\item scheduler topology becomes operational
+\end{itemize}
+\subsection{HPC Scheduler Architecture}
+\label{sec:org7d2af35}
+
+\begin{enumerate}
+\item Master Node
+\label{sec:orgab9a308}
+
+Purpose:
+
+\begin{itemize}
+\item Slurm controller
+\item cluster scheduler
+\item resource manager
+\item Munge authority
+\end{itemize}
+
+Services:
+
+\begin{center}
+\begin{tabular}{ll}
+Service & Purpose\\
+\hline
+munged & cluster authentication\\
+slurmctld & scheduler controller\\
+\end{tabular}
+\end{center}
+\item Login Node
+\label{sec:org352cc50}
+
+Purpose:
+
+\begin{itemize}
+\item user login
+\item compilation
+\item job submission
+\end{itemize}
+
+Users should:
+
+\begin{itemize}
+\item login here
+\item compile here
+\item submit jobs here
+\end{itemize}
+\item Compute Nodes
+\label{sec:org361ac62}
+
+Purpose:
+
+\begin{itemize}
+\item execute jobs
+\end{itemize}
+
+Services:
+
+\begin{center}
+\begin{tabular}{ll}
+Service & Purpose\\
+\hline
+munged & authentication\\
+slurmd & compute execution daemon\\
+\end{tabular}
+\end{center}
+\end{enumerate}
+\subsection{IMPORTANT Rocky Linux 10 Issue}
+\label{sec:org74ad48c}
+
+Originally the cluster was created using:
+
+\begin{verbatim}
+Rocky Linux 10
+\end{verbatim}
+
+Problem encountered:
+
+\begin{verbatim}
+No match for argument: slurm
+\end{verbatim}
+
+Reason:
+
+\begin{itemize}
+\item Rocky Linux 10 HPC ecosystem still immature
+\item Slurm packages unavailable in standard repos
+\item OpenHPC EL10 support incomplete
+\end{itemize}
+
+Resolution:
+
+\begin{itemize}
+\item cluster rebuilt using Rocky Linux 9 Minimal
+\end{itemize}
+
+Important HPC lesson:
+
+Production HPC clusters usually avoid bleeding-edge enterprise releases because:
+
+\begin{itemize}
+\item scheduler ecosystems lag behind
+\item HPC repos may not exist
+\item compatibility becomes unstable
+\end{itemize}
+\subsection{Install EPEL Repository}
+\label{sec:org9f97a62}
+
+Install on ALL nodes:
+
+\begin{verbatim}
+sudo dnf install -y epel-release
+\end{verbatim}
+\subsection{Enable CRB Repository}
+\label{sec:orgc7a7ed4}
+
+Required on Rocky Linux 9.
+
+Install on ALL nodes:
+
+\begin{verbatim}
+sudo crb enable
+\end{verbatim}
+\subsection{Install Munge + Slurm Packages}
+\label{sec:org95df834}
+
+Install on ALL nodes:
+
+\begin{verbatim}
+sudo dnf install -y \
+munge munge-libs \
+slurm slurm-slurmd slurm-slurmctld
+\end{verbatim}
+\subsection{Verify Installed Packages}
+\label{sec:orgfc0d30d}
+
+\begin{enumerate}
+\item Verify Munge
+\label{sec:orgd33e219}
+
+\begin{verbatim}
+rpm -qa | grep munge
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+munge
+munge-libs
+\end{verbatim}
+\item Verify Slurm
+\label{sec:orgb7bdb98}
+
+\begin{verbatim}
+rpm -qa | grep slurm
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+slurm
+slurm-slurmd
+slurm-slurmctld
+\end{verbatim}
+\end{enumerate}
+\subsection{Verify System Users}
+\label{sec:org5e3cc28}
+
+\begin{enumerate}
+\item Verify Munge User
+\label{sec:org52fbcee}
+
+\begin{verbatim}
+id munge
+\end{verbatim}
+\item Verify Slurm User
+\label{sec:org4f2c00b}
+
+\begin{verbatim}
+id slurm
+\end{verbatim}
+\end{enumerate}
+\subsection{IMPORTANT Issue Encountered — Missing slurm User}
+\label{sec:org7d16ca9}
+
+Problem:
+
+\begin{verbatim}
+id: 'slurm': no such user
+\end{verbatim}
+
+Reason:
+
+Some Slurm packages on Rocky Linux do not automatically create the slurm user.
+
+Resolution:
+
+Create manually on ALL nodes.
+\subsection{Create Slurm Group}
+\label{sec:org474bbb3}
+
+\begin{verbatim}
+sudo groupadd slurm
+\end{verbatim}
+\subsection{Create Slurm User}
+\label{sec:org1f68acf}
+
+\begin{verbatim}
+sudo useradd -r -g slurm -s /sbin/nologin slurm
+\end{verbatim}
+
+Explanation:
+
+\begin{center}
+\begin{tabular}{ll}
+Option & Meaning\\
+\hline
+-r & system account\\
+-g slurm & primary group\\
+-s /sbin/nologin & disable shell login\\
+\end{tabular}
+\end{center}
+\subsection{Verify Slurm User}
+\label{sec:org4d98920}
+
+\begin{verbatim}
+id slurm
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+uid=...
+gid=...
+\end{verbatim}
+\subsection{IMPORTANT HPC Security Concept}
+\label{sec:org79abd78}
+
+Cluster daemons should not run permanently as root.
+
+Therefore:
+
+\begin{itemize}
+\item Munge runs as munge user
+\item Slurm runs as slurm user
+\end{itemize}
+
+This is standard enterprise daemon security practice.
+\subsection{Configure Munge Authentication}
+\label{sec:org9b82eb0}
+
+Purpose:
+
+Create secure trust relationship between all cluster nodes.
+
+IMPORTANT:
+
+All nodes MUST use the same:
+
+\begin{verbatim}
+/etc/munge/munge.key
+\end{verbatim}
+
+This key acts as the cluster-wide shared secret.
+\subsection{Generate Munge Key on Master}
+\label{sec:org85609c4}
+
+ONLY on master node:
+
+\begin{verbatim}
+sudo /usr/sbin/create-munge-key
+\end{verbatim}
+\subsection{Verify Munge Key}
+\label{sec:org969db71}
+
+\begin{verbatim}
+ls -l /etc/munge/munge.key
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+-rw-------
+\end{verbatim}
+
+owned by:
+
+\begin{verbatim}
+munge munge
+\end{verbatim}
+\subsection{IMPORTANT Mistake Encountered — Munge Key Generated on All Nodes}
+\label{sec:orgba449d3}
+
+Problem:
+
+Munge key accidentally generated independently on all nodes.
+
+Result:
+
+Nodes could not authenticate each other.
+
+Important HPC lesson:
+
+Munge works using a:
+
+\begin{verbatim}
+shared trust model
+\end{verbatim}
+
+All nodes MUST share identical munge.key.
+\subsection{Correct Munge Key Distribution}
+\label{sec:orga9c0deb}
+
+\begin{enumerate}
+\item Copy Key Temporarily
+\label{sec:org3d73738}
+
+On master:
+
+\begin{verbatim}
+sudo cp /etc/munge/munge.key /tmp/
+\end{verbatim}
+\item Temporary Permission Adjustment
+\label{sec:org29c377c}
+
+\begin{verbatim}
+sudo chmod 644 /tmp/munge.key
+\end{verbatim}
+
+Purpose:
+
+Allow normal user SCP transfer.
+\end{enumerate}
+\subsection{IMPORTANT SSH Root Login Issue}
+\label{sec:orgec429b4}
+
+Problem encountered:
+
+\begin{verbatim}
+Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password)
+\end{verbatim}
+
+Reason:
+
+Using:
+
+\begin{verbatim}
+sudo scp ...
+\end{verbatim}
+
+attempted root SSH login.
+
+Rocky Linux disables direct root SSH login by default.
+
+Resolution:
+
+Use normal user SCP.
+\subsection{Copy Munge Key to Login Node}
+\label{sec:org1bec3e1}
+
+\begin{verbatim}
+scp /tmp/munge.key login:/tmp/
+\end{verbatim}
+\subsection{Copy Munge Key to Compute01}
+\label{sec:orga14255d}
+
+\begin{verbatim}
+scp /tmp/munge.key compute01:/tmp/
+\end{verbatim}
+\subsection{Copy Munge Key to Compute02}
+\label{sec:orgad50379}
+
+\begin{verbatim}
+scp /tmp/munge.key compute02:/tmp/
+\end{verbatim}
+\subsection{Copy Munge Key to Compute03}
+\label{sec:orga0511d4}
+
+\begin{verbatim}
+scp /tmp/munge.key compute03:/tmp/
+\end{verbatim}
+\subsection{Remove Temporary Key Copy}
+\label{sec:orgab2feda}
+
+On master:
+
+\begin{verbatim}
+sudo rm -f /tmp/munge.key
+\end{verbatim}
+\subsection{Install Munge Key on Client Nodes}
+\label{sec:orgc6b9067}
+
+Perform on:
+
+\begin{itemize}
+\item login
+\item compute01
+\item compute02
+\item compute03
+\end{itemize}
+\subsection{Stop Munge Service}
+\label{sec:orgb0ae5ea}
+
+\begin{verbatim}
+sudo systemctl stop munge
+\end{verbatim}
+\subsection{Install Key}
+\label{sec:org4ba6b82}
+
+\begin{verbatim}
+sudo mv /tmp/munge.key /etc/munge/
+\end{verbatim}
+\subsection{Fix Ownership}
+\label{sec:org447069d}
+
+\begin{verbatim}
+sudo chown munge:munge /etc/munge/munge.key
+\end{verbatim}
+\subsection{Fix Permissions}
+\label{sec:orgb61d6e9}
+
+\begin{verbatim}
+sudo chmod 400 /etc/munge/munge.key
+\end{verbatim}
+\subsection{Start Munge}
+\label{sec:org81ba86c}
+
+On ALL nodes:
+
+\begin{verbatim}
+sudo systemctl enable --now munge
+\end{verbatim}
+\subsection{IMPORTANT Issue Encountered — Munge Not Running on Master}
+\label{sec:org7c800d1}
+
+Problem:
+
+\begin{verbatim}
+munge: Error: Failed to access "/var/run/munge/munge.socket.2"
+\end{verbatim}
+
+Reason:
+
+Munge service never started on master.
+
+Resolution:
+
+\begin{verbatim}
+sudo systemctl enable --now munge
+\end{verbatim}
+
+Important lesson:
+
+Difference between:
+
+\begin{center}
+\begin{tabular}{ll}
+State & Meaning\\
+\hline
+inactive & service not started\\
+failed & service crashed\\
+\end{tabular}
+\end{center}
+\subsection{Verify Munge Service}
+\label{sec:org528e7f6}
+
+\begin{verbatim}
+systemctl status munge
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+active (running)
+\end{verbatim}
+\subsection{Verify Munge Authentication}
+\label{sec:org8cdc41c}
+
+From master:
+
+\begin{verbatim}
+munge -n | ssh compute01 unmunge
+\end{verbatim}
+\subsection{Test Compute02}
+\label{sec:orgd031d27}
+
+\begin{verbatim}
+munge -n | ssh compute02 unmunge
+\end{verbatim}
+\subsection{Test Compute03}
+\label{sec:orgfcee8c3}
+
+\begin{verbatim}
+munge -n | ssh compute03 unmunge
+\end{verbatim}
+\subsection{Test Login Node}
+\label{sec:orge1c3715}
+
+\begin{verbatim}
+munge -n | ssh login unmunge
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+STATUS: Success
+\end{verbatim}
+\subsection{HPC Concepts Learned}
+\label{sec:orgfc5d6cd}
+
+Munge introduced:
+
+\begin{itemize}
+\item cluster-wide authentication
+\item distributed trust model
+\item shared secret authentication
+\item daemon security
+\item inter-node trust validation
+\end{itemize}
+\subsection{Configure Slurm Scheduler}
+\label{sec:orgb67cede}
+
+Purpose:
+
+Enable centralized resource scheduling.
+
+IMPORTANT:
+
+\begin{verbatim}
+/etc/slurm/slurm.conf
+\end{verbatim}
+
+must be IDENTICAL on ALL nodes.
+\subsection{IMPORTANT Issue Encountered — Default localhost Configuration}
+\label{sec:org2d6853f}
+
+Problem:
+
+\begin{verbatim}
+sinfo
+-> localhost
+\end{verbatim}
+
+Reason:
+
+Default example slurm.conf remained active.
+
+Resolution:
+
+Replace configuration with custom cluster topology.
+
+Important HPC lesson:
+
+Incorrect topology configuration is one of the most common Slurm admin problems.
+\subsection{Create Slurm Configuration}
+\label{sec:orgb647972}
+
+On master:
+
+\begin{verbatim}
+sudo vim /etc/slurm/slurm.conf
+\end{verbatim}
+
+Replace ENTIRE file with:
+
+\begin{verbatim}
+ClusterName=hpccluster
+SlurmctldHost=master
+
+MpiDefault=none
+ProctrackType=proctrack/cgroup
+ReturnToService=2
+
+SlurmctldPidFile=/run/slurmctld.pid
+SlurmdPidFile=/run/slurmd.pid
+
+SlurmdSpoolDir=/var/spool/slurmd
+StateSaveLocation=/var/spool/slurmctld
+
+SlurmUser=slurm
+
+SwitchType=switch/none
+TaskPlugin=task/affinity
+
+SchedulerType=sched/backfill
+
+SelectType=select/cons_tres
+SelectTypeParameters=CR_Core
+
+AuthType=auth/munge
+
+NodeName=compute01 CPUs=2 State=UNKNOWN
+NodeName=compute02 CPUs=2 State=UNKNOWN
+NodeName=compute03 CPUs=2 State=UNKNOWN
+
+PartitionName=debug Nodes=ALL Default=YES MaxTime=INFINITE State=UP
+\end{verbatim}
+\subsection{Configuration Explanation}
+\label{sec:org4165d99}
+
+\begin{center}
+\begin{tabular}{ll}
+Parameter & Purpose\\
+\hline
+ClusterName & cluster identifier\\
+SlurmctldHost & controller node\\
+NodeName & compute nodes\\
+CPUs=2 & available CPUs\\
+PartitionName & scheduler queue\\
+\end{tabular}
+\end{center}
+\subsection{Create Slurm Runtime Directories}
+\label{sec:orge52ab2c}
+
+\begin{enumerate}
+\item On Master
+\label{sec:org19d0202}
+
+\begin{verbatim}
+sudo mkdir -p /var/spool/slurmctld
+\end{verbatim}
+
+\begin{verbatim}
+sudo mkdir -p /var/spool/slurmd
+\end{verbatim}
+\end{enumerate}
+\subsection{Set Ownership}
+\label{sec:orgcb482c1}
+
+\begin{verbatim}
+sudo chown slurm:slurm /var/spool/slurmctld
+\end{verbatim}
+
+\begin{verbatim}
+sudo chown slurm:slurm /var/spool/slurmd
+\end{verbatim}
+\subsection{Create slurmd Directories on Compute Nodes}
+\label{sec:org0325b8c}
+
+\begin{enumerate}
+\item Compute01
+\label{sec:org2caba06}
+
+\begin{verbatim}
+ssh compute01 sudo -S mkdir -p /var/spool/slurmd
+\end{verbatim}
+\item Compute02
+\label{sec:org5b5c410}
+
+\begin{verbatim}
+ssh compute02 sudo -S mkdir -p /var/spool/slurmd
+\end{verbatim}
+\item Compute03
+\label{sec:org2536bf1}
+
+\begin{verbatim}
+ssh compute03 sudo -S mkdir -p /var/spool/slurmd
+\end{verbatim}
+\end{enumerate}
+\subsection{IMPORTANT sudo Over SSH Issue}
+\label{sec:orgf7805c5}
+
+Problem:
+
+\begin{verbatim}
+sudo: a terminal is required to read the password
+\end{verbatim}
+
+Resolution:
+
+Use:
+
+\begin{verbatim}
+sudo -S
+\end{verbatim}
+
+Important Linux administration concept:
+
+sudo over non-interactive SSH requires stdin password handling.
+\subsection{Fix Ownership on Compute Nodes}
+\label{sec:orgc00386f}
+
+\begin{enumerate}
+\item Compute01
+\label{sec:orgab6cde6}
+
+\begin{verbatim}
+ssh compute01 sudo -S chown slurm:slurm /var/spool/slurmd
+\end{verbatim}
+\item Compute02
+\label{sec:orgdc5e275}
+
+\begin{verbatim}
+ssh compute02 sudo -S chown slurm:slurm /var/spool/slurmd
+\end{verbatim}
+\item Compute03
+\label{sec:org651e8ae}
+
+\begin{verbatim}
+ssh compute03 sudo -S chown slurm:slurm /var/spool/slurmd
+\end{verbatim}
+\end{enumerate}
+\subsection{Verify Runtime Directories}
+\label{sec:org4fed379}
+
+\begin{verbatim}
+ls -ld /var/spool/slurmctld
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+slurm slurm
+\end{verbatim}
+\subsection{Distribute slurm.conf}
+\label{sec:org4a49c60}
+
+\begin{enumerate}
+\item Login
+\label{sec:org7aeed73}
+
+\begin{verbatim}
+scp /etc/slurm/slurm.conf login:/tmp/
+\end{verbatim}
+\item Compute01
+\label{sec:org7159268}
+
+\begin{verbatim}
+scp /etc/slurm/slurm.conf compute01:/tmp/
+\end{verbatim}
+\item Compute02
+\label{sec:org5148064}
+
+\begin{verbatim}
+scp /etc/slurm/slurm.conf compute02:/tmp/
+\end{verbatim}
+\item Compute03
+\label{sec:org6bc358d}
+
+\begin{verbatim}
+scp /etc/slurm/slurm.conf compute03:/tmp/
+\end{verbatim}
+\end{enumerate}
+\subsection{Install Configuration on Nodes}
+\label{sec:org051a423}
+
+On ALL nodes:
+
+\begin{verbatim}
+sudo mv /tmp/slurm.conf /etc/slurm/slurm.conf
+\end{verbatim}
+\subsection{Start Slurm Controller}
+\label{sec:org18646b6}
+
+ONLY on master:
+
+\begin{verbatim}
+sudo systemctl enable --now slurmctld
+\end{verbatim}
+\subsection{Verify Controller}
+\label{sec:org588eba4}
+
+\begin{verbatim}
+systemctl status slurmctld
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+active (running)
+\end{verbatim}
+\subsection{Start slurmd on Compute Nodes}
+\label{sec:orgc92d69c}
+
+On:
+\begin{itemize}
+\item compute01
+\item compute02
+\item compute03
+\end{itemize}
+
+\begin{verbatim}
+sudo systemctl enable --now slurmd
+\end{verbatim}
+\subsection{Verify slurmd}
+\label{sec:orgdf94d23}
+
+\begin{verbatim}
+systemctl status slurmd
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+active (running)
+\end{verbatim}
+\subsection{Reconfigure Slurm}
+\label{sec:org82db8cf}
+
+On master:
+
+\begin{verbatim}
+sudo scontrol reconfigure
+\end{verbatim}
+\subsection{IMPORTANT Issue Encountered — Nodes in DRAIN State}
+\label{sec:orge441eee}
+
+Problem:
+
+Nodes entered:
+
+\begin{verbatim}
+DRAIN
+\end{verbatim}
+
+after CPU topology changes.
+
+Reason:
+
+Slurm detected mismatch between:
+\begin{itemize}
+\item configured CPUs
+\item detected hardware topology
+\end{itemize}
+
+Resolution:
+
+Clear stale slurmd state.
+\subsection{Stop slurmd}
+\label{sec:org6c3e620}
+
+On compute nodes:
+
+\begin{verbatim}
+sudo systemctl stop slurmd
+\end{verbatim}
+\subsection{Remove Old State}
+\label{sec:orgb2726e3}
+
+\begin{verbatim}
+sudo rm -rf /var/spool/slurmd/*
+\end{verbatim}
+\subsection{Restart slurmd}
+\label{sec:org9878a2c}
+
+\begin{verbatim}
+sudo systemctl start slurmd
+\end{verbatim}
+\subsection{Resume Nodes}
+\label{sec:org494f9e9}
+
+On master:
+
+\begin{verbatim}
+sudo scontrol update NodeName=compute01 State=RESUME
+\end{verbatim}
+
+\begin{verbatim}
+sudo scontrol update NodeName=compute02 State=RESUME
+\end{verbatim}
+
+\begin{verbatim}
+sudo scontrol update NodeName=compute03 State=RESUME
+\end{verbatim}
+\subsection{Verify Cluster Status}
+\label{sec:orgaac5080}
+
+\begin{verbatim}
+sinfo
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+PARTITION AVAIL TIMELIMIT NODES STATE NODELIST
+debug* up infinite 3 idle compute[01-03]
+\end{verbatim}
+\subsection{Verify Node Details}
+\label{sec:org14d73d2}
+
+\begin{verbatim}
+scontrol show nodes
+\end{verbatim}
+
+This displays:
+
+\begin{itemize}
+\item CPU information
+\item memory
+\item node states
+\item scheduler topology
+\item resource allocation
+\end{itemize}
+\subsection{Test Slurm Execution}
+\label{sec:orga8a9abd}
+
+\begin{enumerate}
+\item Single Node Test
+\label{sec:org01bd216}
+
+From login node:
+
+\begin{verbatim}
+srun hostname
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+compute01.local
+\end{verbatim}
+\end{enumerate}
+\subsection{Multi-node Execution}
+\label{sec:org31f988a}
+
+\begin{verbatim}
+srun -N 3 hostname
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+compute01.local
+compute02.local
+compute03.local
+\end{verbatim}
+\subsection{Multi-task Multi-node Execution}
+\label{sec:orgf07ad5c}
+
+\begin{verbatim}
+srun -N 3 -n 6 hostname
+\end{verbatim}
+
+This verifies:
+
+\begin{itemize}
+\item task distribution
+\item multi-node scheduling
+\item CPU allocation
+\end{itemize}
+\subsection{Multi-core Single-node Execution}
+\label{sec:orgf9eba50}
+
+\begin{verbatim}
+srun -N 1 -n 2 hostname
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+compute01.local
+compute01.local
+\end{verbatim}
+\subsection{IMPORTANT Slurm Scheduling Concept}
+\label{sec:org25479f5}
+
+Earlier:
+
+\begin{verbatim}
+srun -N 1 -n 2 hostname
+\end{verbatim}
+
+failed because nodes initially had:
+
+\begin{verbatim}
+CPUs=1
+\end{verbatim}
+
+After increasing VM CPUs and updating slurm.conf:
+
+\begin{verbatim}
+CPUs=2
+\end{verbatim}
+
+the scheduler successfully allocated 2 tasks on a single node.
+
+Important HPC lesson:
+
+Slurm strictly enforces:
+\begin{itemize}
+\item CPU limits
+\item task allocation
+\item topology constraints
+\item resource consistency
+\end{itemize}
+\section{Shared Software Filesystem (/apps)}
+\label{sec:org5f1027a}
+
+Goal:
+
+Create a dedicated shared software filesystem for:
+
+\begin{itemize}
+\item Spack
+\item compilers
+\item MPI stacks
+\item scientific applications
+\item modulefiles
+\item HPC software hierarchy
+\end{itemize}
+
+This phase transitions the cluster from:
+
+\begin{verbatim}
+basic scheduler infrastructure
+\end{verbatim}
+
+to:
+
+\begin{verbatim}
+realistic HPC software environment
+\end{verbatim}
+\subsection{Why Separate /apps Filesystem?}
+\label{sec:orge9f135c}
+
+Initially:
+
+\begin{itemize}
+\item each VM had a 30 GB local disk
+\item /home was exported from master over NFS
+\end{itemize}
+
+Concern encountered:
+
+\begin{verbatim}
+Shared /home only had ~30 GB available.
+Spack and HPC software stacks can become very large.
+\end{verbatim}
+
+Important HPC storage concept:
+
+Real HPC clusters usually separate:
+
+\begin{center}
+\begin{tabular}{ll}
+Filesystem & Purpose\\
+\hline
+/home & user files\\
+/apps & software stack\\
+/scratch & temporary runtime data\\
+/archive & long-term storage\\
+\end{tabular}
+\end{center}
+
+Therefore a dedicated:
+
+\begin{verbatim}
+/apps
+\end{verbatim}
+
+filesystem was created.
+
+This is significantly closer to real HPC architecture.
+\subsection{IMPORTANT Storage Architecture Concept}
+\label{sec:orgc4b696d}
+
+Each VM still has its own independent local storage.
+
+Example:
+
+\begin{center}
+\begin{tabular}{ll}
+Node & Local Disk\\
+\hline
+master & 30 GB\\
+login & 30 GB\\
+compute01 & 30 GB\\
+compute02 & 30 GB\\
+compute03 & 30 GB\\
+\end{tabular}
+\end{center}
+
+When:
+
+\begin{verbatim}
+master:/home
+\end{verbatim}
+
+was mounted via NFS:
+
+\begin{itemize}
+\item compute node local /home became hidden
+\item but local disks still exist
+\end{itemize}
+
+Only the exported filesystem becomes shared.
+
+Therefore:
+
+\begin{verbatim}
+/apps
+\end{verbatim}
+
+was created as a dedicated shared software layer.
+\subsection{Add New Virtual Disk to Master}
+\label{sec:org9c12309}
+
+A second virtual disk was attached ONLY to:
+
+\begin{verbatim}
+master
+\end{verbatim}
+
+Purpose:
+
+\begin{itemize}
+\item centralized software storage
+\item shared application filesystem
+\item Spack software stack
+\end{itemize}
+
+Disk size selected:
+
+\begin{verbatim}
+60 GB
+\end{verbatim}
+
+Disk type:
+
+\begin{verbatim}
+VDI (Dynamically Allocated)
+\end{verbatim}
+\subsection{Verify New Disk Detection}
+\label{sec:org0ea11f7}
+
+After booting master:
+
+\begin{verbatim}
+lsblk
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+sda    30G
+sdb    60G
+\end{verbatim}
+
+Important:
+
+\begin{center}
+\begin{tabular}{ll}
+Device & Purpose\\
+\hline
+sda & OS disk\\
+sdb & New apps disk\\
+\end{tabular}
+\end{center}
+
+Only:
+
+\begin{verbatim}
+sdb
+\end{verbatim}
+
+was modified.
+\subsection{Create GPT Partition Table}
+\label{sec:org4c97474}
+
+\begin{verbatim}
+sudo fdisk /dev/sdb
+\end{verbatim}
+
+Inside fdisk:
+
+Create GPT label:
+
+\begin{verbatim}
+g
+\end{verbatim}
+
+Create partition:
+
+\begin{verbatim}
+n
+\end{verbatim}
+
+Accept defaults.
+
+Write changes:
+
+\begin{verbatim}
+w
+\end{verbatim}
+\subsection{Verify Partition}
+\label{sec:orgb580530}
+
+\begin{verbatim}
+lsblk
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+sdb
+└── sdb1
+\end{verbatim}
+\subsection{Create XFS Filesystem}
+\label{sec:org6c739eb}
+
+\begin{verbatim}
+sudo mkfs.xfs /dev/sdb1
+\end{verbatim}
+
+Why XFS?
+
+\begin{itemize}
+\item default enterprise filesystem
+\item highly scalable
+\item excellent for large filesystems
+\item commonly used in HPC
+\end{itemize}
+\subsection{Create Mount Point}
+\label{sec:orgfc66da2}
+
+\begin{verbatim}
+sudo mkdir -p /apps
+\end{verbatim}
+\subsection{Get Filesystem UUID}
+\label{sec:org5246634}
+
+\begin{verbatim}
+sudo blkid /dev/sdb1
+\end{verbatim}
+
+Example:
+
+\begin{verbatim}
+UUID="xxxxxxxx-xxxx-xxxx"
+\end{verbatim}
+\subsection{Configure Persistent Mount}
+\label{sec:org2b77b93}
+
+Edit:
+
+\begin{verbatim}
+sudo vim /etc/fstab
+\end{verbatim}
+
+Add:
+
+\begin{verbatim}
+UUID=YOUR_UUID_HERE   /apps   xfs   defaults   0 0
+\end{verbatim}
+
+Important Linux administration concept:
+
+UUIDs are preferred over:
+
+\begin{verbatim}
+/dev/sdb1
+\end{verbatim}
+
+because device names can change after reboot.
+\subsection{Mount Filesystem}
+\label{sec:orgdd5f51e}
+
+\begin{verbatim}
+sudo mount -a
+\end{verbatim}
+\subsection{Verify Mount}
+\label{sec:org019db74}
+
+\begin{verbatim}
+df -h
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+/apps
+\end{verbatim}
+
+mounted with approximately:
+
+\begin{verbatim}
+60 GB
+\end{verbatim}
+\subsection{Configure Ownership}
+\label{sec:org7799bed}
+
+\begin{verbatim}
+sudo chown hpcadmin:hpcadmin /apps
+\end{verbatim}
+\subsection{Create Shared HPC Software Hierarchy}
+\label{sec:orgd524dce}
+
+\begin{verbatim}
+mkdir -p /apps/{spack,modulefiles,software,sources}
+\end{verbatim}
+
+Resulting structure:
+
+\begin{verbatim}
+/apps
+├── spack
+├── modulefiles
+├── software
+└── sources
+\end{verbatim}
+\subsection{HPC Software Hierarchy Concept}
+\label{sec:org577b298}
+
+Purpose of directories:
+
+\begin{center}
+\begin{tabular}{ll}
+Directory & Purpose\\
+\hline
+spack & Spack package manager\\
+modulefiles & custom modulefiles\\
+software & installed software\\
+sources & downloaded sources\\
+\end{tabular}
+\end{center}
+
+This is similar to production HPC software layouts.
+\subsection{Export /apps via NFS}
+\label{sec:org528752a}
+
+Edit exports file:
+
+\begin{verbatim}
+sudo vim /etc/exports
+\end{verbatim}
+
+Add:
+
+\begin{verbatim}
+/apps 10.10.10.0/24(rw,sync,no_root_squash)
+\end{verbatim}
+\subsection{Apply NFS Exports}
+\label{sec:orgd9b9b02}
+
+\begin{verbatim}
+sudo exportfs -rav
+\end{verbatim}
+\subsection{Verify Exports}
+\label{sec:org0d4fa63}
+
+\begin{verbatim}
+showmount -e localhost
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+/apps
+/home
+\end{verbatim}
+\subsection{Create Mount Points on Client Nodes}
+\label{sec:org5a5bbd1}
+
+On:
+\begin{itemize}
+\item login
+\item compute01
+\item compute02
+\item compute03
+\end{itemize}
+
+Create:
+
+\begin{verbatim}
+sudo mkdir -p /apps
+\end{verbatim}
+\subsection{Configure Persistent NFS Mounts}
+\label{sec:org0621e70}
+
+Edit:
+
+\begin{verbatim}
+sudo vim /etc/fstab
+\end{verbatim}
+
+Add:
+
+\begin{verbatim}
+master:/apps   /apps   nfs   defaults,_netdev   0 0
+\end{verbatim}
+\subsection{Mount Shared /apps Filesystem}
+\label{sec:org97ef1bc}
+
+\begin{verbatim}
+sudo mount -a
+\end{verbatim}
+\subsection{Verify Shared Mount}
+\label{sec:org0fd0b30}
+
+\begin{verbatim}
+df -h
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+master:/apps
+\end{verbatim}
+
+mounted on all nodes.
+\subsection{Verify Shared Filesystem Functionality}
+\label{sec:orgbee6c90}
+
+On master:
+
+\begin{verbatim}
+touch /apps/testfile
+\end{verbatim}
+
+On compute node:
+
+\begin{verbatim}
+ls /apps
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+testfile
+\end{verbatim}
+
+This verifies:
+
+\begin{itemize}
+\item shared software filesystem
+\item NFS functionality
+\item cluster-wide software visibility
+\end{itemize}
+\subsection{HPC Architecture After /apps Setup}
+\label{sec:org4dff1b8}
+
+Current cluster storage architecture:
+
+\begin{center}
+\begin{tabular}{ll}
+Filesystem & Purpose\\
+\hline
+/home & user files\\
+/apps & software stack\\
+local disks & local runtime storage\\
+\end{tabular}
+\end{center}
+
+This resembles real HPC environments significantly more closely.
+\section{Spack Software Stack + MPI Runtime Validation}
+\label{sec:orga3c9d0c}
+
+Goal:
+
+Create centralized HPC software stack using:
+
+\begin{itemize}
+\item Spack
+\item shared software filesystem
+\item shared compilers
+\item shared MPI stack
+\item scheduler-aware runtime execution
+\end{itemize}
+
+This phase validates:
+
+\begin{itemize}
+\item software distribution
+\item multinode execution
+\item Slurm integration
+\item MPI runtime functionality
+\end{itemize}
+
+After completing this section you will be able to:
+
+\begin{itemize}
+\item install HPC software using Spack
+\item manage multiple compiler versions
+\item manage multiple MPI versions
+\item load software dynamically
+\item compile MPI applications
+\item execute distributed jobs using Slurm
+\item monitor and debug jobs
+\item understand performance metrics
+\end{itemize}
+\subsection{IMPORTANT HPC Software Stack Concept}
+\label{sec:orgb188672}
+
+Instead of:
+
+\begin{verbatim}
+dnf install openmpi
+\end{verbatim}
+
+a centralized HPC software stack was created.
+
+Benefits:
+
+\begin{itemize}
+\item software installed once
+\item accessible cluster-wide
+\item compiler hierarchy support
+\item reproducible builds
+\item module-based software environments
+\item centralized software management
+\end{itemize}
+
+This approach is significantly closer to real HPC centers.
+
+In production HPC environments:
+
+\begin{itemize}
+\item operating system packages are separated
+\item scientific software stack is separated
+\item compiler stacks are separated
+\item MPI stacks are separated
+\end{itemize}
+
+This separation improves:
+
+\begin{itemize}
+\item portability
+\item reproducibility
+\item scalability
+\item maintenance
+\end{itemize}
+\subsection{IMPORTANT Shared Filesystem Concept}
+\label{sec:org98ccc7c}
+
+The cluster uses:
+
+\begin{verbatim}
+/apps
+\end{verbatim}
+
+as shared application storage.
+
+Because:
+
+\begin{verbatim}
+/apps
+\end{verbatim}
+
+is mounted cluster-wide through NFS:
+
+\begin{itemize}
+\item software installed once becomes visible everywhere
+\item compute nodes automatically access installed software
+\item users share common software stack
+\item recompilation is unnecessary on compute nodes
+\end{itemize}
+
+This is one of the MOST important HPC architecture concepts.
+\subsection{Install Development Tools}
+\label{sec:orga92bf03}
+
+Installed manually on ALL nodes:
+
+\begin{verbatim}
+sudo dnf groupinstall -y "Development Tools"
+\end{verbatim}
+
+Purpose:
+
+Provides:
+
+\begin{itemize}
+\item gcc
+\item g++
+\item gfortran
+\item make
+\item linker tools
+\item build utilities
+\item development environment
+\end{itemize}
+
+Important note:
+
+\begin{verbatim}
+System compilers are still required even when using Spack.
+\end{verbatim}
+
+Reason:
+
+Spack builds software from source code and therefore still requires:
+
+\begin{itemize}
+\item assembler
+\item linker
+\item basic compiler toolchain
+\end{itemize}
+\subsection{Move into Shared Application Filesystem}
+\label{sec:org9ac63fe}
+
+Run on:
+
+\begin{verbatim}
+master
+\end{verbatim}
+
+Move into shared applications directory:
+
+\begin{verbatim}
+cd /apps
+\end{verbatim}
+
+Verify:
+
+\begin{verbatim}
+pwd
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+/apps
+\end{verbatim}
+\subsection{Clone Spack into Shared Filesystem}
+\label{sec:orgf8ac36b}
+
+Clone Spack:
+
+\begin{verbatim}
+git clone https://github.com/spack/spack.git
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+/apps/spack
+\end{verbatim}
+
+This creates centralized package manager installation.
+\subsection{Enter Spack Directory}
+\label{sec:org4536507}
+
+\begin{verbatim}
+cd spack
+\end{verbatim}
+
+Verify:
+
+\begin{verbatim}
+pwd
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+/apps/spack
+\end{verbatim}
+\subsection{Initialize Spack Environment}
+\label{sec:org7fa54d6}
+
+Initialize Spack:
+
+\begin{verbatim}
+source share/spack/setup-env.sh
+\end{verbatim}
+
+Purpose:
+
+Adds:
+
+\begin{itemize}
+\item spack command
+\item shell integration
+\item environment variables
+\item package management environment
+\end{itemize}
+
+to current shell session.
+
+Without initialization:
+
+\begin{itemize}
+\item spack command will not work
+\item spack load will fail
+\item software environments will not activate
+\end{itemize}
+\subsection{IMPORTANT Shell Environment Concept}
+\label{sec:org6729458}
+
+\begin{verbatim}
+source
+\end{verbatim}
+
+does NOT execute script normally.
+
+Instead:
+
+\begin{verbatim}
+it modifies current shell environment
+\end{verbatim}
+
+This is extremely important in:
+
+\begin{itemize}
+\item Spack
+\item modules
+\item MPI environments
+\item compiler environments
+\end{itemize}
+\subsection{Make Spack Permanent}
+\label{sec:orga03f40d}
+
+To avoid sourcing manually every session:
+
+Edit:
+
+\begin{verbatim}
+vim ~/.bashrc
+\end{verbatim}
+
+Add:
+
+\begin{verbatim}
+source /apps/spack/share/spack/setup-env.sh
+\end{verbatim}
+
+Reload shell:
+
+\begin{verbatim}
+source ~/.bashrc
+\end{verbatim}
+
+Verify:
+
+\begin{verbatim}
+spack --version
+\end{verbatim}
+
+Expected:
+\begin{itemize}
+\item Spack version information
+\end{itemize}
+\subsection{Clone Additional Spack Repository}
+\label{sec:orge171b06}
+
+Clone repository:
+
+\begin{verbatim}
+git clone https://github.com/spack/spack-packages.git
+\end{verbatim}
+
+Purpose:
+
+Adds additional package definitions.
+\subsection{Configure Spack Repository}
+\label{sec:orgc8c9576}
+
+\begin{verbatim}
+spack repo set --destination "$(pwd)/spack-packages" builtin
+\end{verbatim}
+
+Purpose:
+
+Configure additional repository support.
+
+This allows:
+
+\begin{itemize}
+\item package metadata
+\item package recipes
+\item software definitions
+\end{itemize}
+
+to become visible to Spack.
+\subsection{Verify Spack Functionality}
+\label{sec:org4f73ba7}
+
+\begin{verbatim}
+spack info gcc
+\end{verbatim}
+
+Expected:
+
+Detailed GCC package information.
+
+This verifies:
+
+\begin{itemize}
+\item Spack environment working
+\item package repository functional
+\item package metadata accessible
+\end{itemize}
+\subsection{IMPORTANT HPC Software Stack Concept}
+\label{sec:orga78c1c4}
+
+Spack operates as:
+
+\begin{verbatim}
+source-based HPC package manager
+\end{verbatim}
+
+Unlike:
+
+\begin{center}
+\begin{tabular}{ll}
+Package Manager & Purpose\\
+\hline
+dnf & operating system\\
+Spack & HPC software ecosystem\\
+\end{tabular}
+\end{center}
+
+Production HPC systems commonly separate:
+
+\begin{itemize}
+\item OS packages
+\item scientific software stacks
+\end{itemize}
+
+exactly like this setup.
+\subsection{IMPORTANT Spack Build Concept}
+\label{sec:org3015f58}
+
+When installing software using Spack:
+
+\begin{verbatim}
+software is compiled from source
+\end{verbatim}
+
+Advantages:
+
+\begin{itemize}
+\item architecture optimization
+\item compiler flexibility
+\item dependency control
+\item reproducibility
+\item variant support
+\end{itemize}
+
+Disadvantages:
+
+\begin{itemize}
+\item longer installation time
+\end{itemize}
+\subsection{Detect Available Compilers}
+\label{sec:org80d5456}
+
+Before installing software:
+
+\begin{verbatim}
+spack compiler find
+\end{verbatim}
+
+Purpose:
+
+Detect system compilers available for building software.
+
+Verify detected compilers:
+
+\begin{verbatim}
+spack compilers
+\end{verbatim}
+
+Expected:
+\begin{itemize}
+\item compiler list
+\end{itemize}
+\subsection{Install GCC Using Spack}
+\label{sec:org6607a6a}
+
+Install GCC version:
+
+\begin{verbatim}
+spack install gcc@13.4.0
+\end{verbatim}
+
+Purpose:
+
+Create dedicated HPC compiler stack.
+
+This may take considerable time because:
+
+\begin{itemize}
+\item GCC itself is compiled from source
+\item dependencies are built
+\item optimization occurs
+\end{itemize}
+\subsection{IMPORTANT Multiple Compiler Version Concept}
+\label{sec:org8315cab}
+
+Production HPC systems frequently maintain multiple compiler versions simultaneously.
+
+Example:
+
+\begin{verbatim}
+gcc@11
+gcc@12
+gcc@13
+intel
+nvhpc
+clang
+\end{verbatim}
+
+Reasons:
+
+\begin{itemize}
+\item application compatibility
+\item compiler ABI differences
+\item reproducibility
+\item benchmark consistency
+\end{itemize}
+\subsection{Verify Installed Software}
+\label{sec:org6f23dae}
+
+List installed packages:
+
+\begin{verbatim}
+spack find
+\end{verbatim}
+
+Expected example:
+
+\begin{verbatim}
+==> 1 installed package
+gcc@13.4.0
+\end{verbatim}
+\subsection{Load Installed GCC Compiler}
+\label{sec:org25139a6}
+
+\begin{verbatim}
+spack load gcc@13.4.0
+\end{verbatim}
+
+Purpose:
+
+Activate compiler environment.
+
+Verify compiler path:
+
+\begin{verbatim}
+which gcc
+\end{verbatim}
+
+Expected:
+\begin{itemize}
+\item Spack GCC path
+\end{itemize}
+
+Verify version:
+
+\begin{verbatim}
+gcc --version
+\end{verbatim}
+
+Expected:
+\begin{itemize}
+\item GCC 13.4.0
+\end{itemize}
+\subsection{IMPORTANT Runtime Environment Concept}
+\label{sec:orgaaa3465}
+
+When software is loaded:
+
+\begin{itemize}
+\item PATH changes
+\item LD\_LIBRARY\_PATH changes
+\item MANPATH changes
+\end{itemize}
+
+This allows applications to locate:
+
+\begin{itemize}
+\item executables
+\item shared libraries
+\item runtime dependencies
+\end{itemize}
+
+automatically.
+\subsection{Register Newly Installed Compiler}
+\label{sec:orgadc08cf}
+
+After installing GCC:
+
+\begin{verbatim}
+spack compiler find
+\end{verbatim}
+
+Purpose:
+
+Allow Spack to use newly installed GCC for future package builds.
+
+Verify:
+
+\begin{verbatim}
+spack compilers
+\end{verbatim}
+
+Expected:
+\begin{itemize}
+\item new GCC compiler entry
+\end{itemize}
+\subsection{Install OpenMPI Using Spack}
+\label{sec:orga5ccdf2}
+
+Install MPI runtime:
+
+\begin{verbatim}
+spack install openmpi
+\end{verbatim}
+
+Purpose:
+
+Create shared MPI runtime stack.
+
+This installation includes:
+
+\begin{itemize}
+\item MPI runtime
+\item MPI compiler wrappers
+\item MPI libraries
+\item distributed runtime environment
+\end{itemize}
+\subsection{IMPORTANT MPI Compiler Dependency Concept}
+\label{sec:org67c92e9}
+
+MPI stacks are tightly coupled with compiler toolchains.
+
+Example:
+
+\begin{verbatim}
+openmpi built using gcc@13
+\end{verbatim}
+
+This is important because:
+
+\begin{itemize}
+\item ABI compatibility matters
+\item runtime compatibility matters
+\item mixed compiler environments may fail
+\end{itemize}
+\subsection{Verify Installed Software Tree}
+\label{sec:org33ce999}
+
+Show dependency tree:
+
+\begin{verbatim}
+spack find -d
+\end{verbatim}
+
+Purpose:
+
+Displays:
+
+\begin{itemize}
+\item dependency hierarchy
+\item compiler hierarchy
+\item runtime dependencies
+\end{itemize}
+
+Example:
+
+\begin{verbatim}
+openmpi
+   ^gcc@13.4.0
+\end{verbatim}
+\subsection{IMPORTANT Spack Spec Concept}
+\label{sec:orge9c6870}
+
+Every Spack installation contains:
+
+\begin{itemize}
+\item package version
+\item compiler information
+\item dependency tree
+\item unique installation hash
+\end{itemize}
+
+Example:
+
+\begin{verbatim}
+openmpi@5.0.7%gcc@13.4.0
+\end{verbatim}
+
+Meaning:
+
+\begin{center}
+\begin{tabular}{ll}
+Component & Meaning\\
+\hline
+openmpi & package\\
+5.0.7 & package version\\
+gcc@13.4.0 & compiler used\\
+\end{tabular}
+\end{center}
+\subsection{IMPORTANT Hash-Based Software Loading}
+\label{sec:org2b4ccb4}
+
+Sometimes multiple builds of same version exist because of:
+
+\begin{itemize}
+\item different compilers
+\item different variants
+\item different dependencies
+\end{itemize}
+
+Spack assigns:
+
+\begin{verbatim}
+unique hashes
+\end{verbatim}
+
+View hashes:
+
+\begin{verbatim}
+spack find -l
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+abc1234 gcc@13.4.0
+xyz5678 openmpi@5.0.7
+\end{verbatim}
+
+Load using hash:
+
+\begin{verbatim}
+spack load /xyz5678
+\end{verbatim}
+
+This is extremely common in production HPC systems.
+\subsection{Load OpenMPI Environment}
+\label{sec:orga70ae10}
+
+\begin{verbatim}
+spack load openmpi
+\end{verbatim}
+
+Verify:
+
+\begin{verbatim}
+which mpicc
+\end{verbatim}
+
+Expected:
+\begin{itemize}
+\item Spack OpenMPI wrapper path
+\end{itemize}
+
+Verify MPI runtime:
+
+\begin{verbatim}
+mpirun --version
+\end{verbatim}
+
+Expected:
+\begin{itemize}
+\item OpenMPI version information
+\end{itemize}
+\subsection{IMPORTANT MPI Wrapper Concept}
+\label{sec:org63ff5b4}
+
+\begin{verbatim}
+mpicc
+\end{verbatim}
+
+is NOT a compiler itself.
+
+It is a wrapper that automatically injects:
+
+\begin{itemize}
+\item MPI headers
+\item MPI libraries
+\item runtime linker flags
+\end{itemize}
+
+around GCC.
+
+This is a critical HPC build concept.
+\subsection{Verify Loaded Software}
+\label{sec:org22b35f2}
+
+Display loaded packages:
+
+\begin{verbatim}
+spack find --loaded
+\end{verbatim}
+
+Unload OpenMPI:
+
+\begin{verbatim}
+spack unload openmpi
+\end{verbatim}
+
+Unload all software:
+
+\begin{verbatim}
+spack unload --all
+\end{verbatim}
+
+Verify:
+
+\begin{verbatim}
+spack find --loaded
+\end{verbatim}
+
+Expected:
+\begin{itemize}
+\item no loaded packages
+\end{itemize}
+\subsection{Create MPI Performance Validation Program}
+\label{sec:orgf542a17}
+
+Create source file:
+
+\begin{verbatim}
+vim mpi_sum.c
+\end{verbatim}
+
+Purpose:
+
+\begin{itemize}
+\item validate MPI runtime
+\item validate multinode execution
+\item validate scheduler-aware execution
+\item compare serial vs parallel runtime
+\item demonstrate reduction operations
+\item calculate speedup
+\item calculate efficiency
+\end{itemize}
+
+Paste:
+
+\begin{verbatim}
+#include <mpi.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#define N 1000000000
+
+double serial_sum()
+{
+    double sum = 0.0;
+
+    for(long long int i = 0; i < N; i++)
+    {
+        sum += i;
+    }
+
+    return sum;
+}
+
+int main(int argc, char *argv[])
+{
+    int rank, size;
+
+    long long int start_index;
+    long long int end_index;
+    long long int chunk;
+
+    double local_sum = 0.0;
+    double global_sum = 0.0;
+
+    double serial_start;
+    double serial_end;
+
+    double parallel_start;
+    double parallel_end;
+
+    MPI_Init(&argc, &argv);
+
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+    if(rank == 0)
+    {
+        serial_start = MPI_Wtime();
+
+        double serial_result = serial_sum();
+
+        serial_end = MPI_Wtime();
+
+        printf("\n");
+        printf("========== SERIAL COMPUTATION ==========\n");
+        printf("Sum = %.0f\n", serial_result);
+        printf("Time taken = %f seconds\n",
+               serial_end - serial_start);
+    }
+
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    chunk = N / size;
+
+    start_index = rank * chunk;
+
+    if(rank == size - 1)
+        end_index = N;
+    else
+        end_index = start_index + chunk;
+
+    parallel_start = MPI_Wtime();
+
+    for(long long int i = start_index;
+        i < end_index;
+        i++)
+    {
+        local_sum += i;
+    }
+
+    MPI_Reduce(&local_sum,
+               &global_sum,
+               1,
+               MPI_DOUBLE,
+               MPI_SUM,
+               0,
+               MPI_COMM_WORLD);
+
+    parallel_end = MPI_Wtime();
+
+    if(rank == 0)
+    {
+        double parallel_time =
+            parallel_end - parallel_start;
+
+        double serial_time =
+            serial_end - serial_start;
+
+        printf("\n");
+        printf("========== PARALLEL COMPUTATION ==========\n");
+        printf("Processes used = %d\n", size);
+        printf("Sum = %.0f\n", global_sum);
+        printf("Time taken = %f seconds\n",
+               parallel_time);
+
+        printf("\n");
+        printf("========== PERFORMANCE ==========\n");
+        printf("Speedup = %f\n",
+               serial_time / parallel_time);
+
+        printf("Efficiency = %f\n",
+               (serial_time / parallel_time) / size);
+    }
+
+    MPI_Finalize();
+
+    return 0;
+}
+\end{verbatim}
+\subsection{IMPORTANT MPI Reduction Concept}
+\label{sec:org5b44906}
+
+This program uses:
+
+\begin{verbatim}
+MPI_Reduce()
+\end{verbatim}
+
+Purpose:
+
+Combine partial sums from all MPI ranks into:
+
+\begin{verbatim}
+single global result
+\end{verbatim}
+
+Flow:
+
+\begin{verbatim}
+local sums
+    ↓
+MPI_Reduce
+    ↓
+global sum
+\end{verbatim}
+
+This is one of the MOST important MPI collective communication operations.
+\subsection{IMPORTANT Parallel Execution Concept}
+\label{sec:org569f5e0}
+
+Serial execution:
+
+\begin{verbatim}
+single process computes entire workload
+\end{verbatim}
+
+Parallel execution:
+
+\begin{verbatim}
+multiple MPI ranks divide workload
+\end{verbatim}
+
+Example:
+
+\begin{center}
+\begin{tabular}{ll}
+Rank & Work\\
+\hline
+rank0 & 0 --> 25\%\\
+rank1 & 25\% --> 50\%\\
+rank2 & 50\% --> 75\%\\
+rank3 & 75\% --> 100\%\\
+\end{tabular}
+\end{center}
+
+Advantages:
+
+\begin{itemize}
+\item reduced execution time
+\item distributed workload
+\item scalable computation
+\end{itemize}
+\subsection{Load Software Before Compilation}
+\label{sec:orgf30ef25}
+
+Initialize Spack:
+
+\begin{verbatim}
+source /apps/spack/share/spack/setup-env.sh
+\end{verbatim}
+
+Load compiler:
+
+\begin{verbatim}
+spack load gcc@13.4.0
+\end{verbatim}
+
+Load MPI runtime:
+
+\begin{verbatim}
+spack load openmpi
+\end{verbatim}
+
+Verify:
+
+\begin{verbatim}
+which mpicc
+\end{verbatim}
+
+Expected:
+\begin{itemize}
+\item MPI compiler wrapper path
+\end{itemize}
+\subsection{Compile MPI Program}
+\label{sec:org91f2759}
+
+Compile:
+
+\begin{verbatim}
+mpicc mpi_sum.c -o mpi_sum
+\end{verbatim}
+
+Verify executable:
+
+\begin{verbatim}
+ls
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+mpi_sum
+\end{verbatim}
+\subsection{IMPORTANT MPI Compilation Concept}
+\label{sec:org021267d}
+
+MPI programs are compiled using:
+
+\begin{verbatim}
+mpicc
+\end{verbatim}
+
+instead of:
+
+\begin{verbatim}
+gcc
+\end{verbatim}
+
+because MPI wrapper automatically injects:
+
+\begin{itemize}
+\item MPI headers
+\item MPI libraries
+\item linker flags
+\end{itemize}
+\subsection{Interactive MPI Runtime Validation}
+\label{sec:org7fd2f03}
+
+Run interactively:
+
+\begin{verbatim}
+mpirun -np 4 ./mpi_sum
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+========== SERIAL COMPUTATION ==========
+...
+
+========== PARALLEL COMPUTATION ==========
+...
+
+========== PERFORMANCE ==========
+...
+\end{verbatim}
+
+This validates:
+
+\begin{itemize}
+\item MPI runtime
+\item MPI communication
+\item reduction operations
+\item distributed execution
+\end{itemize}
+\subsection{IMPORTANT Shared Filesystem Advantage}
+\label{sec:org0021932}
+
+Because:
+
+\begin{itemize}
+\item source code
+\item executable
+\item software stack
+\end{itemize}
+
+exist on shared filesystem:
+
+\begin{verbatim}
+/apps
+or
+/home
+\end{verbatim}
+
+compute nodes automatically access:
+
+\begin{itemize}
+\item compiled binaries
+\item runtime libraries
+\item MPI stack
+\end{itemize}
+
+without recompilation.
+
+This is one of the major HPC architecture advantages.
+\subsection{Create Slurm Batch Script}
+\label{sec:org6c739f4}
+
+Create batch script:
+
+\begin{verbatim}
+vim submit.sh
+\end{verbatim}
+
+Paste:
+
+\begin{verbatim}
+#!/bin/bash
+#SBATCH -N 3
+#SBATCH --ntasks-per-node=1
+#SBATCH --job-name=test
+#SBATCH --output=%J.out
+#SBATCH --error=%J.err
+#SBATCH --time=01:00:00
+##SBATCH --nodelist=compute03,compute01
+
+source /apps/spack/share/spack/setup-env.sh
+
+spack load openmpi
+
+mpirun -np $SLURM_NTASKS ./$1
+\end{verbatim}
+
+Make executable:
+
+\begin{verbatim}
+chmod +x submit.sh
+\end{verbatim}
+\subsection{IMPORTANT Slurm Script Explanation}
+\label{sec:org5503ffd}
+
+\begin{center}
+\begin{tabular}{ll}
+Line & Purpose\\
+\hline
+\#SBATCH -N 3 & request 3 nodes\\
+--ntasks-per-node=1 & one MPI rank per node\\
+--job-name=test & job name\\
+--output=\%J.out & stdout file\\
+--error=\%J.err & stderr file\\
+--time=01:00:00 & walltime limit\\
+\end{tabular}
+\end{center}
+\subsection{IMPORTANT Runtime Environment Section}
+\label{sec:org2fe13ff}
+
+Inside batch script:
+
+\begin{verbatim}
+source /apps/spack/share/spack/setup-env.sh
+\end{verbatim}
+
+initializes Spack environment.
+
+\begin{verbatim}
+spack load openmpi
+\end{verbatim}
+
+loads MPI runtime stack.
+
+Without these:
+
+\begin{itemize}
+\item mpirun may fail
+\item MPI libraries may not load
+\item runtime linker errors may occur
+\end{itemize}
+\subsection{IMPORTANT Slurm Runtime Variable}
+\label{sec:orgefcfe61}
+
+\begin{verbatim}
+$SLURM_NTASKS
+\end{verbatim}
+
+contains:
+
+\begin{verbatim}
+total MPI process count allocated by Slurm
+\end{verbatim}
+
+Example:
+
+\begin{center}
+\begin{tabular}{rrr}
+Nodes & Tasks per node & Total\\
+\hline
+3 & 1 & 3\\
+\end{tabular}
+\end{center}
+
+Therefore:
+
+\begin{verbatim}
+mpirun -np $SLURM_NTASKS
+\end{verbatim}
+
+automatically launches correct number of MPI ranks.
+\subsection{Submit MPI Job}
+\label{sec:org3647aa4}
+
+Submit job:
+
+\begin{verbatim}
+sbatch submit.sh mpi_sum
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+Submitted batch job 101
+\end{verbatim}
+
+This validates:
+
+\begin{itemize}
+\item Slurm scheduler
+\item distributed allocation
+\item multinode MPI execution
+\item scheduler-aware runtime launch
+\end{itemize}
+\subsection{Monitor Jobs}
+\label{sec:org362a63e}
+
+Check user jobs:
+
+\begin{verbatim}
+squeue --me
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+JOBID PARTITION NAME USER ST TIME NODES NODELIST(REASON)
+\end{verbatim}
+\subsection{IMPORTANT Job States}
+\label{sec:org05b4987}
+
+\begin{center}
+\begin{tabular}{ll}
+State & Meaning\\
+\hline
+PD & pending\\
+R & running\\
+CG & completing\\
+CD & completed\\
+F & failed\\
+\end{tabular}
+\end{center}
+\subsection{View Detailed Job Information}
+\label{sec:orgcd82fd5}
+
+Show detailed job info:
+
+\begin{verbatim}
+scontrol show job <jobid>
+\end{verbatim}
+
+Example:
+
+\begin{verbatim}
+scontrol show job 101
+\end{verbatim}
+
+Displays:
+
+\begin{itemize}
+\item allocated nodes
+\item CPUs
+\item runtime
+\item scheduling information
+\item execution directory
+\item output locations
+\end{itemize}
+\subsection{Check Cluster Status}
+\label{sec:org5178c0d}
+
+Check cluster nodes:
+
+\begin{verbatim}
+sinfo
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+debug* up infinite 3 idle compute[01-03]
+\end{verbatim}
+\subsection{IMPORTANT Node States}
+\label{sec:org063a432}
+
+\begin{center}
+\begin{tabular}{ll}
+State & Meaning\\
+\hline
+idle & available\\
+alloc & allocated\\
+mix & partially used\\
+drain & unavailable\\
+down & offline\\
+\end{tabular}
+\end{center}
+\subsection{Check Output Files}
+\label{sec:orgba09511}
+
+After completion:
+
+\begin{verbatim}
+ls
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+101.out
+101.err
+\end{verbatim}
+
+View output:
+
+\begin{verbatim}
+cat 101.out
+\end{verbatim}
+
+Expected:
+
+\begin{itemize}
+\item serial runtime
+\item parallel runtime
+\item speedup
+\item efficiency
+\end{itemize}
+\subsection{IMPORTANT HPC Performance Metrics}
+\label{sec:org48d3df9}
+
+The program calculates:
+
+\begin{center}
+\begin{tabular}{ll}
+Metric & Meaning\\
+\hline
+Speedup & serial\_time / parallel\_time\\
+Efficiency & speedup / processes\\
+\end{tabular}
+\end{center}
+
+Ideal values:
+
+\begin{center}
+\begin{tabular}{ll}
+Metric & Ideal\\
+\hline
+Speedup & near process count\\
+Efficiency & near 1.0\\
+\end{tabular}
+\end{center}
+
+Real systems experience:
+
+\begin{itemize}
+\item communication overhead
+\item synchronization cost
+\item MPI latency
+\item reduction overhead
+\end{itemize}
+\subsection{Cancel Jobs}
+\label{sec:org4b7b370}
+
+Cancel job:
+
+\begin{verbatim}
+scancel <jobid>
+\end{verbatim}
+
+Example:
+
+\begin{verbatim}
+scancel 101
+\end{verbatim}
+
+Cancel all user jobs:
+
+\begin{verbatim}
+scancel -u $USER
+\end{verbatim}
+\subsection{Interactive Slurm Execution}
+\label{sec:orgc5dc4c1}
+
+Launch interactive shell:
+
+\begin{verbatim}
+srun --pty bash
+\end{verbatim}
+
+Distributed hostname test:
+
+\begin{verbatim}
+srun -N 3 -n 3 hostname
+\end{verbatim}
+
+Expected:
+\begin{itemize}
+\item hostnames from allocated nodes
+\end{itemize}
+
+This validates:
+
+\begin{itemize}
+\item scheduler allocation
+\item distributed execution
+\item runtime communication
+\end{itemize}
+\subsection{IMPORTANT HPC Workflow}
+\label{sec:org68d4b2b}
+
+Typical HPC workflow:
+
+\begin{verbatim}
+Load software
+    ↓
+Compile application
+    ↓
+Prepare Slurm script
+    ↓
+Submit job
+    ↓
+Monitor execution
+    ↓
+Analyze outputs
+\end{verbatim}
+\subsection{IMPORTANT Production HPC Concept}
+\label{sec:orgcc075c5}
+
+Production HPC systems usually separate:
+
+\begin{itemize}
+\item operating system packages
+\item scientific software stack
+\item compiler stack
+\item MPI runtime stack
+\item scheduler integration
+\end{itemize}
+
+exactly like this setup.
+
+This architecture provides:
+
+\begin{itemize}
+\item reproducibility
+\item scalability
+\item centralized administration
+\item software consistency
+\item runtime portability
+\end{itemize}
+\section{Centralized Identity Management using OpenLDAP + nslcd}
+\label{sec:orge56bbeb}
+
+Goal:
+
+Transform the cluster from:
+
+\begin{verbatim}
+local-user-only infrastructure
+\end{verbatim}
+
+into:
+
+\begin{verbatim}
+centralized multi-user HPC environment
+\end{verbatim}
+
+using:
+
+\begin{itemize}
+\item OpenLDAP
+\item nslcd
+\item NSS
+\item PAM
+\end{itemize}
+
+This phase introduces centralized user management for the HPC cluster.
+
+After completion:
+
+\begin{itemize}
+\item users are created once centrally
+\item login node recognizes LDAP users
+\item compute nodes recognize LDAP users
+\item centralized authentication works cluster-wide
+\item automatic home directory creation works
+\item Slurm can later use centralized identities
+\end{itemize}
+\subsection{Important Architecture}
+\label{sec:org81b1e58}
+
+Cluster roles:
+
+\begin{center}
+\begin{tabular}{ll}
+Node & Role\\
+\hline
+master & LDAP server\\
+login & LDAP client\\
+compute01 & LDAP client\\
+compute02 & LDAP client\\
+compute03 & LDAP client\\
+\end{tabular}
+\end{center}
+
+Important concept:
+
+\begin{verbatim}
+Only master runs LDAP SERVER (slapd).
+
+Login and compute nodes run LDAP CLIENTS (nslcd).
+\end{verbatim}
+\subsection{Important Linux Authentication Concepts}
+\label{sec:org0241b99}
+
+Before starting, understand the layers.
+
+\begin{center}
+\begin{tabular}{ll}
+Component & Purpose\\
+\hline
+LDAP & centralized user database\\
+NSS & user/group lookup\\
+PAM & authentication\\
+nslcd & bridge between Linux and LDAP\\
+\end{tabular}
+\end{center}
+
+Authentication flow:
+
+\begin{verbatim}
+SSH Login
+   ↓
+PAM
+   ↓
+nslcd
+   ↓
+LDAP server
+\end{verbatim}
+\subsection{Install OpenLDAP Server on Master Node}
+\label{sec:org2cb2244}
+
+Run ONLY on:
+
+\begin{verbatim}
+master
+\end{verbatim}
+
+Install LDAP packages:
+
+\begin{verbatim}
+sudo dnf install -y \
+openldap \
+openldap-servers \
+openldap-clients
+\end{verbatim}
+
+Package explanation:
+
+\begin{center}
+\begin{tabular}{ll}
+Package & Purpose\\
+\hline
+openldap & LDAP utilities\\
+openldap-servers & slapd server daemon\\
+openldap-clients & ldapsearch, ldapadd etc\\
+\end{tabular}
+\end{center}
+\subsection{Enable LDAP Server}
+\label{sec:orge4e232b}
+
+Run ONLY on:
+
+\begin{verbatim}
+master
+\end{verbatim}
+
+Enable and start slapd:
+
+\begin{verbatim}
+sudo systemctl enable --now slapd
+\end{verbatim}
+
+Verify:
+
+\begin{verbatim}
+systemctl status slapd
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+active (running)
+\end{verbatim}
+\subsection{Generate LDAP Admin Password Hash}
+\label{sec:orgd4593cd}
+
+Run ONLY on:
+
+\begin{verbatim}
+master
+\end{verbatim}
+
+Generate secure LDAP admin password hash:
+
+\begin{verbatim}
+slappasswd
+\end{verbatim}
+
+Enter desired password.
+
+Example:
+
+\begin{verbatim}
+cluster123
+\end{verbatim}
+
+Example output:
+
+\begin{verbatim}
+{SSHA}xxxxxxxxxxxxxxxx
+\end{verbatim}
+
+Important:
+
+\begin{verbatim}
+Copy this hash carefully.
+\end{verbatim}
+
+It will be used in LDAP database configuration.
+\subsection{Configure LDAP Database}
+\label{sec:org6ab3be2}
+
+Run ONLY on:
+
+\begin{verbatim}
+master
+\end{verbatim}
+
+Create LDAP database configuration file:
+
+\begin{verbatim}
+vim ~/db.ldif
+\end{verbatim}
+
+Paste:
+
+\begin{verbatim}
+dn: olcDatabase={2}mdb,cn=config
+changetype: modify
+replace: olcSuffix
+olcSuffix: dc=hpc,dc=local
+
+dn: olcDatabase={2}mdb,cn=config
+changetype: modify
+replace: olcRootDN
+olcRootDN: cn=Manager,dc=hpc,dc=local
+
+dn: olcDatabase={2}mdb,cn=config
+changetype: modify
+replace: olcRootPW
+olcRootPW: PASTE_HASH_HERE
+\end{verbatim}
+
+Replace:
+
+\begin{verbatim}
+PASTE_HASH_HERE
+\end{verbatim}
+
+with the hash generated using:
+
+\begin{verbatim}
+slappasswd
+\end{verbatim}
+\subsection{Important LDAP Concepts}
+\label{sec:org9af8823}
+
+LDAP uses a hierarchical tree called:
+
+\begin{verbatim}
+DIT -- Directory Information Tree
+\end{verbatim}
+
+Example structure:
+
+\begin{verbatim}
+dc=hpc,dc=local
+ ├── ou=People
+ └── ou=Groups
+\end{verbatim}
+
+Meaning of terms:
+
+\begin{center}
+\begin{tabular}{ll}
+Term & Meaning\\
+\hline
+dc & domain component\\
+ou & organizational unit\\
+cn & common name\\
+\end{tabular}
+\end{center}
+\subsection{Apply LDAP Database Configuration}
+\label{sec:orgcffb56b}
+
+Run ONLY on:
+
+\begin{verbatim}
+master
+\end{verbatim}
+
+Apply configuration:
+
+\begin{verbatim}
+sudo ldapmodify -Y EXTERNAL -H ldapi:/// \
+-f ~/db.ldif
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+modifying entry
+\end{verbatim}
+\subsection{Import LDAP Schemas}
+\label{sec:org9eb9e19}
+
+Schemas define:
+
+\begin{itemize}
+\item user attributes
+\item group attributes
+\item UNIX account structure
+\end{itemize}
+
+Run ONLY on:
+
+\begin{verbatim}
+master
+\end{verbatim}
+
+Import cosine schema:
+
+\begin{verbatim}
+sudo ldapadd -Y EXTERNAL -H ldapi:/// \
+-f /etc/openldap/schema/cosine.ldif
+\end{verbatim}
+
+Import nis schema:
+
+\begin{verbatim}
+sudo ldapadd -Y EXTERNAL -H ldapi:/// \
+-f /etc/openldap/schema/nis.ldif
+\end{verbatim}
+
+Import inetorgperson schema:
+
+\begin{verbatim}
+sudo ldapadd -Y EXTERNAL -H ldapi:/// \
+-f /etc/openldap/schema/inetorgperson.ldif
+\end{verbatim}
+
+Schema explanation:
+
+\begin{center}
+\begin{tabular}{ll}
+Schema & Purpose\\
+\hline
+cosine & basic directory attributes\\
+nis & UNIX/Linux account support\\
+inetorgperson & user/person identity support\\
+\end{tabular}
+\end{center}
+\subsection{Create LDAP Base Tree}
+\label{sec:org4d989e5}
+
+Run ONLY on:
+
+\begin{verbatim}
+master
+\end{verbatim}
+
+Create base LDAP tree:
+
+\begin{verbatim}
+vim ~/base.ldif
+\end{verbatim}
+
+Paste:
+
+\begin{verbatim}
+dn: dc=hpc,dc=local
+objectClass: top
+objectClass: dcObject
+objectClass: organization
+o: HPC Cluster
+dc: hpc
+
+dn: ou=People,dc=hpc,dc=local
+objectClass: organizationalUnit
+ou: People
+
+dn: ou=Groups,dc=hpc,dc=local
+objectClass: organizationalUnit
+ou: Groups
+\end{verbatim}
+
+Apply tree:
+
+\begin{verbatim}
+ldapadd -x \
+-D "cn=Manager,dc=hpc,dc=local" \
+-W \
+-f ~/base.ldif
+\end{verbatim}
+
+Enter LDAP admin password.
+\subsection{Verify LDAP Tree}
+\label{sec:org1f7e80e}
+
+Run ONLY on:
+
+\begin{verbatim}
+master
+\end{verbatim}
+
+Verify tree:
+
+\begin{verbatim}
+ldapsearch -x -b "dc=hpc,dc=local"
+\end{verbatim}
+
+Expected:
+
+\begin{itemize}
+\item dc=hpc,dc=local
+\item ou=People
+\item ou=Groups
+\end{itemize}
+\subsection{Create LDAP Group}
+\label{sec:org215a3a9}
+
+Run ONLY on:
+
+\begin{verbatim}
+master
+\end{verbatim}
+
+Create group file:
+
+\begin{verbatim}
+vim ~/group.ldif
+\end{verbatim}
+
+Paste:
+
+\begin{verbatim}
+dn: cn=hpcusers,ou=Groups,dc=hpc,dc=local
+objectClass: posixGroup
+cn: hpcusers
+gidNumber: 10000
+\end{verbatim}
+
+Add group:
+
+\begin{verbatim}
+ldapadd -x \
+-D "cn=Manager,dc=hpc,dc=local" \
+-W \
+-f ~/group.ldif
+\end{verbatim}
+\subsection{Create LDAP User Password Hash}
+\label{sec:org6707c06}
+
+Run ONLY on:
+
+\begin{verbatim}
+master
+\end{verbatim}
+
+Generate password hash:
+
+\begin{verbatim}
+slappasswd
+\end{verbatim}
+
+Example password:
+
+\begin{verbatim}
+test123
+\end{verbatim}
+
+Copy generated hash carefully.
+\subsection{Create LDAP User}
+\label{sec:org9694ff9}
+
+Run ONLY on:
+
+\begin{verbatim}
+master
+\end{verbatim}
+
+Create user file:
+
+\begin{verbatim}
+vim ~/user.ldif
+\end{verbatim}
+
+Paste:
+
+\begin{verbatim}
+dn: uid=testUser,ou=People,dc=hpc,dc=local
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+cn: Test User
+sn: User
+uid: testUser
+uidNumber: 10001
+gidNumber: 10000
+homeDirectory: /home/testUser
+loginShell: /bin/bash
+userPassword: PASTE_HASH_HERE
+\end{verbatim}
+
+Replace:
+
+\begin{verbatim}
+PASTE_HASH_HERE
+\end{verbatim}
+
+with actual hash from:
+
+\begin{verbatim}
+slappasswd
+\end{verbatim}
+
+Add user:
+
+\begin{verbatim}
+ldapadd -x \
+-D "cn=Manager,dc=hpc,dc=local" \
+-W \
+-f ~/user.ldif
+\end{verbatim}
+\subsection{Important LDAP User Attributes}
+\label{sec:orgdc81aa6}
+
+\begin{center}
+\begin{tabular}{ll}
+Attribute & Purpose\\
+\hline
+uid & username\\
+uidNumber & UNIX UID\\
+gidNumber & primary group\\
+homeDirectory & user home\\
+loginShell & login shell\\
+cn & common name\\
+sn & surname\\
+\end{tabular}
+\end{center}
+\subsection{Verify LDAP User}
+\label{sec:org3e00220}
+
+Run ONLY on:
+
+\begin{verbatim}
+master
+\end{verbatim}
+
+Verify user:
+
+\begin{verbatim}
+ldapsearch -x \
+-b "dc=hpc,dc=local" uid=testUser
+\end{verbatim}
+
+Expected:
+\begin{itemize}
+\item LDAP user entry
+\end{itemize}
+\subsection{Configure LDAP Client on Login Node}
+\label{sec:orgcdc5e1e}
+
+Now begin client-side integration.
+
+Run ONLY on:
+
+\begin{verbatim}
+login
+\end{verbatim}
+
+Install LDAP client packages:
+
+\begin{verbatim}
+sudo dnf install -y \
+openldap-clients \
+nss-pam-ldapd
+\end{verbatim}
+\subsection{Configure nslcd}
+\label{sec:org0c2c191}
+
+Run ONLY on:
+
+\begin{verbatim}
+login
+\end{verbatim}
+
+Create configuration:
+
+\begin{verbatim}
+sudo vim /etc/nslcd.conf
+\end{verbatim}
+
+Paste:
+
+\begin{verbatim}
+uid nslcd
+gid ldap
+
+uri ldap://master
+base dc=hpc,dc=local
+\end{verbatim}
+
+Explanation:
+
+\begin{center}
+\begin{tabular}{ll}
+Parameter & Purpose\\
+\hline
+uri & LDAP server\\
+base & LDAP search root\\
+\end{tabular}
+\end{center}
+
+Secure configuration:
+
+\begin{verbatim}
+sudo chmod 600 /etc/nslcd.conf
+\end{verbatim}
+\subsection{Enable nslcd}
+\label{sec:org19c056d}
+
+Run ONLY on:
+
+\begin{verbatim}
+login
+\end{verbatim}
+
+Enable service:
+
+\begin{verbatim}
+sudo systemctl enable --now nslcd
+\end{verbatim}
+
+Verify:
+
+\begin{verbatim}
+systemctl status nslcd
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+active (running)
+\end{verbatim}
+\subsection{Verify LDAP Connectivity}
+\label{sec:orga3ca9e8}
+
+Run ONLY on:
+
+\begin{verbatim}
+login
+\end{verbatim}
+
+Test LDAP communication:
+
+\begin{verbatim}
+ldapsearch -x \
+-H ldap://master \
+-b "dc=hpc,dc=local" uid=testUser
+\end{verbatim}
+
+Expected:
+\begin{itemize}
+\item LDAP user entry
+\end{itemize}
+
+This verifies:
+\begin{itemize}
+\item login node can communicate with master LDAP server
+\end{itemize}
+\subsection{Configure NSS}
+\label{sec:orgc33dbcd}
+
+Run ONLY on:
+
+\begin{verbatim}
+login
+\end{verbatim}
+
+Edit:
+
+\begin{verbatim}
+sudo vim /etc/nsswitch.conf
+\end{verbatim}
+
+Modify lines:
+
+\begin{verbatim}
+passwd: files ldap
+group: files ldap
+shadow: files ldap
+\end{verbatim}
+
+Important:
+
+\begin{verbatim}
+This tells Linux:
+check local files first, then LDAP.
+\end{verbatim}
+\subsection{Restart nslcd}
+\label{sec:org3d742b6}
+
+Run ONLY on:
+
+\begin{verbatim}
+login
+\end{verbatim}
+
+Restart service:
+
+\begin{verbatim}
+sudo systemctl restart nslcd
+\end{verbatim}
+\subsection{Verify LDAP User Resolution}
+\label{sec:orgabec4ff}
+
+Run ONLY on:
+
+\begin{verbatim}
+login
+\end{verbatim}
+
+Test centralized user lookup:
+
+\begin{verbatim}
+getent passwd testUser
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+testUser:x:10001:10000:Test User:/home/testUser:/bin/bash
+\end{verbatim}
+
+Important concept:
+
+\begin{verbatim}
+This proves Linux itself recognizes LDAP users.
+\end{verbatim}
+
+This is one of the most important LDAP verification steps.
+\begin{enumerate}
+\item NOTE
+\label{sec:orgdfe8dbf}
+\begin{verbatim}
+Now we must configure: *master* with EXACT same setup (master should be able to recognise the user).
+\end{verbatim}
+\end{enumerate}
+\subsection{Install Automatic Home Directory Support}
+\label{sec:orgc636b1d}
+
+Run ONLY on:
+
+\begin{verbatim}
+login
+\end{verbatim}
+
+Install package:
+
+\begin{verbatim}
+sudo dnf install -y oddjob-mkhomedir
+\end{verbatim}
+
+Enable service:
+
+\begin{verbatim}
+sudo systemctl enable --now oddjobd
+\end{verbatim}
+
+Purpose:
+
+\begin{verbatim}
+Automatically creates user home directory
+during first successful login.
+\end{verbatim}
+\subsection{Configure PAM Authentication}
+\label{sec:org6a7efcb}
+
+Run ONLY on:
+
+\begin{verbatim}
+login
+\end{verbatim}
+
+Edit:
+
+\begin{verbatim}
+sudo vim /etc/pam.d/system-auth
+\end{verbatim}
+
+Add LDAP lines in appropriate sections.
+
+Add in auth section:
+
+\begin{verbatim}
+auth        sufficient    pam_ldap.so use_first_pass
+\end{verbatim}
+
+Add in account section:
+
+\begin{verbatim}
+account     sufficient    pam_ldap.so
+\end{verbatim}
+
+Add in password section:
+
+\begin{verbatim}
+password    sufficient    pam_ldap.so use_authtok
+\end{verbatim}
+
+Add in session section:
+
+\begin{verbatim}
+session     optional      pam_ldap.so
+session     optional      pam_mkhomedir.so
+\end{verbatim}
+
+Important:
+
+\begin{verbatim}
+Do NOT remove pam_unix.so lines.
+\end{verbatim}
+\subsection{Configure Second PAM File}
+\label{sec:org1a54250}
+
+Run ONLY on:
+
+\begin{verbatim}
+login
+\end{verbatim}
+
+Edit:
+
+\begin{verbatim}
+sudo vim /etc/pam.d/password-auth
+\end{verbatim}
+
+Add SAME LDAP PAM lines.
+
+Reason:
+
+\begin{verbatim}
+Different login methods use different PAM stacks.
+\end{verbatim}
+\subsection{Restart Services}
+\label{sec:orge30f3c3}
+
+Run ONLY on:
+
+\begin{verbatim}
+login
+\end{verbatim}
+
+Restart services:
+
+\begin{verbatim}
+sudo systemctl restart nslcd
+sudo systemctl restart oddjobd
+\end{verbatim}
+\subsection{Verify LDAP Authentication}
+\label{sec:org451ec8d}
+
+Run ONLY on:
+
+\begin{verbatim}
+login
+\end{verbatim}
+
+Test login:
+
+\begin{verbatim}
+su - testUser
+\end{verbatim}
+
+Enter LDAP password.
+
+Expected:
+
+\begin{verbatim}
+Creating directory '/home/testUser'
+\end{verbatim}
+
+Successful login indicates:
+
+\begin{itemize}
+\item LDAP authentication working
+\item PAM integration working
+\item automatic home directory creation working
+\end{itemize}
+\subsection{Verify User Home}
+\label{sec:org22a79bc}
+
+Run ONLY on:
+
+\begin{verbatim}
+login
+\end{verbatim}
+
+After login:
+
+\begin{verbatim}
+pwd
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+/home/testUser
+\end{verbatim}
+\begin{enumerate}
+\item NOW WE MUST REPLICATE TO COMPUTE NODES
+\label{sec:org1cecab7}
+
+Currently:
+
+\begin{verbatim}
+login node works fully
+\end{verbatim}
+
+Now we configure:
+
+\begin{itemize}
+\item compute01
+\item compute02
+\item compute03
+\end{itemize}
+
+with EXACT same client setup.
+\end{enumerate}
+\subsection{Troubleshooting}
+\label{sec:org7ba2333}
+\begin{enumerate}
+\item Important Slurm + LDAP Troubleshooting
+\label{sec:org7bcde18}
+
+This section explains one of the MOST common HPC setup issues.
+\item Symptom
+\label{sec:orge21ca7a}
+
+LDAP users:
+
+\begin{itemize}
+\item can SSH login
+\item can use su
+\item appear in getent passwd
+\end{itemize}
+
+BUT:
+
+\begin{verbatim}
+sbatch submit.sh
+\end{verbatim}
+
+results in:
+
+\begin{itemize}
+\item jobs stuck in pending
+\item BeginTime state
+\item scheduler instability
+\item sinfo hanging
+\item Slurm credential errors
+\item slurmctld crashes
+\end{itemize}
+\item Root Cause
+\label{sec:orgd6ef2dc}
+
+Slurm internally works using:
+
+\begin{itemize}
+\item UID
+\item GID
+\item NSS identity resolution
+\end{itemize}
+
+When launching jobs, Slurm performs internal user identity lookups.
+
+If master node cannot resolve LDAP users correctly through:
+
+\begin{itemize}
+\item NSS
+\item nslcd
+\item LDAP
+\end{itemize}
+
+then:
+
+\begin{itemize}
+\item Slurm credential generation fails
+\item scheduler may crash
+\item jobs cannot launch
+\end{itemize}
+
+Common error:
+
+\begin{verbatim}
+_fill_cred_gids: getpwuid failed for uid=10001
+\end{verbatim}
+
+Meaning:
+
+\begin{verbatim}
+Slurm cannot resolve LDAP user identity correctly.
+\end{verbatim}
+\item Important Verification Commands
+\label{sec:org3b224c3}
+
+Run on:
+
+\begin{verbatim}
+master
+login
+compute nodes
+\end{verbatim}
+
+Verify LDAP resolution:
+
+\begin{verbatim}
+getent passwd testUser
+id testUser
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+uid=10001(testUser) gid=10000(hpcusers)
+\end{verbatim}
+
+These commands MUST work correctly on ALL cluster nodes.
+\item Important Master Node Verification
+\label{sec:orga6c3286}
+
+The master node MUST also resolve LDAP users correctly.
+
+Verify:
+
+\begin{verbatim}
+getent passwd testUser
+\end{verbatim}
+
+If master cannot resolve LDAP users:
+
+\begin{itemize}
+\item slurmctld may fail
+\item scheduler may crash
+\item jobs remain pending
+\end{itemize}
+
+Verify nslcd configuration on master:
+
+\begin{verbatim}
+sudo vim /etc/nslcd.conf
+\end{verbatim}
+
+Example:
+
+\begin{verbatim}
+uid nslcd
+gid ldap
+
+uri ldap://master
+base dc=hpc,dc=local
+\end{verbatim}
+
+Verify NSS configuration:
+
+\begin{verbatim}
+sudo vim /etc/nsswitch.conf
+\end{verbatim}
+
+Ensure:
+
+\begin{verbatim}
+passwd: files ldap
+group: files ldap
+shadow: files ldap
+\end{verbatim}
+
+Restart LDAP client:
+
+\begin{verbatim}
+sudo systemctl restart nslcd
+\end{verbatim}
+\item Important Slurm Architecture
+\label{sec:orgd0aca96}
+
+Correct architecture:
+
+\begin{center}
+\begin{tabular}{ll}
+Node & Service\\
+\hline
+master & slurmctld\\
+login & login services only\\
+compute01 & slurmd\\
+compute02 & slurmd\\
+compute03 & slurmd\\
+\end{tabular}
+\end{center}
+
+IMPORTANT:
+
+\begin{verbatim}
+Login node should NOT run slurmd.
+\end{verbatim}
+
+Because login node is NOT configured as a compute node in:
+
+\begin{verbatim}
+/etc/slurm/slurm.conf
+\end{verbatim}
+
+Attempting to start slurmd on login gives:
+
+\begin{verbatim}
+slurmd: fatal: Unable to determine this slurmd's NodeName
+\end{verbatim}
+
+This is NORMAL and expected.
+
+Correct action on login node:
+
+\begin{verbatim}
+sudo systemctl stop slurmd
+sudo systemctl disable slurmd
+\end{verbatim}
+
+Expected afterward:
+
+\begin{verbatim}
+inactive (dead)
+\end{verbatim}
+
+This is CORRECT for login nodes.
+\item Important Slurm Recovery Commands
+\label{sec:org0fb4df5}
+
+Whenever:
+
+\begin{itemize}
+\item LDAP users are added
+\item NSS configuration changes
+\item PAM configuration changes
+\item nslcd configuration changes
+\end{itemize}
+
+restart Slurm services.
+
+Restart controller on master:
+
+\begin{verbatim}
+sudo systemctl restart slurmctld
+\end{verbatim}
+
+Restart compute daemons on compute nodes:
+
+\begin{verbatim}
+sudo systemctl restart slurmd
+\end{verbatim}
+
+Restart LDAP client:
+
+\begin{verbatim}
+sudo systemctl restart nslcd
+\end{verbatim}
+
+Verify cluster:
+
+\begin{verbatim}
+sinfo
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+debug* up infinite 3 idle compute[01-03]
+\end{verbatim}
+\item Important Scheduler Debugging
+\label{sec:org0bd2852}
+
+If:
+
+\begin{verbatim}
+sinfo
+\end{verbatim}
+
+hangs indefinitely:
+
+Possible cause:
+
+\begin{verbatim}
+slurmctld crashed
+\end{verbatim}
+
+Verify:
+
+\begin{verbatim}
+systemctl status slurmctld
+\end{verbatim}
+
+or:
+
+\begin{verbatim}
+journalctl -u slurmctld -n 50
+\end{verbatim}
+\end{enumerate}
+\subsection{Current Cluster State After LDAP Setup}
+\label{sec:orgb043984}
+
+Cluster now contains:
+
+\begin{center}
+\begin{tabular}{ll}
+Component & Status\\
+\hline
+OpenLDAP server & working\\
+centralized users & working\\
+centralized authentication & working\\
+nslcd integration & working\\
+NSS integration & working\\
+PAM authentication & working\\
+automatic home creation & working\\
+\end{tabular}
+\end{center}
+\subsection{Important Debugging Commands}
+\label{sec:orgfa11676}
+
+Verify LDAP tree:
+
+\begin{verbatim}
+ldapsearch -x -b "dc=hpc,dc=local"
+\end{verbatim}
+
+Verify LDAP user:
+
+\begin{verbatim}
+ldapsearch -x -b "dc=hpc,dc=local" uid=testUser
+\end{verbatim}
+
+Verify LDAP authentication:
+
+\begin{verbatim}
+ldapwhoami -x \
+-D "uid=testUser,ou=People,dc=hpc,dc=local" \
+-W \
+-H ldap://master
+\end{verbatim}
+
+Verify Linux user resolution:
+
+\begin{verbatim}
+getent passwd testUser
+\end{verbatim}
+
+Verify nslcd service:
+
+\begin{verbatim}
+systemctl status nslcd
+\end{verbatim}
+\subsection{Important Architecture Understanding}
+\label{sec:org60b8802}
+
+Master node:
+\begin{itemize}
+\item provides centralized identity database
+\end{itemize}
+
+Login/compute nodes:
+\begin{itemize}
+\item authenticate users
+\item resolve LDAP users
+\item create user sessions
+\end{itemize}
+
+This separation is fundamental in distributed authentication systems.
+\section{Automated LDAP User Creation Script}
+\label{sec:org840468d}
+
+Managing users manually using individual LDIF files becomes difficult
+as the number of users increases.
+
+To simplify user management, an automation script can be used to:
+
+\begin{itemize}
+\item create LDAP group
+\item create LDAP user
+\item generate password automatically
+\item generate password hash automatically
+\item add entries into LDAP
+\end{itemize}
+
+This script automates complete LDAP user creation.
+
+IMPORTANT:
+
+\begin{verbatim}
+The script creates:
+
+- private group for user
+- LDAP user entry
+- hashed LDAP password
+
+automatically.
+\end{verbatim}
+\subsection{Script Location}
+\label{sec:orga6aee5c}
+
+Example:
+
+\begin{verbatim}
+cd ~/ldap-scripts
+ls
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+createUser.sh
+\end{verbatim}
+\subsection{User Creation Script}
+\label{sec:orgdf73ba7}
+
+Create file:
+
+\begin{verbatim}
+vim createUser.sh
+\end{verbatim}
+
+Paste the complete script exactly as shown below:
+
+\begin{verbatim}
+#!/bin/bash 
+
+LDAP_ADMIN="cn=Manager,dc=hpc,dc=local"
+BASE_DN="dc=hpc,dc=local"
+
+USERNAME=$1
+UIDNUM=$2
+GIDNUM=$3
+
+if [ $# -ne 3 ]; then
+    echo "Usage: $0 <username> <uid> <gid>"
+    exit 1
+fi
+
+# Check if user already exists
+USER_EXISTS=$(ldapsearch -x \
+-b "ou=People,${BASE_DN}" "(uid=${USERNAME})" dn \
+| grep "^dn:")
+
+if [ ! -z "$USER_EXISTS" ]; then
+    echo "ERROR: User ${USERNAME} already exists!"
+    exit 1
+fi
+
+# Check if group already exists
+GROUP_EXISTS=$(ldapsearch -x \
+-b "ou=Groups,${BASE_DN}" "(cn=${USERNAME})" dn \
+| grep "^dn:")
+
+if [ ! -z "$GROUP_EXISTS" ]; then
+    echo "ERROR: Group ${USERNAME} already exists!"
+    exit 1
+fi
+
+PASSWORD="${USERNAME}@@123"
+
+PASSWORD_HASH=$(slappasswd -s "$PASSWORD")
+
+echo
+echo "=================================="
+echo "Creating LDAP User"
+echo "=================================="
+echo "Username : ${USERNAME}"
+echo "UID      : ${UIDNUM}"
+echo "GID      : ${GIDNUM}"
+echo "=================================="
+
+# Create private group LDIF
+cat > /tmp/${USERNAME}_group.ldif <<EOF
+dn: cn=${USERNAME},ou=Groups,${BASE_DN}
+objectClass: posixGroup
+cn: ${USERNAME}
+gidNumber: ${GIDNUM}
+EOF
+
+# Create user LDIF
+cat > /tmp/${USERNAME}.ldif <<EOF
+dn: uid=${USERNAME},ou=People,${BASE_DN}
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+cn: ${USERNAME}
+sn: ${USERNAME}
+uid: ${USERNAME}
+uidNumber: ${UIDNUM}
+gidNumber: ${GIDNUM}
+homeDirectory: /home/${USERNAME}
+loginShell: /bin/bash
+userPassword: ${PASSWORD_HASH}
+EOF
+
+echo
+echo "Adding LDAP group..."
+
+ldapadd -x \
+-D "${LDAP_ADMIN}" \
+-W \
+-f /tmp/${USERNAME}_group.ldif
+
+if [ $? -ne 0 ]; then
+    echo "ERROR: Failed to create LDAP group!"
+    exit 1
+fi
+
+echo
+echo "Adding LDAP user..."
+
+ldapadd -x \
+-D "${LDAP_ADMIN}" \
+-W \
+-f /tmp/${USERNAME}.ldif
+
+if [ $? -ne 0 ]; then
+    echo "ERROR: Failed to create LDAP user!"
+    exit 1
+fi
+
+echo
+echo "=================================="
+echo "LDAP User Created Successfully"
+echo "=================================="
+echo "Username : ${USERNAME}"
+echo "Password : ${PASSWORD}"
+echo "UID      : ${UIDNUM}"
+echo "GID      : ${GIDNUM}"
+echo "=================================="
+\end{verbatim}
+\subsection{Make Script Executable}
+\label{sec:org7685436}
+
+Before using the script:
+
+\begin{verbatim}
+chmod +x createUser.sh
+\end{verbatim}
+\subsection{Understanding Script Arguments}
+\label{sec:org6211373}
+
+The script requires THREE arguments:
+
+\begin{center}
+\begin{tabular}{ll}
+Argument & Meaning\\
+\hline
+username & LDAP username\\
+uid & UNIX UID\\
+gid & UNIX GID\\
+\end{tabular}
+\end{center}
+
+Syntax:
+
+\begin{verbatim}
+./createUser.sh <username> <uid> <gid>
+\end{verbatim}
+
+Example:
+
+\begin{verbatim}
+./createUser.sh student01 11001 11001
+\end{verbatim}
+
+Explanation:
+
+\begin{center}
+\begin{tabular}{rl}
+Value & Meaning\\
+\hline
+student01 & username\\
+11001 & UID\\
+11001 & GID\\
+\end{tabular}
+\end{center}
+
+IMPORTANT:
+
+\begin{verbatim}
+The script creates a private group automatically.
+
+Therefore username and group name become identical.
+\end{verbatim}
+
+Example:
+
+\begin{center}
+\begin{tabular}{ll}
+Entity & Created Automatically\\
+\hline
+User & student01\\
+Group & student01\\
+Home Directory & /home/student01\\
+\end{tabular}
+\end{center}
+\subsection{Default Password Format}
+\label{sec:org8314304}
+
+The script automatically creates password using:
+
+\begin{verbatim}
+username@@123
+\end{verbatim}
+
+Example:
+
+\begin{center}
+\begin{tabular}{ll}
+Username & Password\\
+\hline
+student01 & student01@@123\\
+student02 & student02@@123\\
+\end{tabular}
+\end{center}
+
+IMPORTANT:
+
+\begin{verbatim}
+Users should change password after first login.
+\end{verbatim}
+\subsection{What the Script Automatically Does}
+\label{sec:orge71b7b8}
+
+The script performs following operations automatically:
+
+\begin{center}
+\begin{tabular}{ll}
+Operation & Description\\
+\hline
+Check existing user & avoids duplicate users\\
+Check existing group & avoids duplicate groups\\
+Generate password hash & secure LDAP password\\
+Create LDAP group LDIF & automatic\\
+Create LDAP user LDIF & automatic\\
+Add LDAP group & automatic\\
+Add LDAP user & automatic\\
+\end{tabular}
+\end{center}
+\subsection{Example User Creation}
+\label{sec:org67b8783}
+
+Example:
+
+\begin{verbatim}
+./createUser.sh student02 11002 11002
+\end{verbatim}
+
+Expected output:
+
+\begin{verbatim}
+==================================
+Creating LDAP User
+==================================
+Username : student02
+UID      : 11002
+GID      : 11002
+==================================
+\end{verbatim}
+
+LDAP admin password will be requested.
+
+After successful creation:
+
+\begin{verbatim}
+==================================
+LDAP User Created Successfully
+==================================
+Username : student02
+Password : student02@@123
+UID      : 11002
+GID      : 11002
+==================================
+\end{verbatim}
+\subsection{Verify User Creation}
+\label{sec:org684414f}
+
+Verify user using:
+
+\begin{verbatim}
+getent passwd student02
+\end{verbatim}
+
+or:
+
+\begin{verbatim}
+id student02
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+uid=11002(student02)
+\end{verbatim}
+
+Verify LDAP entry:
+
+\begin{verbatim}
+ldapsearch -x \
+-b "dc=hpc,dc=local" uid=student02
+\end{verbatim}
+\subsection{Verify Login}
+\label{sec:org7189014}
+
+Test login:
+
+\begin{verbatim}
+su - student02
+\end{verbatim}
+
+or:
+
+\begin{verbatim}
+ssh student02@login
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+successful login
+\end{verbatim}
+\subsection{Important UID/GID Notes}
+\label{sec:orgbc48cc5}
+
+IMPORTANT:
+
+\begin{verbatim}
+UID and GID values must remain unique cluster-wide.
+\end{verbatim}
+
+Avoid:
+\begin{itemize}
+\item duplicate UID
+\item duplicate GID
+\end{itemize}
+
+because duplicate IDs can create:
+
+\begin{itemize}
+\item ownership conflicts
+\item wrong usernames
+\item incorrect file ownership
+\item Slurm identity problems
+\end{itemize}
+
+Example of BAD configuration:
+
+\begin{center}
+\begin{tabular}{lr}
+User & UID\\
+\hline
+student01 & 11001\\
+student02 & 11001\\
+\end{tabular}
+\end{center}
+
+This can cause:
+
+\begin{verbatim}
+whoami returning wrong username
+\end{verbatim}
+
+Always use unique UID/GID values.
+\subsection{Important HPC Identity Concept}
+\label{sec:orge0caa58}
+
+In HPC clusters:
+
+\begin{itemize}
+\item NFS
+\item Slurm
+\item MPI
+\item LDAP
+\item SSH
+\end{itemize}
+
+all depend on:
+
+\begin{verbatim}
+consistent unique UID/GID mappings
+\end{verbatim}
+
+across the entire cluster.
+
+This is one of the MOST important concepts in centralized HPC authentication.
+\section{Automated LDAP User Deletion Script}
+\label{sec:orgd04f11e}
+
+Managing users manually using:
+
+\begin{itemize}
+\item ldapdelete
+\item group deletion
+\item home directory cleanup
+\end{itemize}
+
+can become repetitive and error-prone.
+
+To simplify cleanup operations, an automated LDAP deletion script can be used.
+
+This script automates:
+
+\begin{itemize}
+\item LDAP user deletion
+\item optional LDAP group deletion
+\item optional home directory deletion
+\end{itemize}
+
+IMPORTANT:
+
+\begin{verbatim}
+The script provides interactive cleanup options
+for safer user management.
+\end{verbatim}
+\subsection{Script Location}
+\label{sec:org1d66761}
+
+Example:
+
+\begin{verbatim}
+cd ~/ldap-scripts
+ls
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+deleteUser.sh
+\end{verbatim}
+\subsection{User Deletion Script}
+\label{sec:org6901570}
+
+Create file:
+
+\begin{verbatim}
+vim deleteUser.sh
+\end{verbatim}
+
+Paste the complete script exactly as shown below:
+
+\begin{verbatim}
+#!/bin/bash 
+
+LDAP_ADMIN="cn=Manager,dc=hpc,dc=local"
+BASE_DN="dc=hpc,dc=local"
+
+USERNAME=$1
+
+if [ $# -ne 1 ]; then
+    echo "Usage: $0 <username>"
+    exit 1
+fi
+
+echo
+echo "=================================="
+echo "Deleting LDAP User"
+echo "=================================="
+echo "Username : ${USERNAME}"
+echo "=================================="
+
+echo
+echo "Deleting LDAP user entry..."
+
+ldapdelete -x \
+-D "${LDAP_ADMIN}" \
+-W \
+"uid=${USERNAME},ou=People,${BASE_DN}"
+
+if [ $? -ne 0 ]; then
+    echo "ERROR: Failed to delete LDAP user!"
+    exit 1
+fi
+
+echo
+echo "LDAP user deleted successfully."
+
+# Ask about deleting group
+echo
+read -p "Delete LDAP group '${USERNAME}'? (y/n): " DELETE_GROUP
+
+case $DELETE_GROUP in
+    y|Y)
+
+        ldapdelete -x \
+        -D "${LDAP_ADMIN}" \
+        -W \
+        "cn=${USERNAME},ou=Groups,${BASE_DN}"
+
+        if [ $? -eq 0 ]; then
+            echo "LDAP group deleted successfully."
+        else
+            echo "WARNING: Failed to delete LDAP group."
+        fi
+        ;;
+
+    n|N)
+        echo "Skipping LDAP group deletion."
+        ;;
+
+    *)
+        echo "Invalid option. Skipping group deletion."
+        ;;
+esac
+
+# Ask about deleting home directory
+echo
+read -p "Delete home directory '/home/${USERNAME}'? (y/n): " DELETE_HOME
+
+case $DELETE_HOME in
+    y|Y)
+
+        if [ -d "/home/${USERNAME}" ]; then
+            sudo rm -rf "/home/${USERNAME}"
+
+            if [ $? -eq 0 ]; then
+                echo "Home directory deleted successfully."
+            else
+                echo "WARNING: Failed to delete home directory."
+            fi
+        else
+            echo "Home directory does not exist."
+        fi
+        ;;
+
+    n|N)
+        echo "Skipping home directory deletion."
+        ;;
+
+    *)
+        echo "Invalid option. Skipping home deletion."
+        ;;
+esac
+
+echo
+echo "=================================="
+echo "User cleanup completed"
+echo "=================================="
+\end{verbatim}
+\subsection{Make Script Executable}
+\label{sec:org7920d2e}
+
+Before using the script:
+
+\begin{verbatim}
+chmod +x deleteUser.sh
+\end{verbatim}
+\subsection{Understanding Script Arguments}
+\label{sec:org8e82521}
+
+The script requires ONE argument:
+
+\begin{center}
+\begin{tabular}{ll}
+Argument & Meaning\\
+\hline
+username & LDAP username\\
+\end{tabular}
+\end{center}
+
+Syntax:
+
+\begin{verbatim}
+./deleteUser.sh <username>
+\end{verbatim}
+
+Example:
+
+\begin{verbatim}
+./deleteUser.sh student02
+\end{verbatim}
+\subsection{What the Script Automatically Does}
+\label{sec:orgbc96770}
+
+The script performs following operations automatically:
+
+\begin{center}
+\begin{tabular}{ll}
+Operation & Description\\
+\hline
+Delete LDAP user & removes LDAP account\\
+Optional group deletion & removes LDAP group if requested\\
+Optional home deletion & removes user home if requested\\
+Interactive confirmation & prevents accidental cleanup\\
+\end{tabular}
+\end{center}
+\subsection{Example User Deletion}
+\label{sec:org55ba837}
+
+Example:
+
+\begin{verbatim}
+./deleteUser.sh student02
+\end{verbatim}
+
+Expected output:
+
+\begin{verbatim}
+==================================
+Deleting LDAP User
+==================================
+Username : student02
+==================================
+\end{verbatim}
+
+LDAP admin password will be requested.
+
+After successful deletion:
+
+\begin{verbatim}
+LDAP user deleted successfully.
+\end{verbatim}
+
+The script then asks:
+
+\begin{verbatim}
+Delete LDAP group 'student02'? (y/n):
+\end{verbatim}
+
+If:
+
+\begin{verbatim}
+y
+\end{verbatim}
+
+is selected, corresponding LDAP group will also be removed.
+
+Next prompt:
+
+\begin{verbatim}
+Delete home directory '/home/student02'? (y/n):
+\end{verbatim}
+
+If:
+
+\begin{verbatim}
+y
+\end{verbatim}
+
+is selected, user home directory will also be deleted.
+\subsection{Important Group Deletion Notes}
+\label{sec:orgeb27e70}
+
+IMPORTANT:
+
+\begin{verbatim}
+Do NOT delete shared groups accidentally.
+\end{verbatim}
+
+Example:
+
+\begin{verbatim}
+hpcusers
+\end{verbatim}
+
+may contain multiple users.
+
+Deleting shared groups can create:
+
+\begin{itemize}
+\item broken group mappings
+\item permission problems
+\item Slurm identity issues
+\end{itemize}
+
+The script therefore asks confirmation before deleting groups.
+\subsection{Important Home Directory Notes}
+\label{sec:org38bcb52}
+
+Deleting home directories permanently removes:
+
+\begin{itemize}
+\item source codes
+\item job scripts
+\item outputs
+\item datasets
+\item SSH keys
+\item configuration files
+\end{itemize}
+
+IMPORTANT:
+
+\begin{verbatim}
+Home directory deletion is irreversible.
+\end{verbatim}
+
+Always verify before deleting.
+\subsection{Verify User Removal}
+\label{sec:orga111152}
+
+Verify deletion:
+
+\begin{verbatim}
+getent passwd student02
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+no output
+\end{verbatim}
+
+Verify LDAP entry removal:
+
+\begin{verbatim}
+ldapsearch -x \
+-b "dc=hpc,dc=local" uid=student02
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+no entries returned
+\end{verbatim}
+
+Verify login failure:
+
+\begin{verbatim}
+su - student02
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+user does not exist
+\end{verbatim}
+\subsection{Important HPC User Management Concept}
+\label{sec:orgfc77c3a}
+
+In centralized HPC environments:
+
+\begin{itemize}
+\item user lifecycle management
+\item account cleanup
+\item UID/GID consistency
+\item group management
+\end{itemize}
+
+are critical administrative tasks.
+
+Improper deletion can create:
+
+\begin{itemize}
+\item orphaned files
+\item broken permissions
+\item Slurm scheduling issues
+\item incorrect ownership mappings
+\end{itemize}
+
+Therefore automated and controlled cleanup procedures are highly important in production HPC systems.
+\section{Automated LDAP Password Change Script}
+\label{sec:orgacaef72}
+
+Managing passwords manually using LDIF files becomes inconvenient
+in centralized LDAP environments.
+
+To simplify password management, an automated password change script
+can be used.
+
+This script automates:
+
+\begin{itemize}
+\item LDAP password update
+\item password hash generation
+\item secure password input
+\item LDAP password modification
+\end{itemize}
+
+IMPORTANT:
+
+\begin{verbatim}
+Because authentication is centralized through LDAP,
+password changes automatically work cluster-wide.
+\end{verbatim}
+
+After changing password:
+
+\begin{itemize}
+\item login node recognizes new password
+\item compute nodes recognize new password
+\item master recognizes new password
+\end{itemize}
+
+without changing anything individually on nodes.
+\subsection{Script Location}
+\label{sec:org5dbc64e}
+
+Example:
+
+\begin{verbatim}
+cd ~/ldap-scripts
+ls
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+changePassword.sh
+\end{verbatim}
+\subsection{Password Change Script}
+\label{sec:orge630042}
+
+Create file:
+
+\begin{verbatim}
+vim changePassword.sh
+\end{verbatim}
+
+Paste the complete script exactly as shown below:
+
+\begin{verbatim}
+#!/bin/bash
+
+LDAP_ADMIN="cn=Manager,dc=hpc,dc=local"
+BASE_DN="dc=hpc,dc=local"
+
+USERNAME=$1
+
+if [ $# -ne 1 ]; then
+    echo "Usage: $0 <username>"
+    exit 1
+fi
+
+# Check if user exists
+USER_EXISTS=$(ldapsearch -x \
+-b "ou=People,${BASE_DN}" "(uid=${USERNAME})" dn \
+| grep "^dn:")
+
+if [ -z "$USER_EXISTS" ]; then
+    echo "ERROR: User ${USERNAME} does not exist!"
+    exit 1
+fi
+
+echo
+echo "=================================="
+echo "LDAP Password Change"
+echo "=================================="
+echo "Username : ${USERNAME}"
+echo "=================================="
+
+# Take password securely
+echo
+read -s -p "Enter new password: " PASSWORD1
+echo
+
+read -s -p "Confirm new password: " PASSWORD2
+echo
+
+# Check password match
+if [ "$PASSWORD1" != "$PASSWORD2" ]; then
+    echo
+    echo "ERROR: Passwords do not match!"
+    exit 1
+fi
+
+# Generate LDAP password hash
+PASSWORD_HASH=$(slappasswd -s "$PASSWORD1")
+
+# Create LDIF file
+cat > /tmp/${USERNAME}_password.ldif <<EOF
+dn: uid=${USERNAME},ou=People,${BASE_DN}
+changetype: modify
+replace: userPassword
+userPassword: ${PASSWORD_HASH}
+EOF
+
+echo
+echo "Updating LDAP password..."
+
+ldapmodify -x \
+-D "${LDAP_ADMIN}" \
+-W \
+-f /tmp/${USERNAME}_password.ldif
+
+if [ $? -ne 0 ]; then
+    echo
+    echo "ERROR: Failed to change password!"
+    exit 1
+fi
+
+echo
+echo "=================================="
+echo "Password updated successfully"
+echo "=================================="
+echo "Username : ${USERNAME}"
+echo "=================================="
+\end{verbatim}
+\subsection{Make Script Executable}
+\label{sec:org1a89ac4}
+
+Before using the script:
+
+\begin{verbatim}
+chmod +x changePassword.sh
+\end{verbatim}
+\subsection{Understanding Script Arguments}
+\label{sec:orga5323ff}
+
+The script requires ONE argument:
+
+\begin{center}
+\begin{tabular}{ll}
+Argument & Meaning\\
+\hline
+username & LDAP username\\
+\end{tabular}
+\end{center}
+
+Syntax:
+
+\begin{verbatim}
+./changePassword.sh <username>
+\end{verbatim}
+
+Example:
+
+\begin{verbatim}
+./changePassword.sh student01
+\end{verbatim}
+\subsection{What the Script Automatically Does}
+\label{sec:org09815d6}
+
+The script performs following operations automatically:
+
+\begin{center}
+\begin{tabular}{ll}
+Operation & Description\\
+\hline
+Verify LDAP user exists & prevents invalid modifications\\
+Secure password input & password hidden during typing\\
+Password confirmation & avoids typing mistakes\\
+Generate password hash & secure LDAP password storage\\
+Modify LDAP password & centralized password update\\
+\end{tabular}
+\end{center}
+\subsection{Example Password Change}
+\label{sec:orgedb21a1}
+
+Example:
+
+\begin{verbatim}
+./changePassword.sh student01
+\end{verbatim}
+
+Expected output:
+
+\begin{verbatim}
+==================================
+LDAP Password Change
+==================================
+Username : student01
+==================================
+\end{verbatim}
+
+The script asks:
+
+\begin{verbatim}
+Enter new password:
+\end{verbatim}
+
+Then:
+
+\begin{verbatim}
+Confirm new password:
+\end{verbatim}
+
+LDAP admin password will also be requested.
+
+After successful update:
+
+\begin{verbatim}
+==================================
+Password updated successfully
+==================================
+Username : student01
+==================================
+\end{verbatim}
+\subsection{Verify Password Change}
+\label{sec:org9379a37}
+
+Test login using updated password:
+
+\begin{verbatim}
+su - student01
+\end{verbatim}
+
+or:
+
+\begin{verbatim}
+ssh student01@login
+\end{verbatim}
+
+Expected:
+
+\begin{verbatim}
+successful login using new password
+\end{verbatim}
+
+Because LDAP authentication is centralized, the updated password works automatically on:
+
+\begin{itemize}
+\item login node
+\item compute nodes
+\item master node
+\end{itemize}
+\subsection{Important Password Management Notes}
+\label{sec:orgc6a510a}
+
+IMPORTANT:
+
+\begin{verbatim}
+LDAP stores password hashes, not plain-text passwords.
+\end{verbatim}
+
+The script automatically generates secure LDAP-compatible password hashes using:
+
+\begin{verbatim}
+slappasswd
+\end{verbatim}
+
+This improves security by avoiding direct plain-text password storage.
+\end{document}
