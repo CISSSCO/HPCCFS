@@ -4100,3 +4100,987 @@ Login/compute nodes:
 - create user sessions
 
 This separation is fundamental in distributed authentication systems.
+* Automated LDAP User Creation Script
+
+Managing users manually using individual LDIF files becomes difficult
+as the number of users increases.
+
+To simplify user management, an automation script can be used to:
+
+- create LDAP group
+- create LDAP user
+- generate password automatically
+- generate password hash automatically
+- add entries into LDAP
+
+This script automates complete LDAP user creation.
+
+IMPORTANT:
+
+#+begin_example
+The script creates:
+
+- private group for user
+- LDAP user entry
+- hashed LDAP password
+
+automatically.
+#+end_example
+
+** Script Location
+
+Example:
+
+#+begin_src bash
+cd ~/ldap-scripts
+ls
+#+end_src
+
+Expected:
+
+#+begin_example
+createUser.sh
+#+end_example
+
+** User Creation Script
+
+Create file:
+
+#+begin_src bash
+vim createUser.sh
+#+end_src
+
+Paste the complete script exactly as shown below:
+
+#+begin_src bash :tangle createUser.sh
+#!/bin/bash 
+
+LDAP_ADMIN="cn=Manager,dc=hpc,dc=local"
+BASE_DN="dc=hpc,dc=local"
+
+USERNAME=$1
+UIDNUM=$2
+GIDNUM=$3
+
+if [ $# -ne 3 ]; then
+    echo "Usage: $0 <username> <uid> <gid>"
+    exit 1
+fi
+
+# Check if user already exists
+USER_EXISTS=$(ldapsearch -x \
+-b "ou=People,${BASE_DN}" "(uid=${USERNAME})" dn \
+| grep "^dn:")
+
+if [ ! -z "$USER_EXISTS" ]; then
+    echo "ERROR: User ${USERNAME} already exists!"
+    exit 1
+fi
+
+# Check if group already exists
+GROUP_EXISTS=$(ldapsearch -x \
+-b "ou=Groups,${BASE_DN}" "(cn=${USERNAME})" dn \
+| grep "^dn:")
+
+if [ ! -z "$GROUP_EXISTS" ]; then
+    echo "ERROR: Group ${USERNAME} already exists!"
+    exit 1
+fi
+
+PASSWORD="${USERNAME}@@123"
+
+PASSWORD_HASH=$(slappasswd -s "$PASSWORD")
+
+echo
+echo "=================================="
+echo "Creating LDAP User"
+echo "=================================="
+echo "Username : ${USERNAME}"
+echo "UID      : ${UIDNUM}"
+echo "GID      : ${GIDNUM}"
+echo "=================================="
+
+# Create private group LDIF
+cat > /tmp/${USERNAME}_group.ldif <<EOF
+dn: cn=${USERNAME},ou=Groups,${BASE_DN}
+objectClass: posixGroup
+cn: ${USERNAME}
+gidNumber: ${GIDNUM}
+EOF
+
+# Create user LDIF
+cat > /tmp/${USERNAME}.ldif <<EOF
+dn: uid=${USERNAME},ou=People,${BASE_DN}
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+cn: ${USERNAME}
+sn: ${USERNAME}
+uid: ${USERNAME}
+uidNumber: ${UIDNUM}
+gidNumber: ${GIDNUM}
+homeDirectory: /home/${USERNAME}
+loginShell: /bin/bash
+userPassword: ${PASSWORD_HASH}
+EOF
+
+echo
+echo "Adding LDAP group..."
+
+ldapadd -x \
+-D "${LDAP_ADMIN}" \
+-W \
+-f /tmp/${USERNAME}_group.ldif
+
+if [ $? -ne 0 ]; then
+    echo "ERROR: Failed to create LDAP group!"
+    exit 1
+fi
+
+echo
+echo "Adding LDAP user..."
+
+ldapadd -x \
+-D "${LDAP_ADMIN}" \
+-W \
+-f /tmp/${USERNAME}.ldif
+
+if [ $? -ne 0 ]; then
+    echo "ERROR: Failed to create LDAP user!"
+    exit 1
+fi
+
+echo
+echo "=================================="
+echo "LDAP User Created Successfully"
+echo "=================================="
+echo "Username : ${USERNAME}"
+echo "Password : ${PASSWORD}"
+echo "UID      : ${UIDNUM}"
+echo "GID      : ${GIDNUM}"
+echo "=================================="
+#+end_src
+
+** Make Script Executable
+
+Before using the script:
+
+#+begin_src bash
+chmod +x createUser.sh
+#+end_src
+
+** Understanding Script Arguments
+
+The script requires THREE arguments:
+
+| Argument | Meaning |
+|-----------+----------|
+| username | LDAP username |
+| uid | UNIX UID |
+| gid | UNIX GID |
+
+Syntax:
+
+#+begin_src bash
+./createUser.sh <username> <uid> <gid>
+#+end_src
+
+Example:
+
+#+begin_src bash
+./createUser.sh student01 11001 11001
+#+end_src
+
+Explanation:
+
+| Value | Meaning |
+|--------+----------|
+| student01 | username |
+| 11001 | UID |
+| 11001 | GID |
+
+IMPORTANT:
+
+#+begin_example
+The script creates a private group automatically.
+
+Therefore username and group name become identical.
+#+end_example
+
+Example:
+
+| Entity | Created Automatically |
+|---------+------------------------|
+| User | student01 |
+| Group | student01 |
+| Home Directory | /home/student01 |
+
+** Default Password Format
+
+The script automatically creates password using:
+
+#+begin_example
+username@@123
+#+end_example
+
+Example:
+
+| Username | Password |
+|-----------+-----------|
+| student01 | student01@@123 |
+| student02 | student02@@123 |
+
+IMPORTANT:
+
+#+begin_example
+Users should change password after first login.
+#+end_example
+
+** What the Script Automatically Does
+
+The script performs following operations automatically:
+
+| Operation | Description |
+|------------+--------------|
+| Check existing user | avoids duplicate users |
+| Check existing group | avoids duplicate groups |
+| Generate password hash | secure LDAP password |
+| Create LDAP group LDIF | automatic |
+| Create LDAP user LDIF | automatic |
+| Add LDAP group | automatic |
+| Add LDAP user | automatic |
+
+** Example User Creation
+
+Example:
+
+#+begin_src bash
+./createUser.sh student02 11002 11002
+#+end_src
+
+Expected output:
+
+#+begin_example
+==================================
+Creating LDAP User
+==================================
+Username : student02
+UID      : 11002
+GID      : 11002
+==================================
+#+end_example
+
+LDAP admin password will be requested.
+
+After successful creation:
+
+#+begin_example
+==================================
+LDAP User Created Successfully
+==================================
+Username : student02
+Password : student02@@123
+UID      : 11002
+GID      : 11002
+==================================
+#+end_example
+
+** Verify User Creation
+
+Verify user using:
+
+#+begin_src bash
+getent passwd student02
+#+end_src
+
+or:
+
+#+begin_src bash
+id student02
+#+end_src
+
+Expected:
+
+#+begin_example
+uid=11002(student02)
+#+end_example
+
+Verify LDAP entry:
+
+#+begin_src bash
+ldapsearch -x \
+-b "dc=hpc,dc=local" uid=student02
+#+end_src
+
+** Verify Login
+
+Test login:
+
+#+begin_src bash
+su - student02
+#+end_src
+
+or:
+
+#+begin_src bash
+ssh student02@login
+#+end_src
+
+Expected:
+
+#+begin_example
+successful login
+#+end_example
+
+** Important UID/GID Notes
+
+IMPORTANT:
+
+#+begin_example
+UID and GID values must remain unique cluster-wide.
+#+end_example
+
+Avoid:
+- duplicate UID
+- duplicate GID
+
+because duplicate IDs can create:
+
+- ownership conflicts
+- wrong usernames
+- incorrect file ownership
+- Slurm identity problems
+
+Example of BAD configuration:
+
+| User | UID |
+|-------+-----|
+| student01 | 11001 |
+| student02 | 11001 |
+
+This can cause:
+
+#+begin_example
+whoami returning wrong username
+#+end_example
+
+Always use unique UID/GID values.
+
+** Important HPC Identity Concept
+
+In HPC clusters:
+
+- NFS
+- Slurm
+- MPI
+- LDAP
+- SSH
+
+all depend on:
+
+#+begin_example
+consistent unique UID/GID mappings
+#+end_example
+
+across the entire cluster.
+
+This is one of the MOST important concepts in centralized HPC authentication.
+* Automated LDAP User Deletion Script
+
+Managing users manually using:
+
+- ldapdelete
+- group deletion
+- home directory cleanup
+
+can become repetitive and error-prone.
+
+To simplify cleanup operations, an automated LDAP deletion script can be used.
+
+This script automates:
+
+- LDAP user deletion
+- optional LDAP group deletion
+- optional home directory deletion
+
+IMPORTANT:
+
+#+begin_example
+The script provides interactive cleanup options
+for safer user management.
+#+end_example
+
+** Script Location
+
+Example:
+
+#+begin_src bash
+cd ~/ldap-scripts
+ls
+#+end_src
+
+Expected:
+
+#+begin_example
+deleteUser.sh
+#+end_example
+
+** User Deletion Script
+
+Create file:
+
+#+begin_src bash
+vim deleteUser.sh
+#+end_src
+
+Paste the complete script exactly as shown below:
+
+#+begin_src bash :tangle deleteUser.sh
+#!/bin/bash 
+
+LDAP_ADMIN="cn=Manager,dc=hpc,dc=local"
+BASE_DN="dc=hpc,dc=local"
+
+USERNAME=$1
+
+if [ $# -ne 1 ]; then
+    echo "Usage: $0 <username>"
+    exit 1
+fi
+
+echo
+echo "=================================="
+echo "Deleting LDAP User"
+echo "=================================="
+echo "Username : ${USERNAME}"
+echo "=================================="
+
+echo
+echo "Deleting LDAP user entry..."
+
+ldapdelete -x \
+-D "${LDAP_ADMIN}" \
+-W \
+"uid=${USERNAME},ou=People,${BASE_DN}"
+
+if [ $? -ne 0 ]; then
+    echo "ERROR: Failed to delete LDAP user!"
+    exit 1
+fi
+
+echo
+echo "LDAP user deleted successfully."
+
+# Ask about deleting group
+echo
+read -p "Delete LDAP group '${USERNAME}'? (y/n): " DELETE_GROUP
+
+case $DELETE_GROUP in
+    y|Y)
+
+        ldapdelete -x \
+        -D "${LDAP_ADMIN}" \
+        -W \
+        "cn=${USERNAME},ou=Groups,${BASE_DN}"
+
+        if [ $? -eq 0 ]; then
+            echo "LDAP group deleted successfully."
+        else
+            echo "WARNING: Failed to delete LDAP group."
+        fi
+        ;;
+
+    n|N)
+        echo "Skipping LDAP group deletion."
+        ;;
+
+    *)
+        echo "Invalid option. Skipping group deletion."
+        ;;
+esac
+
+# Ask about deleting home directory
+echo
+read -p "Delete home directory '/home/${USERNAME}'? (y/n): " DELETE_HOME
+
+case $DELETE_HOME in
+    y|Y)
+
+        if [ -d "/home/${USERNAME}" ]; then
+            sudo rm -rf "/home/${USERNAME}"
+
+            if [ $? -eq 0 ]; then
+                echo "Home directory deleted successfully."
+            else
+                echo "WARNING: Failed to delete home directory."
+            fi
+        else
+            echo "Home directory does not exist."
+        fi
+        ;;
+
+    n|N)
+        echo "Skipping home directory deletion."
+        ;;
+
+    *)
+        echo "Invalid option. Skipping home deletion."
+        ;;
+esac
+
+echo
+echo "=================================="
+echo "User cleanup completed"
+echo "=================================="
+#+end_src
+
+** Make Script Executable
+
+Before using the script:
+
+#+begin_src bash
+chmod +x deleteUser.sh
+#+end_src
+
+** Understanding Script Arguments
+
+The script requires ONE argument:
+
+| Argument | Meaning |
+|-----------+----------|
+| username | LDAP username |
+
+Syntax:
+
+#+begin_src bash
+./deleteUser.sh <username>
+#+end_src
+
+Example:
+
+#+begin_src bash
+./deleteUser.sh student02
+#+end_src
+
+** What the Script Automatically Does
+
+The script performs following operations automatically:
+
+| Operation | Description |
+|------------+--------------|
+| Delete LDAP user | removes LDAP account |
+| Optional group deletion | removes LDAP group if requested |
+| Optional home deletion | removes user home if requested |
+| Interactive confirmation | prevents accidental cleanup |
+
+** Example User Deletion
+
+Example:
+
+#+begin_src bash
+./deleteUser.sh student02
+#+end_src
+
+Expected output:
+
+#+begin_example
+==================================
+Deleting LDAP User
+==================================
+Username : student02
+==================================
+#+end_example
+
+LDAP admin password will be requested.
+
+After successful deletion:
+
+#+begin_example
+LDAP user deleted successfully.
+#+end_example
+
+The script then asks:
+
+#+begin_example
+Delete LDAP group 'student02'? (y/n):
+#+end_example
+
+If:
+
+#+begin_example
+y
+#+end_example
+
+is selected, corresponding LDAP group will also be removed.
+
+Next prompt:
+
+#+begin_example
+Delete home directory '/home/student02'? (y/n):
+#+end_example
+
+If:
+
+#+begin_example
+y
+#+end_example
+
+is selected, user home directory will also be deleted.
+
+** Important Group Deletion Notes
+
+IMPORTANT:
+
+#+begin_example
+Do NOT delete shared groups accidentally.
+#+end_example
+
+Example:
+
+#+begin_example
+hpcusers
+#+end_example
+
+may contain multiple users.
+
+Deleting shared groups can create:
+
+- broken group mappings
+- permission problems
+- Slurm identity issues
+
+The script therefore asks confirmation before deleting groups.
+
+** Important Home Directory Notes
+
+Deleting home directories permanently removes:
+
+- source codes
+- job scripts
+- outputs
+- datasets
+- SSH keys
+- configuration files
+
+IMPORTANT:
+
+#+begin_example
+Home directory deletion is irreversible.
+#+end_example
+
+Always verify before deleting.
+
+** Verify User Removal
+
+Verify deletion:
+
+#+begin_src bash
+getent passwd student02
+#+end_src
+
+Expected:
+
+#+begin_example
+no output
+#+end_example
+
+Verify LDAP entry removal:
+
+#+begin_src bash
+ldapsearch -x \
+-b "dc=hpc,dc=local" uid=student02
+#+end_src
+
+Expected:
+
+#+begin_example
+no entries returned
+#+end_example
+
+Verify login failure:
+
+#+begin_src bash
+su - student02
+#+end_src
+
+Expected:
+
+#+begin_example
+user does not exist
+#+end_example
+
+** Important HPC User Management Concept
+
+In centralized HPC environments:
+
+- user lifecycle management
+- account cleanup
+- UID/GID consistency
+- group management
+
+are critical administrative tasks.
+
+Improper deletion can create:
+
+- orphaned files
+- broken permissions
+- Slurm scheduling issues
+- incorrect ownership mappings
+
+Therefore automated and controlled cleanup procedures are highly important in production HPC systems.
+* Automated LDAP Password Change Script
+
+Managing passwords manually using LDIF files becomes inconvenient
+in centralized LDAP environments.
+
+To simplify password management, an automated password change script
+can be used.
+
+This script automates:
+
+- LDAP password update
+- password hash generation
+- secure password input
+- LDAP password modification
+
+IMPORTANT:
+
+#+begin_example
+Because authentication is centralized through LDAP,
+password changes automatically work cluster-wide.
+#+end_example
+
+After changing password:
+
+- login node recognizes new password
+- compute nodes recognize new password
+- master recognizes new password
+
+without changing anything individually on nodes.
+
+** Script Location
+
+Example:
+
+#+begin_src bash
+cd ~/ldap-scripts
+ls
+#+end_src
+
+Expected:
+
+#+begin_example
+changePassword.sh
+#+end_example
+
+** Password Change Script
+
+Create file:
+
+#+begin_src bash
+vim changePassword.sh
+#+end_src
+
+Paste the complete script exactly as shown below:
+
+#+begin_src bash :tangle changePassword.sh
+#!/bin/bash
+
+LDAP_ADMIN="cn=Manager,dc=hpc,dc=local"
+BASE_DN="dc=hpc,dc=local"
+
+USERNAME=$1
+
+if [ $# -ne 1 ]; then
+    echo "Usage: $0 <username>"
+    exit 1
+fi
+
+# Check if user exists
+USER_EXISTS=$(ldapsearch -x \
+-b "ou=People,${BASE_DN}" "(uid=${USERNAME})" dn \
+| grep "^dn:")
+
+if [ -z "$USER_EXISTS" ]; then
+    echo "ERROR: User ${USERNAME} does not exist!"
+    exit 1
+fi
+
+echo
+echo "=================================="
+echo "LDAP Password Change"
+echo "=================================="
+echo "Username : ${USERNAME}"
+echo "=================================="
+
+# Take password securely
+echo
+read -s -p "Enter new password: " PASSWORD1
+echo
+
+read -s -p "Confirm new password: " PASSWORD2
+echo
+
+# Check password match
+if [ "$PASSWORD1" != "$PASSWORD2" ]; then
+    echo
+    echo "ERROR: Passwords do not match!"
+    exit 1
+fi
+
+# Generate LDAP password hash
+PASSWORD_HASH=$(slappasswd -s "$PASSWORD1")
+
+# Create LDIF file
+cat > /tmp/${USERNAME}_password.ldif <<EOF
+dn: uid=${USERNAME},ou=People,${BASE_DN}
+changetype: modify
+replace: userPassword
+userPassword: ${PASSWORD_HASH}
+EOF
+
+echo
+echo "Updating LDAP password..."
+
+ldapmodify -x \
+-D "${LDAP_ADMIN}" \
+-W \
+-f /tmp/${USERNAME}_password.ldif
+
+if [ $? -ne 0 ]; then
+    echo
+    echo "ERROR: Failed to change password!"
+    exit 1
+fi
+
+echo
+echo "=================================="
+echo "Password updated successfully"
+echo "=================================="
+echo "Username : ${USERNAME}"
+echo "=================================="
+#+end_src
+
+** Make Script Executable
+
+Before using the script:
+
+#+begin_src bash
+chmod +x changePassword.sh
+#+end_src
+
+** Understanding Script Arguments
+
+The script requires ONE argument:
+
+| Argument | Meaning |
+|-----------+----------|
+| username | LDAP username |
+
+Syntax:
+
+#+begin_src bash
+./changePassword.sh <username>
+#+end_src
+
+Example:
+
+#+begin_src bash
+./changePassword.sh student01
+#+end_src
+
+** What the Script Automatically Does
+
+The script performs following operations automatically:
+
+| Operation | Description |
+|------------+--------------|
+| Verify LDAP user exists | prevents invalid modifications |
+| Secure password input | password hidden during typing |
+| Password confirmation | avoids typing mistakes |
+| Generate password hash | secure LDAP password storage |
+| Modify LDAP password | centralized password update |
+
+** Example Password Change
+
+Example:
+
+#+begin_src bash
+./changePassword.sh student01
+#+end_src
+
+Expected output:
+
+#+begin_example
+==================================
+LDAP Password Change
+==================================
+Username : student01
+==================================
+#+end_example
+
+The script asks:
+
+#+begin_example
+Enter new password:
+#+end_example
+
+Then:
+
+#+begin_example
+Confirm new password:
+#+end_example
+
+LDAP admin password will also be requested.
+
+After successful update:
+
+#+begin_example
+==================================
+Password updated successfully
+==================================
+Username : student01
+==================================
+#+end_example
+
+** Verify Password Change
+
+Test login using updated password:
+
+#+begin_src bash
+su - student01
+#+end_src
+
+or:
+
+#+begin_src bash
+ssh student01@login
+#+end_src
+
+Expected:
+
+#+begin_example
+successful login using new password
+#+end_example
+
+Because LDAP authentication is centralized, the updated password works automatically on:
+
+- login node
+- compute nodes
+- master node
+
+** Important Password Management Notes
+
+IMPORTANT:
+
+#+begin_example
+LDAP stores password hashes, not plain-text passwords.
+#+end_example
+
+The script automatically generates secure LDAP-compatible password hashes using:
+
+#+begin_src bash
+slappasswd
+#+end_src
+
+This improves security by avoiding direct plain-text password storage.
