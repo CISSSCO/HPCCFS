@@ -6,7 +6,7 @@
 #+AUTHOR: Cisco Ramon
 #+DESCRIPTION: Building a mini HPC cluster environment using Rocky Linux, VirtualBox, Slurm, MPI, and OpenMP
 #+STARTUP: overview
-#+OPTIONS: toc:3 num:t
+#+OPTIONS: toc:2 num:t
 #+PROPERTY: header-args :results output
 #+SETUPFILE: https://fniessen.github.io/org-html-themes/org/html-theme-readtheorg.setup
 #+HTML_HEAD: <style> pre.src { font-size: 15px !important;} code { font-size: 15px !important;} </style>
@@ -3611,6 +3611,9 @@ This proves Linux itself recognizes LDAP users.
 
 This is one of the most important LDAP verification steps.
 
+*** NOTE
+: Now we must configure: *master* with EXACT same setup (master should be able to recognise the user).
+
 ** Install Automatic Home Directory Support
 
 Run ONLY on:
@@ -3770,6 +3773,273 @@ Expected:
 /home/testUser
 #+end_example
 
+*** NOW WE MUST REPLICATE TO COMPUTE NODES
+
+Currently:
+
+: login node works fully
+
+Now we configure:
+
+- compute01
+- compute02
+- compute03
+
+with EXACT same client setup.
+** Troubleshooting
+*** Important Slurm + LDAP Troubleshooting
+
+This section explains one of the MOST common HPC setup issues.
+
+*** Symptom
+
+LDAP users:
+
+- can SSH login
+- can use su
+- appear in getent passwd
+
+BUT:
+
+#+begin_src bash
+sbatch submit.sh
+#+end_src
+
+results in:
+
+- jobs stuck in pending
+- BeginTime state
+- scheduler instability
+- sinfo hanging
+- Slurm credential errors
+- slurmctld crashes
+
+*** Root Cause
+
+Slurm internally works using:
+
+- UID
+- GID
+- NSS identity resolution
+
+When launching jobs, Slurm performs internal user identity lookups.
+
+If master node cannot resolve LDAP users correctly through:
+
+- NSS
+- nslcd
+- LDAP
+
+then:
+
+- Slurm credential generation fails
+- scheduler may crash
+- jobs cannot launch
+
+Common error:
+
+#+begin_example
+_fill_cred_gids: getpwuid failed for uid=10001
+#+end_example
+
+Meaning:
+
+#+begin_example
+Slurm cannot resolve LDAP user identity correctly.
+#+end_example
+
+*** Important Verification Commands
+
+Run on:
+
+#+begin_example
+master
+login
+compute nodes
+#+end_example
+
+Verify LDAP resolution:
+
+#+begin_src bash
+getent passwd testUser
+id testUser
+#+end_src
+
+Expected:
+
+#+begin_example
+uid=10001(testUser) gid=10000(hpcusers)
+#+end_example
+
+These commands MUST work correctly on ALL cluster nodes.
+
+*** Important Master Node Verification
+
+The master node MUST also resolve LDAP users correctly.
+
+Verify:
+
+#+begin_src bash
+getent passwd testUser
+#+end_src
+
+If master cannot resolve LDAP users:
+
+- slurmctld may fail
+- scheduler may crash
+- jobs remain pending
+
+Verify nslcd configuration on master:
+
+#+begin_src bash
+sudo vim /etc/nslcd.conf
+#+end_src
+
+Example:
+
+#+begin_src conf
+uid nslcd
+gid ldap
+
+uri ldap://master
+base dc=hpc,dc=local
+#+end_src
+
+Verify NSS configuration:
+
+#+begin_src bash
+sudo vim /etc/nsswitch.conf
+#+end_src
+
+Ensure:
+
+#+begin_src text
+passwd: files ldap
+group: files ldap
+shadow: files ldap
+#+end_src
+
+Restart LDAP client:
+
+#+begin_src bash
+sudo systemctl restart nslcd
+#+end_src
+
+*** Important Slurm Architecture
+
+Correct architecture:
+
+| Node | Service |
+|-------+----------|
+| master | slurmctld |
+| login | login services only |
+| compute01 | slurmd |
+| compute02 | slurmd |
+| compute03 | slurmd |
+
+IMPORTANT:
+
+#+begin_example
+Login node should NOT run slurmd.
+#+end_example
+
+Because login node is NOT configured as a compute node in:
+
+#+begin_example
+/etc/slurm/slurm.conf
+#+end_example
+
+Attempting to start slurmd on login gives:
+
+#+begin_example
+slurmd: fatal: Unable to determine this slurmd's NodeName
+#+end_example
+
+This is NORMAL and expected.
+
+Correct action on login node:
+
+#+begin_src bash
+sudo systemctl stop slurmd
+sudo systemctl disable slurmd
+#+end_src
+
+Expected afterward:
+
+#+begin_example
+inactive (dead)
+#+end_example
+
+This is CORRECT for login nodes.
+
+*** Important Slurm Recovery Commands
+
+Whenever:
+
+- LDAP users are added
+- NSS configuration changes
+- PAM configuration changes
+- nslcd configuration changes
+
+restart Slurm services.
+
+Restart controller on master:
+
+#+begin_src bash
+sudo systemctl restart slurmctld
+#+end_src
+
+Restart compute daemons on compute nodes:
+
+#+begin_src bash
+sudo systemctl restart slurmd
+#+end_src
+
+Restart LDAP client:
+
+#+begin_src bash
+sudo systemctl restart nslcd
+#+end_src
+
+Verify cluster:
+
+#+begin_src bash
+sinfo
+#+end_src
+
+Expected:
+
+#+begin_example
+debug* up infinite 3 idle compute[01-03]
+#+end_example
+
+*** Important Scheduler Debugging
+
+If:
+
+#+begin_src bash
+sinfo
+#+end_src
+
+hangs indefinitely:
+
+Possible cause:
+
+#+begin_example
+slurmctld crashed
+#+end_example
+
+Verify:
+
+#+begin_src bash
+systemctl status slurmctld
+#+end_src
+
+or:
+
+#+begin_src bash
+journalctl -u slurmctld -n 50
+#+end_src
 ** Current Cluster State After LDAP Setup
 
 Cluster now contains:

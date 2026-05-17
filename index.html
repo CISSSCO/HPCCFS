@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2026-05-16 Sat 19:03 -->
+<!-- 2026-05-17 Sun 23:00 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>ClusterSetup</title>
@@ -29,256 +29,257 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
-<li><a href="#org0bc4dc0">1. Introduction</a></li>
-<li><a href="#org756bb9d">2. Cluster Architecture</a></li>
-<li><a href="#orgf20d5d0">3. Node Details</a>
+<li><a href="#org9c875f3">1. Introduction</a></li>
+<li><a href="#org370727b">2. Cluster Architecture</a></li>
+<li><a href="#org2f3f10a">3. Node Details</a>
 <ul>
-<li><a href="#org517c355">3.1. Node Role</a></li>
-<li><a href="#orgc7c7646">3.2. Networking Setup</a></li>
-<li><a href="#org5be7eeb">3.3. Static IP Addressing</a></li>
+<li><a href="#org938222a">3.1. Node Role</a></li>
+<li><a href="#orgcb320ac">3.2. Networking Setup</a></li>
+<li><a href="#orgd03ff60">3.3. Static IP Addressing</a></li>
 </ul>
 </li>
-<li><a href="#orgd0a0c06">4. Resource Allocation</a>
+<li><a href="#org521a57f">4. Resource Allocation</a>
 <ul>
-<li><a href="#orge01a8f5">4.1. Master Node</a></li>
-<li><a href="#orga85d680">4.2. Login Node</a></li>
-<li><a href="#orgc007d2a">4.3. Compute Nodes</a></li>
+<li><a href="#orgdfdaf79">4.1. Master Node</a></li>
+<li><a href="#org1d1289a">4.2. Login Node</a></li>
+<li><a href="#org239621f">4.3. Compute Nodes</a></li>
 </ul>
 </li>
-<li><a href="#orga877946">5. Master Node Setup</a>
+<li><a href="#org08a74f7">5. Master Node Setup</a>
 <ul>
-<li><a href="#org056a8d5">5.1. Install VirtualBox on Manjaro</a></li>
-<li><a href="#orgb3a8a54">5.2. Download Rocky Linux</a></li>
-<li><a href="#org6132879">5.3. Create Master VM</a></li>
-<li><a href="#org2fc23db">5.4. Network Configuration</a></li>
-<li><a href="#orgc0c8db6">5.5. Rocky Linux Installation</a></li>
-<li><a href="#orgd7dfb1a">5.6. Initial System Verification</a></li>
-<li><a href="#orgbcd150c">5.7. Configure Static Internal Network</a></li>
-<li><a href="#orgdc39a98">5.8. Configure Internal Interface</a></li>
-<li><a href="#orgc08bd02">5.9. Restart Networking</a></li>
-<li><a href="#org0bc010e">5.10. Verify Networking</a></li>
-<li><a href="#orgb1cbb7d">5.11. SSH Access from Host</a></li>
-<li><a href="#org7c1347f">5.12. System Update and Packages</a></li>
-<li><a href="#orgca5f173">5.13. Timezone Configuration</a></li>
-<li><a href="#org38ef555">5.14. Configure /etc/hosts</a></li>
-<li><a href="#orgda684ca">5.15. Disable Firewall (Temporary)</a></li>
-<li><a href="#org79bbff7">5.16. SELinux Configuration</a></li>
-<li><a href="#org5769301">5.17. Verify Hostname</a></li>
+<li><a href="#orgdc3f78c">5.1. Install VirtualBox on Manjaro</a></li>
+<li><a href="#orga0ff974">5.2. Download Rocky Linux</a></li>
+<li><a href="#orgfdee2e7">5.3. Create Master VM</a></li>
+<li><a href="#orge54b7d4">5.4. Network Configuration</a></li>
+<li><a href="#org9c56a64">5.5. Rocky Linux Installation</a></li>
+<li><a href="#orgb7901e9">5.6. Initial System Verification</a></li>
+<li><a href="#orgeada6fb">5.7. Configure Static Internal Network</a></li>
+<li><a href="#org161ddf5">5.8. Configure Internal Interface</a></li>
+<li><a href="#org32f8797">5.9. Restart Networking</a></li>
+<li><a href="#org3acdc6a">5.10. Verify Networking</a></li>
+<li><a href="#org11d6840">5.11. SSH Access from Host</a></li>
+<li><a href="#org914dad3">5.12. System Update and Packages</a></li>
+<li><a href="#orgf35c46a">5.13. Timezone Configuration</a></li>
+<li><a href="#orgb4db085">5.14. Configure /etc/hosts</a></li>
+<li><a href="#orgdbdbb5c">5.15. Disable Firewall (Temporary)</a></li>
+<li><a href="#orgb0dd053">5.16. SELinux Configuration</a></li>
+<li><a href="#org1c041a1">5.17. Verify Hostname</a></li>
 </ul>
 </li>
-<li><a href="#orgd86c4b6">6. Cloning Nodes</a>
+<li><a href="#org4c64a7c">6. Cloning Nodes</a>
 <ul>
-<li><a href="#orgf0b2a65">6.1. Create Snapshot</a></li>
-<li><a href="#org9ac9735">6.2. Clone Nodes</a></li>
-<li><a href="#org4ae673f">6.3. Clone Names</a></li>
-<li><a href="#orgcfb5dcf">6.4. Configure Port Forwarding</a></li>
-<li><a href="#orgb04603d">6.5. Machine ID Regeneration</a></li>
-<li><a href="#orgba97553">6.6. Remove Existing Machine ID</a></li>
-<li><a href="#orgeaab154">6.7. Generate New Machine ID</a></li>
-<li><a href="#org47160d7">6.8. Verify Machine ID</a></li>
-<li><a href="#org667160e">6.9. Configure Hostname</a></li>
-<li><a href="#orgc80af01">6.10. Configure Static Internal IPs</a></li>
-<li><a href="#orgd5598a7">6.11. Restart Networking</a></li>
-<li><a href="#orgc60c436">6.12. Verify Networking</a></li>
-<li><a href="#org44f91a4">6.13. Verify Routing</a></li>
-<li><a href="#org573012e">6.14. Verify Connectivity</a></li>
-<li><a href="#org22b030f">6.15. SSH Verification</a></li>
+<li><a href="#org32fb51f">6.1. Create Snapshot</a></li>
+<li><a href="#org03eecf3">6.2. Clone Nodes</a></li>
+<li><a href="#org6764d26">6.3. Clone Names</a></li>
+<li><a href="#orgdc34519">6.4. Configure Port Forwarding</a></li>
+<li><a href="#orgdeae633">6.5. Machine ID Regeneration</a></li>
+<li><a href="#orgad52404">6.6. Remove Existing Machine ID</a></li>
+<li><a href="#org8190d27">6.7. Generate New Machine ID</a></li>
+<li><a href="#orgd69fd27">6.8. Verify Machine ID</a></li>
+<li><a href="#orgc7844f4">6.9. Configure Hostname</a></li>
+<li><a href="#orgd79ea9f">6.10. Configure Static Internal IPs</a></li>
+<li><a href="#org5d32023">6.11. Restart Networking</a></li>
+<li><a href="#org785d672">6.12. Verify Networking</a></li>
+<li><a href="#org0b605db">6.13. Verify Routing</a></li>
+<li><a href="#org2585384">6.14. Verify Connectivity</a></li>
+<li><a href="#org0eb9e00">6.15. SSH Verification</a></li>
 </ul>
 </li>
-<li><a href="#org1d08342">7. Shared Infrastructure Services</a>
+<li><a href="#org95b9441">7. Shared Infrastructure Services</a>
 <ul>
-<li><a href="#org78b4035">7.1. Cluster Role Architecture</a></li>
-<li><a href="#org0376bd3">7.2. Verify User Consistency</a></li>
-<li><a href="#orgb267d52">7.3. Passwordless SSH Configuration</a></li>
-<li><a href="#org3774ed5">7.4. Generate SSH Key on Login Node</a></li>
-<li><a href="#org8150e9c">7.5. Copy SSH Keys to Cluster Nodes</a></li>
-<li><a href="#org66101b1">7.6. Verify Passwordless SSH</a></li>
-<li><a href="#org3e52ea2">7.7. HPC Concept — Why Passwordless SSH Matters</a></li>
-<li><a href="#org3dbd624">7.8. NFS Shared Storage Setup</a></li>
-<li><a href="#org130fbd9">7.9. Install NFS Packages</a></li>
-<li><a href="#org1f8bb46">7.10. Configure NFS Server on Master</a></li>
-<li><a href="#orgd560858">7.11. Enable NFS Services</a></li>
-<li><a href="#orgb887fa3">7.12. Configure NFS Exports</a></li>
-<li><a href="#org463d5de">7.13. Export Option Explanation</a></li>
-<li><a href="#org469e5ed">7.14. Apply Exports</a></li>
-<li><a href="#org77c3291">7.15. Verify Exports</a></li>
-<li><a href="#orgf0ab2e7">7.16. Configure NFS Clients</a></li>
-<li><a href="#org7c68e94">7.17. Backup Existing Home Directory</a></li>
-<li><a href="#orga8abcfb">7.18. Create New Mount Point</a></li>
-<li><a href="#org345316c">7.19. Mount Shared NFS Home</a></li>
-<li><a href="#org7490922">7.20. Verify Mount</a></li>
-<li><a href="#org11e2341">7.21. Verify Shared Filesystem</a></li>
-<li><a href="#org526828c">7.22. Configure Persistent NFS Mounts</a></li>
-<li><a href="#org844bbd6">7.23. Configure /etc/fstab</a></li>
-<li><a href="#orgcaadec1">7.24. Verify fstab Before Reboot</a></li>
-<li><a href="#orgb7f4d7b">7.25. Reboot Validation Procedure</a></li>
-<li><a href="#orgc9099c7">7.26. Reboot Order</a></li>
-<li><a href="#orgddd0660">7.27. Verify Persistent Mounts After Reboot</a></li>
-<li><a href="#orgff689fb">7.28. Verify Active NFS Mount</a></li>
-<li><a href="#orgdeca548">7.29. Verify Shared Files After Reboot</a></li>
+<li><a href="#org47190b1">7.1. Cluster Role Architecture</a></li>
+<li><a href="#orgd531b3d">7.2. Verify User Consistency</a></li>
+<li><a href="#org9a0a679">7.3. Passwordless SSH Configuration</a></li>
+<li><a href="#orgb152bfc">7.4. Generate SSH Key on Login Node</a></li>
+<li><a href="#orge00115a">7.5. Copy SSH Keys to Cluster Nodes</a></li>
+<li><a href="#orgad7042f">7.6. Verify Passwordless SSH</a></li>
+<li><a href="#org9177dac">7.7. HPC Concept — Why Passwordless SSH Matters</a></li>
+<li><a href="#orgf875e84">7.8. NFS Shared Storage Setup</a></li>
+<li><a href="#orgafaaa05">7.9. Install NFS Packages</a></li>
+<li><a href="#orga3c1a9a">7.10. Configure NFS Server on Master</a></li>
+<li><a href="#orge426cd1">7.11. Enable NFS Services</a></li>
+<li><a href="#org45322f2">7.12. Configure NFS Exports</a></li>
+<li><a href="#orgaf3e5c7">7.13. Export Option Explanation</a></li>
+<li><a href="#orgc689430">7.14. Apply Exports</a></li>
+<li><a href="#orgc504329">7.15. Verify Exports</a></li>
+<li><a href="#org45029af">7.16. Configure NFS Clients</a></li>
+<li><a href="#org23857a9">7.17. Backup Existing Home Directory</a></li>
+<li><a href="#orge309ac0">7.18. Create New Mount Point</a></li>
+<li><a href="#org337b889">7.19. Mount Shared NFS Home</a></li>
+<li><a href="#org72c0516">7.20. Verify Mount</a></li>
+<li><a href="#org4e27583">7.21. Verify Shared Filesystem</a></li>
+<li><a href="#org0afd01a">7.22. Configure Persistent NFS Mounts</a></li>
+<li><a href="#orgbfb6a0b">7.23. Configure /etc/fstab</a></li>
+<li><a href="#orgae46888">7.24. Verify fstab Before Reboot</a></li>
+<li><a href="#orgf24b1fa">7.25. Reboot Validation Procedure</a></li>
+<li><a href="#org3938ceb">7.26. Reboot Order</a></li>
+<li><a href="#org434d4ae">7.27. Verify Persistent Mounts After Reboot</a></li>
+<li><a href="#orgd285dfd">7.28. Verify Active NFS Mount</a></li>
+<li><a href="#org90f22ab">7.29. Verify Shared Files After Reboot</a></li>
 </ul>
 </li>
-<li><a href="#orgd06e638">8. Munge Authentication + Slurm Scheduler</a>
+<li><a href="#orgd294a19">8. Munge Authentication + Slurm Scheduler</a>
 <ul>
-<li><a href="#org777c86c">8.1. HPC Scheduler Architecture</a></li>
-<li><a href="#org4cd0000">8.2. IMPORTANT Rocky Linux 10 Issue</a></li>
-<li><a href="#org89fcb0a">8.3. Install EPEL Repository</a></li>
-<li><a href="#org0bfdf7e">8.4. Enable CRB Repository</a></li>
-<li><a href="#org246e4c6">8.5. Install Munge + Slurm Packages</a></li>
-<li><a href="#org25e8530">8.6. Verify Installed Packages</a></li>
-<li><a href="#org6fc0693">8.7. Verify System Users</a></li>
-<li><a href="#org351e3cc">8.8. IMPORTANT Issue Encountered — Missing slurm User</a></li>
-<li><a href="#org96e58f5">8.9. Create Slurm Group</a></li>
-<li><a href="#orge3de75f">8.10. Create Slurm User</a></li>
-<li><a href="#orgff144ea">8.11. Verify Slurm User</a></li>
-<li><a href="#orgceee4bd">8.12. IMPORTANT HPC Security Concept</a></li>
-<li><a href="#org6a18e01">8.13. Configure Munge Authentication</a></li>
-<li><a href="#org940c1c1">8.14. Generate Munge Key on Master</a></li>
-<li><a href="#org46d18bc">8.15. Verify Munge Key</a></li>
-<li><a href="#org937ed6e">8.16. IMPORTANT Mistake Encountered — Munge Key Generated on All Nodes</a></li>
-<li><a href="#org1f37b27">8.17. Correct Munge Key Distribution</a></li>
-<li><a href="#org149219c">8.18. IMPORTANT SSH Root Login Issue</a></li>
-<li><a href="#org41844fc">8.19. Copy Munge Key to Login Node</a></li>
-<li><a href="#org386ce28">8.20. Copy Munge Key to Compute01</a></li>
-<li><a href="#org62b83a2">8.21. Copy Munge Key to Compute02</a></li>
-<li><a href="#org3acba60">8.22. Copy Munge Key to Compute03</a></li>
-<li><a href="#org73b56df">8.23. Remove Temporary Key Copy</a></li>
-<li><a href="#org337ed37">8.24. Install Munge Key on Client Nodes</a></li>
-<li><a href="#org61349e8">8.25. Stop Munge Service</a></li>
-<li><a href="#orgca090e2">8.26. Install Key</a></li>
-<li><a href="#org4186d69">8.27. Fix Ownership</a></li>
-<li><a href="#orgef730ec">8.28. Fix Permissions</a></li>
-<li><a href="#orgc0fc251">8.29. Start Munge</a></li>
-<li><a href="#orge18c90e">8.30. IMPORTANT Issue Encountered — Munge Not Running on Master</a></li>
-<li><a href="#orgc196fef">8.31. Verify Munge Service</a></li>
-<li><a href="#orgef4c95c">8.32. Verify Munge Authentication</a></li>
-<li><a href="#org61f9fbb">8.33. Test Compute02</a></li>
-<li><a href="#org17acaaa">8.34. Test Compute03</a></li>
-<li><a href="#org094064a">8.35. Test Login Node</a></li>
-<li><a href="#org732322c">8.36. HPC Concepts Learned</a></li>
-<li><a href="#orga41ef3a">8.37. Configure Slurm Scheduler</a></li>
-<li><a href="#org3221230">8.38. IMPORTANT Issue Encountered — Default localhost Configuration</a></li>
-<li><a href="#orgbe232fd">8.39. Create Slurm Configuration</a></li>
-<li><a href="#org278481e">8.40. Configuration Explanation</a></li>
-<li><a href="#orge112ab0">8.41. Create Slurm Runtime Directories</a></li>
-<li><a href="#org162d463">8.42. Set Ownership</a></li>
-<li><a href="#orgce3286b">8.43. Create slurmd Directories on Compute Nodes</a></li>
-<li><a href="#org533d262">8.44. IMPORTANT sudo Over SSH Issue</a></li>
-<li><a href="#orge3a21c7">8.45. Fix Ownership on Compute Nodes</a></li>
-<li><a href="#org6fd98ce">8.46. Verify Runtime Directories</a></li>
-<li><a href="#org966d115">8.47. Distribute slurm.conf</a></li>
-<li><a href="#orgabbc51c">8.48. Install Configuration on Nodes</a></li>
-<li><a href="#orgf50ae35">8.49. Start Slurm Controller</a></li>
-<li><a href="#org3e29480">8.50. Verify Controller</a></li>
-<li><a href="#orgde25cd7">8.51. Start slurmd on Compute Nodes</a></li>
-<li><a href="#org96bec4c">8.52. Verify slurmd</a></li>
-<li><a href="#org6746520">8.53. Reconfigure Slurm</a></li>
-<li><a href="#org3ed6825">8.54. IMPORTANT Issue Encountered — Nodes in DRAIN State</a></li>
-<li><a href="#orgf5f6799">8.55. Stop slurmd</a></li>
-<li><a href="#org35223d7">8.56. Remove Old State</a></li>
-<li><a href="#org3da3b30">8.57. Restart slurmd</a></li>
-<li><a href="#orge789e72">8.58. Resume Nodes</a></li>
-<li><a href="#org097147d">8.59. Verify Cluster Status</a></li>
-<li><a href="#org671db09">8.60. Verify Node Details</a></li>
-<li><a href="#org59ecf9c">8.61. Test Slurm Execution</a></li>
-<li><a href="#org4fde9f3">8.62. Multi-node Execution</a></li>
-<li><a href="#org399abb3">8.63. Multi-task Multi-node Execution</a></li>
-<li><a href="#org1575660">8.64. Multi-core Single-node Execution</a></li>
-<li><a href="#org1ab3ca8">8.65. IMPORTANT Slurm Scheduling Concept</a></li>
+<li><a href="#orgc695df2">8.1. HPC Scheduler Architecture</a></li>
+<li><a href="#orge7056bd">8.2. IMPORTANT Rocky Linux 10 Issue</a></li>
+<li><a href="#org215c01d">8.3. Install EPEL Repository</a></li>
+<li><a href="#org600d2b5">8.4. Enable CRB Repository</a></li>
+<li><a href="#orge28c037">8.5. Install Munge + Slurm Packages</a></li>
+<li><a href="#orge6cadd4">8.6. Verify Installed Packages</a></li>
+<li><a href="#org305981a">8.7. Verify System Users</a></li>
+<li><a href="#orgeb87513">8.8. IMPORTANT Issue Encountered — Missing slurm User</a></li>
+<li><a href="#org65831f0">8.9. Create Slurm Group</a></li>
+<li><a href="#orgb9dc4de">8.10. Create Slurm User</a></li>
+<li><a href="#orgdb49790">8.11. Verify Slurm User</a></li>
+<li><a href="#org95d41ee">8.12. IMPORTANT HPC Security Concept</a></li>
+<li><a href="#org692bd0f">8.13. Configure Munge Authentication</a></li>
+<li><a href="#org43d1b2b">8.14. Generate Munge Key on Master</a></li>
+<li><a href="#orgc7ea37d">8.15. Verify Munge Key</a></li>
+<li><a href="#orgb8aab1b">8.16. IMPORTANT Mistake Encountered — Munge Key Generated on All Nodes</a></li>
+<li><a href="#org75978d6">8.17. Correct Munge Key Distribution</a></li>
+<li><a href="#org265eefe">8.18. IMPORTANT SSH Root Login Issue</a></li>
+<li><a href="#orgc2610f7">8.19. Copy Munge Key to Login Node</a></li>
+<li><a href="#orgc9cda71">8.20. Copy Munge Key to Compute01</a></li>
+<li><a href="#orgf238194">8.21. Copy Munge Key to Compute02</a></li>
+<li><a href="#orgef0908f">8.22. Copy Munge Key to Compute03</a></li>
+<li><a href="#orgf8bbab1">8.23. Remove Temporary Key Copy</a></li>
+<li><a href="#orgcfd83a1">8.24. Install Munge Key on Client Nodes</a></li>
+<li><a href="#orga4f94a6">8.25. Stop Munge Service</a></li>
+<li><a href="#org55c7e7e">8.26. Install Key</a></li>
+<li><a href="#org34260fc">8.27. Fix Ownership</a></li>
+<li><a href="#orgbc5ac48">8.28. Fix Permissions</a></li>
+<li><a href="#org9cd7519">8.29. Start Munge</a></li>
+<li><a href="#org6ccdbea">8.30. IMPORTANT Issue Encountered — Munge Not Running on Master</a></li>
+<li><a href="#orgfc82066">8.31. Verify Munge Service</a></li>
+<li><a href="#org8c1aa08">8.32. Verify Munge Authentication</a></li>
+<li><a href="#org269a228">8.33. Test Compute02</a></li>
+<li><a href="#orgdf14733">8.34. Test Compute03</a></li>
+<li><a href="#orga8a0835">8.35. Test Login Node</a></li>
+<li><a href="#org3ad69fc">8.36. HPC Concepts Learned</a></li>
+<li><a href="#orga8f7100">8.37. Configure Slurm Scheduler</a></li>
+<li><a href="#org35b1441">8.38. IMPORTANT Issue Encountered — Default localhost Configuration</a></li>
+<li><a href="#org499c8a6">8.39. Create Slurm Configuration</a></li>
+<li><a href="#orgf5f2bdd">8.40. Configuration Explanation</a></li>
+<li><a href="#org2db28b8">8.41. Create Slurm Runtime Directories</a></li>
+<li><a href="#orga89f37a">8.42. Set Ownership</a></li>
+<li><a href="#orgff3f15d">8.43. Create slurmd Directories on Compute Nodes</a></li>
+<li><a href="#orgce8e635">8.44. IMPORTANT sudo Over SSH Issue</a></li>
+<li><a href="#org0848613">8.45. Fix Ownership on Compute Nodes</a></li>
+<li><a href="#orgd91e587">8.46. Verify Runtime Directories</a></li>
+<li><a href="#org1b527a5">8.47. Distribute slurm.conf</a></li>
+<li><a href="#org7499737">8.48. Install Configuration on Nodes</a></li>
+<li><a href="#org012257f">8.49. Start Slurm Controller</a></li>
+<li><a href="#orgcad3b23">8.50. Verify Controller</a></li>
+<li><a href="#orgdc33b30">8.51. Start slurmd on Compute Nodes</a></li>
+<li><a href="#orgcb16568">8.52. Verify slurmd</a></li>
+<li><a href="#org0ff99a5">8.53. Reconfigure Slurm</a></li>
+<li><a href="#orgf11a89f">8.54. IMPORTANT Issue Encountered — Nodes in DRAIN State</a></li>
+<li><a href="#org423c282">8.55. Stop slurmd</a></li>
+<li><a href="#orgde2b8ba">8.56. Remove Old State</a></li>
+<li><a href="#orgdc7878a">8.57. Restart slurmd</a></li>
+<li><a href="#orgc6d2613">8.58. Resume Nodes</a></li>
+<li><a href="#orgcdc9cb2">8.59. Verify Cluster Status</a></li>
+<li><a href="#org12bdd92">8.60. Verify Node Details</a></li>
+<li><a href="#org711fd7a">8.61. Test Slurm Execution</a></li>
+<li><a href="#orgfea5180">8.62. Multi-node Execution</a></li>
+<li><a href="#org82c6870">8.63. Multi-task Multi-node Execution</a></li>
+<li><a href="#orgeb24170">8.64. Multi-core Single-node Execution</a></li>
+<li><a href="#org1527744">8.65. IMPORTANT Slurm Scheduling Concept</a></li>
 </ul>
 </li>
-<li><a href="#org21ce0fe">9. Shared Software Filesystem (/apps) + HPC Software Stack</a>
+<li><a href="#orgd5147b6">9. Shared Software Filesystem (/apps) + HPC Software Stack</a>
 <ul>
-<li><a href="#orgdc7e324">9.1. Why Separate /apps Filesystem?</a></li>
-<li><a href="#org8831097">9.2. IMPORTANT Storage Architecture Concept</a></li>
-<li><a href="#org4a72143">9.3. Add New Virtual Disk to Master</a></li>
-<li><a href="#org90b35c5">9.4. Verify New Disk Detection</a></li>
-<li><a href="#orgf20ef3a">9.5. Create GPT Partition Table</a></li>
-<li><a href="#orge39441c">9.6. Verify Partition</a></li>
-<li><a href="#org131e6d9">9.7. Create XFS Filesystem</a></li>
-<li><a href="#orgdcf92e0">9.8. Create Mount Point</a></li>
-<li><a href="#org6d4e512">9.9. Get Filesystem UUID</a></li>
-<li><a href="#orgc8f7154">9.10. Configure Persistent Mount</a></li>
-<li><a href="#org5e55255">9.11. Mount Filesystem</a></li>
-<li><a href="#org8375223">9.12. Verify Mount</a></li>
-<li><a href="#org9eb8843">9.13. Configure Ownership</a></li>
-<li><a href="#org48c1750">9.14. Create Shared HPC Software Hierarchy</a></li>
-<li><a href="#orge577e72">9.15. HPC Software Hierarchy Concept</a></li>
-<li><a href="#org87998f5">9.16. Export /apps via NFS</a></li>
-<li><a href="#org71931b5">9.17. Apply NFS Exports</a></li>
-<li><a href="#org70d23d3">9.18. Verify Exports</a></li>
-<li><a href="#org76d6234">9.19. Create Mount Points on Client Nodes</a></li>
-<li><a href="#orgcbccaba">9.20. Configure Persistent NFS Mounts</a></li>
-<li><a href="#orgd4d3551">9.21. Mount Shared /apps Filesystem</a></li>
-<li><a href="#org54e1238">9.22. Verify Shared Mount</a></li>
-<li><a href="#org94d971c">9.23. Verify Shared Filesystem Functionality</a></li>
-<li><a href="#org286b748">9.24. HPC Architecture After /apps Setup</a></li>
-<li><a href="#orgf591efe">9.25. PHASE 1G — Spack Software Stack + MPI Runtime Validation</a></li>
-<li><a href="#org5459357">9.26. IMPORTANT HPC Software Stack Concept</a></li>
-<li><a href="#orgdb2d076">9.27. Install Development Tools</a></li>
-<li><a href="#org0cf6311">9.28. Clone Spack into Shared Filesystem</a></li>
-<li><a href="#org46fb883">9.29. Enter Spack Directory</a></li>
-<li><a href="#orgcbaa4fd">9.30. Initialize Spack Environment</a></li>
-<li><a href="#orge70b9e9">9.31. Clone Additional Spack Repository</a></li>
-<li><a href="#org842d616">9.32. Configure Spack Repository</a></li>
-<li><a href="#org234f433">9.33. Verify Spack Functionality</a></li>
-<li><a href="#orgcf19789">9.34. IMPORTANT HPC Software Stack Concept</a></li>
-<li><a href="#org5974286">9.35. Install GCC Using Spack</a></li>
-<li><a href="#orgdba92d7">9.36. Load Installed GCC Compiler</a></li>
-<li><a href="#org7235712">9.37. Verify Loaded Compiler</a></li>
-<li><a href="#orgf010fb2">9.38. Install OpenMPI Using Spack</a></li>
-<li><a href="#orgbf9b925">9.39. Load OpenMPI Environment</a></li>
-<li><a href="#org97a0e24">9.40. Verify MPI Compiler Wrapper</a></li>
-<li><a href="#orge360afc">9.41. IMPORTANT MPI Wrapper Concept</a></li>
-<li><a href="#org49d0fb7">9.42. Create MPI Sum Program</a></li>
-<li><a href="#org0e664ae">9.43. Compile MPI Program</a></li>
-<li><a href="#org4f3d0e8">9.44. IMPORTANT Shared Filesystem Advantage</a></li>
-<li><a href="#org6eefdd3">9.45. Create Slurm Batch Script</a></li>
-<li><a href="#org41ff322">9.46. Submit MPI Job</a></li>
-<li><a href="#orgf412833">9.47. Verify Job Execution</a></li>
+<li><a href="#org16027ac">9.1. Why Separate /apps Filesystem?</a></li>
+<li><a href="#org68fb07d">9.2. IMPORTANT Storage Architecture Concept</a></li>
+<li><a href="#orgef22bb7">9.3. Add New Virtual Disk to Master</a></li>
+<li><a href="#org42b82bb">9.4. Verify New Disk Detection</a></li>
+<li><a href="#org36579f1">9.5. Create GPT Partition Table</a></li>
+<li><a href="#orgde41f0f">9.6. Verify Partition</a></li>
+<li><a href="#org27e8fc5">9.7. Create XFS Filesystem</a></li>
+<li><a href="#org4e30db2">9.8. Create Mount Point</a></li>
+<li><a href="#org78ccd64">9.9. Get Filesystem UUID</a></li>
+<li><a href="#org9a0e636">9.10. Configure Persistent Mount</a></li>
+<li><a href="#org9ed5c5d">9.11. Mount Filesystem</a></li>
+<li><a href="#orgac2649e">9.12. Verify Mount</a></li>
+<li><a href="#org3e85256">9.13. Configure Ownership</a></li>
+<li><a href="#orgb52ca32">9.14. Create Shared HPC Software Hierarchy</a></li>
+<li><a href="#org3dd9998">9.15. HPC Software Hierarchy Concept</a></li>
+<li><a href="#org42f6090">9.16. Export /apps via NFS</a></li>
+<li><a href="#orgb3a2560">9.17. Apply NFS Exports</a></li>
+<li><a href="#orga3e363e">9.18. Verify Exports</a></li>
+<li><a href="#orga4b3650">9.19. Create Mount Points on Client Nodes</a></li>
+<li><a href="#org8e52537">9.20. Configure Persistent NFS Mounts</a></li>
+<li><a href="#orgbd6c02f">9.21. Mount Shared /apps Filesystem</a></li>
+<li><a href="#org36522a4">9.22. Verify Shared Mount</a></li>
+<li><a href="#orgf77b204">9.23. Verify Shared Filesystem Functionality</a></li>
+<li><a href="#org4d60182">9.24. HPC Architecture After /apps Setup</a></li>
+<li><a href="#org12eb08a">9.25. PHASE 1G — Spack Software Stack + MPI Runtime Validation</a></li>
+<li><a href="#org69ef523">9.26. IMPORTANT HPC Software Stack Concept</a></li>
+<li><a href="#org90d671f">9.27. Install Development Tools</a></li>
+<li><a href="#org6dfad36">9.28. Clone Spack into Shared Filesystem</a></li>
+<li><a href="#org3be771d">9.29. Enter Spack Directory</a></li>
+<li><a href="#orgf68a3a2">9.30. Initialize Spack Environment</a></li>
+<li><a href="#org3e94a9a">9.31. Clone Additional Spack Repository</a></li>
+<li><a href="#org2ce0474">9.32. Configure Spack Repository</a></li>
+<li><a href="#orge9b89ac">9.33. Verify Spack Functionality</a></li>
+<li><a href="#org6824087">9.34. IMPORTANT HPC Software Stack Concept</a></li>
+<li><a href="#org96a372c">9.35. Install GCC Using Spack</a></li>
+<li><a href="#org3e68d9f">9.36. Load Installed GCC Compiler</a></li>
+<li><a href="#org2e710cc">9.37. Verify Loaded Compiler</a></li>
+<li><a href="#org67a8f02">9.38. Install OpenMPI Using Spack</a></li>
+<li><a href="#orgd06d0b3">9.39. Load OpenMPI Environment</a></li>
+<li><a href="#orgf0af6af">9.40. Verify MPI Compiler Wrapper</a></li>
+<li><a href="#orge2970ea">9.41. IMPORTANT MPI Wrapper Concept</a></li>
+<li><a href="#orgef21a05">9.42. Create MPI Sum Program</a></li>
+<li><a href="#org5a89227">9.43. Compile MPI Program</a></li>
+<li><a href="#org3e0bc6e">9.44. IMPORTANT Shared Filesystem Advantage</a></li>
+<li><a href="#orgfa3ca6a">9.45. Create Slurm Batch Script</a></li>
+<li><a href="#org671461f">9.46. Submit MPI Job</a></li>
+<li><a href="#orgfe451d4">9.47. Verify Job Execution</a></li>
 </ul>
 </li>
-<li><a href="#org3f53508">10. Centralized Identity Management using OpenLDAP + nslcd</a>
+<li><a href="#orga9b627e">10. Centralized Identity Management using OpenLDAP + nslcd</a>
 <ul>
-<li><a href="#org231a95e">10.1. Important Architecture</a></li>
-<li><a href="#orgea1bd7f">10.2. Important Linux Authentication Concepts</a></li>
-<li><a href="#org546508c">10.3. Install OpenLDAP Server on Master Node</a></li>
-<li><a href="#orgc444573">10.4. Enable LDAP Server</a></li>
-<li><a href="#org31036bb">10.5. Generate LDAP Admin Password Hash</a></li>
-<li><a href="#org8ac4554">10.6. Configure LDAP Database</a></li>
-<li><a href="#org8c080aa">10.7. Important LDAP Concepts</a></li>
-<li><a href="#org258a62a">10.8. Apply LDAP Database Configuration</a></li>
-<li><a href="#orgfe1e063">10.9. Import LDAP Schemas</a></li>
-<li><a href="#org12c983b">10.10. Create LDAP Base Tree</a></li>
-<li><a href="#org447588f">10.11. Verify LDAP Tree</a></li>
-<li><a href="#org6d46fac">10.12. Create LDAP Group</a></li>
-<li><a href="#org68b0727">10.13. Create LDAP User Password Hash</a></li>
-<li><a href="#org651a981">10.14. Create LDAP User</a></li>
-<li><a href="#orgeb1218c">10.15. Important LDAP User Attributes</a></li>
-<li><a href="#org351fdca">10.16. Verify LDAP User</a></li>
-<li><a href="#org35ae25c">10.17. Configure LDAP Client on Login Node</a></li>
-<li><a href="#orgdd29ade">10.18. Configure nslcd</a></li>
-<li><a href="#org2db8169">10.19. Enable nslcd</a></li>
-<li><a href="#orgb5350f6">10.20. Verify LDAP Connectivity</a></li>
-<li><a href="#org84e1024">10.21. Configure NSS</a></li>
-<li><a href="#org8081651">10.22. Restart nslcd</a></li>
-<li><a href="#org9a95f7c">10.23. Verify LDAP User Resolution</a></li>
-<li><a href="#org28825ee">10.24. Install Automatic Home Directory Support</a></li>
-<li><a href="#orga781ae8">10.25. Configure PAM Authentication</a></li>
-<li><a href="#org13306df">10.26. Configure Second PAM File</a></li>
-<li><a href="#orgf2c8ea9">10.27. Restart Services</a></li>
-<li><a href="#orgc407a5d">10.28. Verify LDAP Authentication</a></li>
-<li><a href="#org34fa9a1">10.29. Verify User Home</a></li>
-<li><a href="#org7d173e2">10.30. Current Cluster State After LDAP Setup</a></li>
-<li><a href="#org16d8e45">10.31. Important Debugging Commands</a></li>
-<li><a href="#org26977be">10.32. Important Architecture Understanding</a></li>
+<li><a href="#orgc90dc65">10.1. Important Architecture</a></li>
+<li><a href="#orge21828d">10.2. Important Linux Authentication Concepts</a></li>
+<li><a href="#orgeb29beb">10.3. Install OpenLDAP Server on Master Node</a></li>
+<li><a href="#orgf2e8eec">10.4. Enable LDAP Server</a></li>
+<li><a href="#org4e7fcd3">10.5. Generate LDAP Admin Password Hash</a></li>
+<li><a href="#orgd5913d7">10.6. Configure LDAP Database</a></li>
+<li><a href="#orgb012760">10.7. Important LDAP Concepts</a></li>
+<li><a href="#org5f63c73">10.8. Apply LDAP Database Configuration</a></li>
+<li><a href="#org87dc4ed">10.9. Import LDAP Schemas</a></li>
+<li><a href="#org69a36ed">10.10. Create LDAP Base Tree</a></li>
+<li><a href="#org26c0cb0">10.11. Verify LDAP Tree</a></li>
+<li><a href="#orgeafecd3">10.12. Create LDAP Group</a></li>
+<li><a href="#org7ac929b">10.13. Create LDAP User Password Hash</a></li>
+<li><a href="#orgf323495">10.14. Create LDAP User</a></li>
+<li><a href="#org3abe1b4">10.15. Important LDAP User Attributes</a></li>
+<li><a href="#orgb15dea1">10.16. Verify LDAP User</a></li>
+<li><a href="#org116a170">10.17. Configure LDAP Client on Login Node</a></li>
+<li><a href="#orga985b05">10.18. Configure nslcd</a></li>
+<li><a href="#org9a89472">10.19. Enable nslcd</a></li>
+<li><a href="#orgc3e2c0a">10.20. Verify LDAP Connectivity</a></li>
+<li><a href="#orgfb37fc8">10.21. Configure NSS</a></li>
+<li><a href="#org64d67c9">10.22. Restart nslcd</a></li>
+<li><a href="#org60c6688">10.23. Verify LDAP User Resolution</a></li>
+<li><a href="#org6665dfb">10.24. Install Automatic Home Directory Support</a></li>
+<li><a href="#org4f9c5cd">10.25. Configure PAM Authentication</a></li>
+<li><a href="#orgd40167f">10.26. Configure Second PAM File</a></li>
+<li><a href="#orgae45247">10.27. Restart Services</a></li>
+<li><a href="#org2e415a7">10.28. Verify LDAP Authentication</a></li>
+<li><a href="#orgdeb3e35">10.29. Verify User Home</a></li>
+<li><a href="#org07d60f8">10.30. Troubleshooting</a></li>
+<li><a href="#org4e72dcc">10.31. Current Cluster State After LDAP Setup</a></li>
+<li><a href="#org4eab8fc">10.32. Important Debugging Commands</a></li>
+<li><a href="#org85fdf89">10.33. Important Architecture Understanding</a></li>
 </ul>
 </li>
 </ul>
 </div>
 </div>
-<div id="outline-container-org0bc4dc0" class="outline-2">
-<h2 id="org0bc4dc0"><span class="section-number-2">1.</span> Introduction</h2>
+<div id="outline-container-org9c875f3" class="outline-2">
+<h2 id="org9c875f3"><span class="section-number-2">1.</span> Introduction</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 This guide explains how to build a small HPC cluster from scratch using
@@ -316,15 +317,15 @@ configure each component manually.
 </p>
 </div>
 </div>
-<div id="outline-container-org756bb9d" class="outline-2">
-<h2 id="org756bb9d"><span class="section-number-2">2.</span> Cluster Architecture</h2>
+<div id="outline-container-org370727b" class="outline-2">
+<h2 id="org370727b"><span class="section-number-2">2.</span> Cluster Architecture</h2>
 <div class="outline-text-2" id="text-2">
 <p>
 The cluster consists of five virtual machines connected using an internal
 network.
 </p>
 
-<pre class="example" id="orgb9c7db2">
+<pre class="example" id="org85dbc8d">
                  HOST MACHINE
                        |
          ssh -p XXXX localhost
@@ -344,16 +345,16 @@ compute03   10.10.10.13
 </pre>
 </div>
 </div>
-<div id="outline-container-orgf20d5d0" class="outline-2">
-<h2 id="orgf20d5d0"><span class="section-number-2">3.</span> Node Details</h2>
+<div id="outline-container-org2f3f10a" class="outline-2">
+<h2 id="org2f3f10a"><span class="section-number-2">3.</span> Node Details</h2>
 <div class="outline-text-2" id="text-3">
 </div>
-<div id="outline-container-org517c355" class="outline-3">
-<h3 id="org517c355"><span class="section-number-3">3.1.</span> Node Role</h3>
+<div id="outline-container-org938222a" class="outline-3">
+<h3 id="org938222a"><span class="section-number-3">3.1.</span> Node Role</h3>
 <div class="outline-text-3" id="text-3-1">
 </div>
 <ol class="org-ol">
-<li><a id="orgb209948"></a>Master Node<br />
+<li><a id="org6478cac"></a>Master Node<br />
 <div class="outline-text-4" id="text-3-1-1">
 <p>
 The master node manages the overall cluster.
@@ -373,7 +374,7 @@ Main responsibilities:
 </ul>
 </div>
 </li>
-<li><a id="org9c7e5dd"></a>Login Node<br />
+<li><a id="orge5bec4f"></a>Login Node<br />
 <div class="outline-text-4" id="text-3-1-2">
 <p>
 The login node is the access point for users.
@@ -391,7 +392,7 @@ Typical tasks performed here:
 </ul>
 </div>
 </li>
-<li><a id="org1f0a568"></a>Compute Nodes<br />
+<li><a id="orgab256d2"></a>Compute Nodes<br />
 <div class="outline-text-4" id="text-3-1-3">
 <p>
 Compute nodes run the actual workloads.
@@ -411,15 +412,15 @@ These nodes are mainly used for:
 </li>
 </ol>
 </div>
-<div id="outline-container-orgc7c7646" class="outline-3">
-<h3 id="orgc7c7646"><span class="section-number-3">3.2.</span> Networking Setup</h3>
+<div id="outline-container-orgcb320ac" class="outline-3">
+<h3 id="orgcb320ac"><span class="section-number-3">3.2.</span> Networking Setup</h3>
 <div class="outline-text-3" id="text-3-2">
 <p>
 Two network adapters are used for each VM.
 </p>
 </div>
 <ol class="org-ol">
-<li><a id="org4477181"></a>NAT Adapter<br />
+<li><a id="orga52ea1c"></a>NAT Adapter<br />
 <div class="outline-text-4" id="text-3-2-1">
 <p>
 Used for:
@@ -432,7 +433,7 @@ Used for:
 </ul>
 </div>
 </li>
-<li><a id="org98a99bd"></a>Internal Network<br />
+<li><a id="orgde8ae8d"></a>Internal Network<br />
 <div class="outline-text-4" id="text-3-2-2">
 <p>
 Used for communication between cluster nodes.
@@ -442,7 +443,7 @@ Used for communication between cluster nodes.
 Network name:
 </p>
 
-<pre class="example" id="org9a7f7df">
+<pre class="example" id="org914091f">
 hpcnet
 </pre>
 
@@ -453,8 +454,8 @@ This network is isolated and only used inside the cluster.
 </li>
 </ol>
 </div>
-<div id="outline-container-org5be7eeb" class="outline-3">
-<h3 id="org5be7eeb"><span class="section-number-3">3.3.</span> Static IP Addressing</h3>
+<div id="outline-container-orgd03ff60" class="outline-3">
+<h3 id="orgd03ff60"><span class="section-number-3">3.3.</span> Static IP Addressing</h3>
 <div class="outline-text-3" id="text-3-3">
 <p>
 Each node uses a fixed IP address.
@@ -529,16 +530,16 @@ Example SSH access:
 </div>
 </div>
 </div>
-<div id="outline-container-orgd0a0c06" class="outline-2">
-<h2 id="orgd0a0c06"><span class="section-number-2">4.</span> Resource Allocation</h2>
+<div id="outline-container-org521a57f" class="outline-2">
+<h2 id="org521a57f"><span class="section-number-2">4.</span> Resource Allocation</h2>
 <div class="outline-text-2" id="text-4">
 <p>
 The following configuration is enough for a lightweight HPC lab.
 You can increase resources later depending on your host system.
 </p>
 </div>
-<div id="outline-container-orge01a8f5" class="outline-3">
-<h3 id="orge01a8f5"><span class="section-number-3">4.1.</span> Master Node</h3>
+<div id="outline-container-orgdfdaf79" class="outline-3">
+<h3 id="orgdfdaf79"><span class="section-number-3">4.1.</span> Master Node</h3>
 <div class="outline-text-3" id="text-4-1">
 <table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
 
@@ -573,8 +574,8 @@ You can increase resources later depending on your host system.
 </table>
 </div>
 </div>
-<div id="outline-container-orga85d680" class="outline-3">
-<h3 id="orga85d680"><span class="section-number-3">4.2.</span> Login Node</h3>
+<div id="outline-container-org1d1289a" class="outline-3">
+<h3 id="org1d1289a"><span class="section-number-3">4.2.</span> Login Node</h3>
 <div class="outline-text-3" id="text-4-2">
 <table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
 
@@ -609,8 +610,8 @@ You can increase resources later depending on your host system.
 </table>
 </div>
 </div>
-<div id="outline-container-orgc007d2a" class="outline-3">
-<h3 id="orgc007d2a"><span class="section-number-3">4.3.</span> Compute Nodes</h3>
+<div id="outline-container-org239621f" class="outline-3">
+<h3 id="org239621f"><span class="section-number-3">4.3.</span> Compute Nodes</h3>
 <div class="outline-text-3" id="text-4-3">
 <table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
 
@@ -646,8 +647,8 @@ You can increase resources later depending on your host system.
 </div>
 </div>
 </div>
-<div id="outline-container-orga877946" class="outline-2">
-<h2 id="orga877946"><span class="section-number-2">5.</span> Master Node Setup</h2>
+<div id="outline-container-org08a74f7" class="outline-2">
+<h2 id="org08a74f7"><span class="section-number-2">5.</span> Master Node Setup</h2>
 <div class="outline-text-2" id="text-5">
 <p>
 This section covers the complete setup of the master node. The master node
@@ -667,15 +668,15 @@ Main responsibilities:
 <li>Software management</li>
 </ul>
 </div>
-<div id="outline-container-org056a8d5" class="outline-3">
-<h3 id="org056a8d5"><span class="section-number-3">5.1.</span> Install VirtualBox on Manjaro</h3>
+<div id="outline-container-orgdc3f78c" class="outline-3">
+<h3 id="orgdc3f78c"><span class="section-number-3">5.1.</span> Install VirtualBox on Manjaro</h3>
 <div class="outline-text-3" id="text-5-1">
 <p>
 I&rsquo;m using Manjaro (Arch) as my base system.
 </p>
 </div>
 <ol class="org-ol">
-<li><a id="org790bfc9"></a>Update packages<br />
+<li><a id="org83c67f1"></a>Update packages<br />
 <div class="outline-text-4" id="text-5-1-1">
 <div class="org-src-container">
 <pre class="src src-bash"><code>sudo pacman -Syu
@@ -683,7 +684,7 @@ I&rsquo;m using Manjaro (Arch) as my base system.
 </div>
 </div>
 </li>
-<li><a id="org09e9d1f"></a>Install VirtualBox and host modules<br />
+<li><a id="org732c597"></a>Install VirtualBox and host modules<br />
 <div class="outline-text-4" id="text-5-1-2">
 <div class="org-src-container">
 <pre class="src src-bash"><code>sudo pacman -S virtualbox virtualbox-host-modules-arch
@@ -691,7 +692,7 @@ I&rsquo;m using Manjaro (Arch) as my base system.
 </div>
 </div>
 </li>
-<li><a id="org79ee220"></a>Install VirtualBox extension pack<br />
+<li><a id="org71a26f7"></a>Install VirtualBox extension pack<br />
 <div class="outline-text-4" id="text-5-1-3">
 <div class="org-src-container">
 <pre class="src src-bash"><code>sudo pacman -S virtualbox-ext-oracle
@@ -699,7 +700,7 @@ I&rsquo;m using Manjaro (Arch) as my base system.
 </div>
 </div>
 </li>
-<li><a id="orgfcd2b7f"></a>Load VirtualBox kernel module<br />
+<li><a id="org1179acf"></a>Load VirtualBox kernel module<br />
 <div class="outline-text-4" id="text-5-1-4">
 <div class="org-src-container">
 <pre class="src src-bash"><code>sudo modprobe vboxdrv
@@ -707,7 +708,7 @@ I&rsquo;m using Manjaro (Arch) as my base system.
 </div>
 </div>
 </li>
-<li><a id="org18659f5"></a>Add current user to VirtualBox group<br />
+<li><a id="org9e5f00a"></a>Add current user to VirtualBox group<br />
 <div class="outline-text-4" id="text-5-1-5">
 <div class="org-src-container">
 <pre class="src src-bash"><code>sudo usermod -aG vboxusers $USER
@@ -715,7 +716,7 @@ I&rsquo;m using Manjaro (Arch) as my base system.
 </div>
 </div>
 </li>
-<li><a id="org8550880"></a>Reboot the system<br />
+<li><a id="org9c8b3dd"></a>Reboot the system<br />
 <div class="outline-text-4" id="text-5-1-6">
 <div class="org-src-container">
 <pre class="src src-bash"><code>sudo reboot
@@ -725,8 +726,8 @@ I&rsquo;m using Manjaro (Arch) as my base system.
 </li>
 </ol>
 </div>
-<div id="outline-container-orgb3a8a54" class="outline-3">
-<h3 id="orgb3a8a54"><span class="section-number-3">5.2.</span> Download Rocky Linux</h3>
+<div id="outline-container-orga0ff974" class="outline-3">
+<h3 id="orga0ff974"><span class="section-number-3">5.2.</span> Download Rocky Linux</h3>
 <div class="outline-text-3" id="text-5-2">
 <p>
 Download Rocky Linux Minimal ISO:
@@ -751,30 +752,30 @@ unnecessary packages.
 </p>
 </div>
 </div>
-<div id="outline-container-org6132879" class="outline-3">
-<h3 id="org6132879"><span class="section-number-3">5.3.</span> Create Master VM</h3>
+<div id="outline-container-orgfdee2e7" class="outline-3">
+<h3 id="orgfdee2e7"><span class="section-number-3">5.3.</span> Create Master VM</h3>
 <div class="outline-text-3" id="text-5-3">
 <p>
 Open VirtualBox and create a new virtual machine.
 </p>
 </div>
 <ol class="org-ol">
-<li><a id="org874442a"></a>VM Name<br />
+<li><a id="orga0356ad"></a>VM Name<br />
 <div class="outline-text-4" id="text-5-3-1">
-<pre class="example" id="orgd71c568">
+<pre class="example" id="orgdb51aef">
 master
 </pre>
 </div>
 </li>
-<li><a id="orgf90b489"></a>Type<br />
+<li><a id="org0edebb4"></a>Type<br />
 <div class="outline-text-4" id="text-5-3-2">
-<pre class="example" id="orgfb6270e">
+<pre class="example" id="orgfe89e1b">
 Linux
 Red Hat (64-bit)
 </pre>
 </div>
 </li>
-<li><a id="orgdf2aa8a"></a>Hardware<br />
+<li><a id="org6f16b08"></a>Hardware<br />
 <div class="outline-text-4" id="text-5-3-3">
 <table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
 
@@ -809,9 +810,9 @@ Red Hat (64-bit)
 </table>
 </div>
 </li>
-<li><a id="org119d4c8"></a>Disk Type<br />
+<li><a id="orgd52c8ff"></a>Disk Type<br />
 <div class="outline-text-4" id="text-5-3-4">
-<pre class="example" id="org8cb51e0">
+<pre class="example" id="org73b3728">
 VDI
 Dynamically Allocated
 </pre>
@@ -823,14 +824,14 @@ This configuration is enough for a lightweight HPC lab environment.
 </li>
 </ol>
 </div>
-<div id="outline-container-org2fc23db" class="outline-3">
-<h3 id="org2fc23db"><span class="section-number-3">5.4.</span> Network Configuration</h3>
+<div id="outline-container-orge54b7d4" class="outline-3">
+<h3 id="orge54b7d4"><span class="section-number-3">5.4.</span> Network Configuration</h3>
 <div class="outline-text-3" id="text-5-4">
 </div>
 <ol class="org-ol">
-<li><a id="org52d8a8f"></a>Adapter 1<br />
+<li><a id="orga7a1251"></a>Adapter 1<br />
 <div class="outline-text-4" id="text-5-4-1">
-<pre class="example" id="org7b8be17">
+<pre class="example" id="org04ec0af">
 Attached to: NAT
 </pre>
 <p>
@@ -844,13 +845,13 @@ Used for:
 </ul>
 </div>
 </li>
-<li><a id="org1e79266"></a>NAT Port Forwarding<br />
+<li><a id="orgc04db2c"></a>NAT Port Forwarding<br />
 <div class="outline-text-4" id="text-5-4-2">
 <p>
 Open:
 </p>
 
-<pre class="example" id="org7c53627">
+<pre class="example" id="orge54c086">
 Settings -&gt; Network -&gt; Adapter 1 -&gt; Advanced -&gt; Port Forwarding
 </pre>
 
@@ -885,9 +886,9 @@ Settings -&gt; Network -&gt; Adapter 1 -&gt; Advanced -&gt; Port Forwarding
 </table>
 </div>
 </li>
-<li><a id="orgf6a7339"></a>Adapter 2<br />
+<li><a id="org9a0e1f0"></a>Adapter 2<br />
 <div class="outline-text-4" id="text-5-4-3">
-<pre class="example" id="orgfdb8f7a">
+<pre class="example" id="org3172450">
 Attached to: Internal Network
 </pre>
 
@@ -895,7 +896,7 @@ Attached to: Internal Network
 Internal Network Name:
 </p>
 
-<pre class="example" id="org795f494">
+<pre class="example" id="org62c4695">
 hpcnet
 </pre>
 
@@ -908,19 +909,19 @@ This network is used for communication between cluster nodes.
 </li>
 </ol>
 </div>
-<div id="outline-container-orgc0c8db6" class="outline-3">
-<h3 id="orgc0c8db6"><span class="section-number-3">5.5.</span> Rocky Linux Installation</h3>
+<div id="outline-container-org9c56a64" class="outline-3">
+<h3 id="org9c56a64"><span class="section-number-3">5.5.</span> Rocky Linux Installation</h3>
 <div class="outline-text-3" id="text-5-5">
 <p>
 Choose:
 </p>
 
-<pre class="example" id="orgd9dd62a">
+<pre class="example" id="orgbf8f871">
 Minimal Install
 </pre>
 </div>
 <ol class="org-ol">
-<li><a id="orgcb4e9e8"></a>Network and Hostname<br />
+<li><a id="org4a88e89"></a>Network and Hostname<br />
 <div class="outline-text-4" id="text-5-5-1">
 <p>
 Enable BOTH network adapters.
@@ -930,12 +931,12 @@ Enable BOTH network adapters.
 Set hostname:
 </p>
 
-<pre class="example" id="orgf6f8802">
+<pre class="example" id="org9cf3f8e">
 master.local
 </pre>
 </div>
 </li>
-<li><a id="org2d82c4f"></a>User Creation<br />
+<li><a id="org5d20b32"></a>User Creation<br />
 <div class="outline-text-4" id="text-5-5-2">
 <p>
 Create an administrative user during installation.
@@ -974,12 +975,12 @@ After installation, log into the VM.
 </li>
 </ol>
 </div>
-<div id="outline-container-orgd7dfb1a" class="outline-3">
-<h3 id="orgd7dfb1a"><span class="section-number-3">5.6.</span> Initial System Verification</h3>
+<div id="outline-container-orgb7901e9" class="outline-3">
+<h3 id="orgb7901e9"><span class="section-number-3">5.6.</span> Initial System Verification</h3>
 <div class="outline-text-3" id="text-5-6">
 </div>
 <ol class="org-ol">
-<li><a id="org1dab2d7"></a>Check Interfaces<br />
+<li><a id="org71ea6a3"></a>Check Interfaces<br />
 <div class="outline-text-4" id="text-5-6-1">
 <div class="org-src-container">
 <pre class="src src-bash"><code>ip addr
@@ -1001,12 +1002,12 @@ Expected:
 </li>
 </ol>
 </div>
-<div id="outline-container-orgbcd150c" class="outline-3">
-<h3 id="orgbcd150c"><span class="section-number-3">5.7.</span> Configure Static Internal Network</h3>
+<div id="outline-container-orgeada6fb" class="outline-3">
+<h3 id="orgeada6fb"><span class="section-number-3">5.7.</span> Configure Static Internal Network</h3>
 <div class="outline-text-3" id="text-5-7">
 </div>
 <ol class="org-ol">
-<li><a id="orge92ba58"></a>Check Device Names<br />
+<li><a id="org8fd1060"></a>Check Device Names<br />
 <div class="outline-text-4" id="text-5-7-1">
 <div class="org-src-container">
 <pre class="src src-bash"><code>nmcli device status
@@ -1047,8 +1048,8 @@ Expected:
 </li>
 </ol>
 </div>
-<div id="outline-container-orgdc39a98" class="outline-3">
-<h3 id="orgdc39a98"><span class="section-number-3">5.8.</span> Configure Internal Interface</h3>
+<div id="outline-container-org161ddf5" class="outline-3">
+<h3 id="org161ddf5"><span class="section-number-3">5.8.</span> Configure Internal Interface</h3>
 <div class="outline-text-3" id="text-5-8">
 <p>
 Launch NetworkManager TUI:
@@ -1063,7 +1064,7 @@ Launch NetworkManager TUI:
 Navigate:
 </p>
 
-<pre class="example" id="orga2e6b54">
+<pre class="example" id="org1ca636b">
 Edit a connection
 </pre>
 
@@ -1071,7 +1072,7 @@ Edit a connection
 Select:
 </p>
 
-<pre class="example" id="org582e684">
+<pre class="example" id="org64e620f">
 enp0s8
 </pre>
 
@@ -1121,8 +1122,8 @@ DO NOT modify NAT interface.
 </p>
 </div>
 </div>
-<div id="outline-container-orgc08bd02" class="outline-3">
-<h3 id="orgc08bd02"><span class="section-number-3">5.9.</span> Restart Networking</h3>
+<div id="outline-container-org32f8797" class="outline-3">
+<h3 id="org32f8797"><span class="section-number-3">5.9.</span> Restart Networking</h3>
 <div class="outline-text-3" id="text-5-9">
 <div class="org-src-container">
 <pre class="src src-bash"><code>sudo systemctl restart NetworkManager
@@ -1130,8 +1131,8 @@ DO NOT modify NAT interface.
 </div>
 </div>
 </div>
-<div id="outline-container-org0bc010e" class="outline-3">
-<h3 id="org0bc010e"><span class="section-number-3">5.10.</span> Verify Networking</h3>
+<div id="outline-container-org3acdc6a" class="outline-3">
+<h3 id="org3acdc6a"><span class="section-number-3">5.10.</span> Verify Networking</h3>
 <div class="outline-text-3" id="text-5-10">
 <div class="org-src-container">
 <pre class="src src-bash"><code>ip addr
@@ -1170,8 +1171,8 @@ Expected:
 </table>
 </div>
 </div>
-<div id="outline-container-orgb1cbb7d" class="outline-3">
-<h3 id="orgb1cbb7d"><span class="section-number-3">5.11.</span> SSH Access from Host</h3>
+<div id="outline-container-org11d6840" class="outline-3">
+<h3 id="org11d6840"><span class="section-number-3">5.11.</span> SSH Access from Host</h3>
 <div class="outline-text-3" id="text-5-11">
 <p>
 From host machine:
@@ -1186,12 +1187,12 @@ If the connection works, port forwarding is configured correctly.
 </p>
 </div>
 </div>
-<div id="outline-container-org7c1347f" class="outline-3">
-<h3 id="org7c1347f"><span class="section-number-3">5.12.</span> System Update and Packages</h3>
+<div id="outline-container-org914dad3" class="outline-3">
+<h3 id="org914dad3"><span class="section-number-3">5.12.</span> System Update and Packages</h3>
 <div class="outline-text-3" id="text-5-12">
 </div>
 <ol class="org-ol">
-<li><a id="orgdfd9ccc"></a>Update System<br />
+<li><a id="orgd1878d7"></a>Update System<br />
 <div class="outline-text-4" id="text-5-12-1">
 <div class="org-src-container">
 <pre class="src src-bash"><code>sudo dnf update -y
@@ -1199,7 +1200,7 @@ If the connection works, port forwarding is configured correctly.
 </div>
 </div>
 </li>
-<li><a id="orgcb00042"></a>Install Base Packages<br />
+<li><a id="org507886b"></a>Install Base Packages<br />
 <div class="outline-text-4" id="text-5-12-2">
 <div class="org-src-container">
 <pre class="src src-bash"><code>sudo dnf install -y \
@@ -1227,8 +1228,8 @@ These packages provide:
 </li>
 </ol>
 </div>
-<div id="outline-container-orgca5f173" class="outline-3">
-<h3 id="orgca5f173"><span class="section-number-3">5.13.</span> Timezone Configuration</h3>
+<div id="outline-container-orgf35c46a" class="outline-3">
+<h3 id="orgf35c46a"><span class="section-number-3">5.13.</span> Timezone Configuration</h3>
 <div class="outline-text-3" id="text-5-13">
 <p>
 Check timezone:
@@ -1249,8 +1250,8 @@ Set timezone if needed:
 </div>
 </div>
 </div>
-<div id="outline-container-org38ef555" class="outline-3">
-<h3 id="org38ef555"><span class="section-number-3">5.14.</span> Configure /etc/hosts</h3>
+<div id="outline-container-orgb4db085" class="outline-3">
+<h3 id="orgb4db085"><span class="section-number-3">5.14.</span> Configure /etc/hosts</h3>
 <div class="outline-text-3" id="text-5-14">
 <p>
 Edit:
@@ -1265,7 +1266,7 @@ Edit:
 Add:
 </p>
 
-<pre class="example" id="org7c9d41d">
+<pre class="example" id="org8050e91">
 10.10.10.1   master master.local
 10.10.10.2   login login.local
 10.10.10.11  compute01 compute01.local
@@ -1277,8 +1278,8 @@ This allows hostname-based communication between nodes.
 </p>
 </div>
 </div>
-<div id="outline-container-orgda684ca" class="outline-3">
-<h3 id="orgda684ca"><span class="section-number-3">5.15.</span> Disable Firewall (Temporary)</h3>
+<div id="outline-container-orgdbdbb5c" class="outline-3">
+<h3 id="orgdbdbb5c"><span class="section-number-3">5.15.</span> Disable Firewall (Temporary)</h3>
 <div class="outline-text-3" id="text-5-15">
 <p>
 For initial setup and testing:
@@ -1296,8 +1297,8 @@ Firewall rules can be configured properly later after cluster setup is complete.
 </p>
 </div>
 </div>
-<div id="outline-container-org79bbff7" class="outline-3">
-<h3 id="org79bbff7"><span class="section-number-3">5.16.</span> SELinux Configuration</h3>
+<div id="outline-container-orgb0dd053" class="outline-3">
+<h3 id="orgb0dd053"><span class="section-number-3">5.16.</span> SELinux Configuration</h3>
 <div class="outline-text-3" id="text-5-16">
 <p>
 Check status:
@@ -1330,7 +1331,7 @@ Persist configuration:
 Modify:
 </p>
 
-<pre class="example" id="orgace490b">
+<pre class="example" id="org45b54da">
 SELINUX=permissive
 </pre>
 <p>
@@ -1338,8 +1339,8 @@ This helps avoid permission-related issues during initial cluster setup.
 </p>
 </div>
 </div>
-<div id="outline-container-org5769301" class="outline-3">
-<h3 id="org5769301"><span class="section-number-3">5.17.</span> Verify Hostname</h3>
+<div id="outline-container-org1c041a1" class="outline-3">
+<h3 id="org1c041a1"><span class="section-number-3">5.17.</span> Verify Hostname</h3>
 <div class="outline-text-3" id="text-5-17">
 <div class="org-src-container">
 <pre class="src src-bash"><code>hostnamectl
@@ -1350,7 +1351,7 @@ This helps avoid permission-related issues during initial cluster setup.
 Expected:
 </p>
 
-<pre class="example" id="org33d1aa7">
+<pre class="example" id="orgc32fbcf">
 Static hostname: master.local
 </pre>
 
@@ -1365,8 +1366,8 @@ further cluster configuration.
 </div>
 </div>
 </div>
-<div id="outline-container-orgd86c4b6" class="outline-2">
-<h2 id="orgd86c4b6"><span class="section-number-2">6.</span> Cloning Nodes</h2>
+<div id="outline-container-org4c64a7c" class="outline-2">
+<h2 id="org4c64a7c"><span class="section-number-2">6.</span> Cloning Nodes</h2>
 <div class="outline-text-2" id="text-6">
 <p>
 Purpose:
@@ -1377,8 +1378,8 @@ Purpose:
 <li>simulate real HPC image provisioning workflow</li>
 </ul>
 </div>
-<div id="outline-container-orgf0b2a65" class="outline-3">
-<h3 id="orgf0b2a65"><span class="section-number-3">6.1.</span> Create Snapshot</h3>
+<div id="outline-container-org32fb51f" class="outline-3">
+<h3 id="org32fb51f"><span class="section-number-3">6.1.</span> Create Snapshot</h3>
 <div class="outline-text-3" id="text-6-1">
 <p>
 Power off VM:
@@ -1393,13 +1394,13 @@ Power off VM:
 Create snapshot in VirtualBox:
 </p>
 
-<pre class="example" id="org6b8778f">
+<pre class="example" id="org9ad1ba9">
 clean-base-master
 </pre>
 </div>
 </div>
-<div id="outline-container-org9ac9735" class="outline-3">
-<h3 id="org9ac9735"><span class="section-number-3">6.2.</span> Clone Nodes</h3>
+<div id="outline-container-org03eecf3" class="outline-3">
+<h3 id="org03eecf3"><span class="section-number-3">6.2.</span> Clone Nodes</h3>
 <div class="outline-text-3" id="text-6-2">
 <p>
 Create FULL CLONES.
@@ -1410,13 +1411,13 @@ IMPORTANT:
 Enable:
 </p>
 
-<pre class="example" id="org74f76f5">
+<pre class="example" id="orga75d147">
 Reinitialize the MAC address of all network cards
 </pre>
 </div>
 </div>
-<div id="outline-container-org4ae673f" class="outline-3">
-<h3 id="org4ae673f"><span class="section-number-3">6.3.</span> Clone Names</h3>
+<div id="outline-container-org6764d26" class="outline-3">
+<h3 id="org6764d26"><span class="section-number-3">6.3.</span> Clone Names</h3>
 <div class="outline-text-3" id="text-6-3">
 <table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
 
@@ -1449,12 +1450,12 @@ Reinitialize the MAC address of all network cards
 </table>
 </div>
 </div>
-<div id="outline-container-orgcfb5dcf" class="outline-3">
-<h3 id="orgcfb5dcf"><span class="section-number-3">6.4.</span> Configure Port Forwarding</h3>
+<div id="outline-container-orgdc34519" class="outline-3">
+<h3 id="orgdc34519"><span class="section-number-3">6.4.</span> Configure Port Forwarding</h3>
 <div class="outline-text-3" id="text-6-4">
 </div>
 <ol class="org-ol">
-<li><a id="orgbb812d6"></a>Login Node<br />
+<li><a id="org92a72d5"></a>Login Node<br />
 <div class="outline-text-4" id="text-6-4-1">
 <table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
 
@@ -1479,7 +1480,7 @@ Reinitialize the MAC address of all network cards
 </table>
 </div>
 </li>
-<li><a id="orgf70fb32"></a>Compute01<br />
+<li><a id="orgabbcead"></a>Compute01<br />
 <div class="outline-text-4" id="text-6-4-2">
 <table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
 
@@ -1504,7 +1505,7 @@ Reinitialize the MAC address of all network cards
 </table>
 </div>
 </li>
-<li><a id="org1fcaf49"></a>Compute02<br />
+<li><a id="org07f87b0"></a>Compute02<br />
 <div class="outline-text-4" id="text-6-4-3">
 <table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
 
@@ -1529,7 +1530,7 @@ Reinitialize the MAC address of all network cards
 </table>
 </div>
 </li>
-<li><a id="orgd9e3727"></a>Compute03<br />
+<li><a id="org45ba785"></a>Compute03<br />
 <div class="outline-text-4" id="text-6-4-4">
 <table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
 
@@ -1556,8 +1557,8 @@ Reinitialize the MAC address of all network cards
 </li>
 </ol>
 </div>
-<div id="outline-container-orgb04603d" class="outline-3">
-<h3 id="orgb04603d"><span class="section-number-3">6.5.</span> Machine ID Regeneration</h3>
+<div id="outline-container-orgdeae633" class="outline-3">
+<h3 id="orgdeae633"><span class="section-number-3">6.5.</span> Machine ID Regeneration</h3>
 <div class="outline-text-3" id="text-6-5">
 <p>
 IMPORTANT:
@@ -1565,8 +1566,8 @@ Each cloned Linux machine must have unique machine-id.
 </p>
 </div>
 </div>
-<div id="outline-container-orgba97553" class="outline-3">
-<h3 id="orgba97553"><span class="section-number-3">6.6.</span> Remove Existing Machine ID</h3>
+<div id="outline-container-orgad52404" class="outline-3">
+<h3 id="orgad52404"><span class="section-number-3">6.6.</span> Remove Existing Machine ID</h3>
 <div class="outline-text-3" id="text-6-6">
 <div class="org-src-container">
 <pre class="src src-bash"><code>sudo rm -f /etc/machine-id
@@ -1574,8 +1575,8 @@ Each cloned Linux machine must have unique machine-id.
 </div>
 </div>
 </div>
-<div id="outline-container-orgeaab154" class="outline-3">
-<h3 id="orgeaab154"><span class="section-number-3">6.7.</span> Generate New Machine ID</h3>
+<div id="outline-container-org8190d27" class="outline-3">
+<h3 id="org8190d27"><span class="section-number-3">6.7.</span> Generate New Machine ID</h3>
 <div class="outline-text-3" id="text-6-7">
 <div class="org-src-container">
 <pre class="src src-bash"><code>sudo systemd-machine-id-setup
@@ -1583,8 +1584,8 @@ Each cloned Linux machine must have unique machine-id.
 </div>
 </div>
 </div>
-<div id="outline-container-org47160d7" class="outline-3">
-<h3 id="org47160d7"><span class="section-number-3">6.8.</span> Verify Machine ID</h3>
+<div id="outline-container-orgd69fd27" class="outline-3">
+<h3 id="orgd69fd27"><span class="section-number-3">6.8.</span> Verify Machine ID</h3>
 <div class="outline-text-3" id="text-6-8">
 <div class="org-src-container">
 <pre class="src src-bash"><code>cat /etc/machine-id
@@ -1596,12 +1597,12 @@ Ensure every node has unique machine-id.
 </p>
 </div>
 </div>
-<div id="outline-container-org667160e" class="outline-3">
-<h3 id="org667160e"><span class="section-number-3">6.9.</span> Configure Hostname</h3>
+<div id="outline-container-orgc7844f4" class="outline-3">
+<h3 id="orgc7844f4"><span class="section-number-3">6.9.</span> Configure Hostname</h3>
 <div class="outline-text-3" id="text-6-9">
 </div>
 <ol class="org-ol">
-<li><a id="orge30c1fb"></a>Login Node<br />
+<li><a id="orgcf86f92"></a>Login Node<br />
 <div class="outline-text-4" id="text-6-9-1">
 <p>
 Edit hostname:
@@ -1616,7 +1617,7 @@ Edit hostname:
 Set:
 </p>
 
-<pre class="example" id="org8602585">
+<pre class="example" id="orgdbe7d94">
 login.local
 </pre>
 
@@ -1630,13 +1631,13 @@ Apply:
 </div>
 </div>
 </li>
-<li><a id="orge6d4a80"></a>Compute01<br />
+<li><a id="org8d5d12c"></a>Compute01<br />
 <div class="outline-text-4" id="text-6-9-2">
 <p>
 Set hostname:
 </p>
 
-<pre class="example" id="org50b4539">
+<pre class="example" id="org9874050">
 compute01.local
 </pre>
 
@@ -1650,9 +1651,9 @@ Apply:
 </div>
 </div>
 </li>
-<li><a id="orgc5407dc"></a>Compute02<br />
+<li><a id="orgd189bf5"></a>Compute02<br />
 <div class="outline-text-4" id="text-6-9-3">
-<pre class="example" id="orgb6b854a">
+<pre class="example" id="orgd7a62db">
 compute02.local
 </pre>
 
@@ -1662,9 +1663,9 @@ compute02.local
 </div>
 </div>
 </li>
-<li><a id="orgb13350d"></a>Compute03<br />
+<li><a id="org9671592"></a>Compute03<br />
 <div class="outline-text-4" id="text-6-9-4">
-<pre class="example" id="orgd2e6f28">
+<pre class="example" id="orgb5022a2">
 compute03.local
 </pre>
 
@@ -1676,8 +1677,8 @@ compute03.local
 </li>
 </ol>
 </div>
-<div id="outline-container-orgc80af01" class="outline-3">
-<h3 id="orgc80af01"><span class="section-number-3">6.10.</span> Configure Static Internal IPs</h3>
+<div id="outline-container-orgd79ea9f" class="outline-3">
+<h3 id="orgd79ea9f"><span class="section-number-3">6.10.</span> Configure Static Internal IPs</h3>
 <div class="outline-text-3" id="text-6-10">
 <p>
 Launch:
@@ -1692,43 +1693,43 @@ Launch:
 Edit internal adapter:
 </p>
 
-<pre class="example" id="org406bb30">
+<pre class="example" id="orga3cb327">
 enp0s8
 </pre>
 </div>
 <ol class="org-ol">
-<li><a id="org27ecc00"></a>Login Node<br />
+<li><a id="orgbf470a1"></a>Login Node<br />
 <div class="outline-text-4" id="text-6-10-1">
-<pre class="example" id="org2619ef9">
+<pre class="example" id="orge15aa72">
 10.10.10.2/24
 </pre>
 </div>
 </li>
-<li><a id="orgbc45f43"></a>Compute01<br />
+<li><a id="org54de647"></a>Compute01<br />
 <div class="outline-text-4" id="text-6-10-2">
-<pre class="example" id="org70d8661">
+<pre class="example" id="org3846100">
 10.10.10.11/24
 </pre>
 </div>
 </li>
-<li><a id="orgf38fc4a"></a>Compute02<br />
+<li><a id="org14e94fa"></a>Compute02<br />
 <div class="outline-text-4" id="text-6-10-3">
-<pre class="example" id="org49e3946">
+<pre class="example" id="org6d8309a">
 10.10.10.12/24
 </pre>
 </div>
 </li>
-<li><a id="org066c241"></a>Compute03<br />
+<li><a id="org4089026"></a>Compute03<br />
 <div class="outline-text-4" id="text-6-10-4">
-<pre class="example" id="orgbefb02c">
+<pre class="example" id="org99b770f">
 10.10.10.13/24
 </pre>
 </div>
 </li>
 </ol>
 </div>
-<div id="outline-container-orgd5598a7" class="outline-3">
-<h3 id="orgd5598a7"><span class="section-number-3">6.11.</span> Restart Networking</h3>
+<div id="outline-container-org5d32023" class="outline-3">
+<h3 id="org5d32023"><span class="section-number-3">6.11.</span> Restart Networking</h3>
 <div class="outline-text-3" id="text-6-11">
 <div class="org-src-container">
 <pre class="src src-bash"><code>sudo systemctl restart NetworkManager
@@ -1736,8 +1737,8 @@ enp0s8
 </div>
 </div>
 </div>
-<div id="outline-container-orgc60c436" class="outline-3">
-<h3 id="orgc60c436"><span class="section-number-3">6.12.</span> Verify Networking</h3>
+<div id="outline-container-org785d672" class="outline-3">
+<h3 id="org785d672"><span class="section-number-3">6.12.</span> Verify Networking</h3>
 <div class="outline-text-3" id="text-6-12">
 <div class="org-src-container">
 <pre class="src src-bash"><code>ip addr
@@ -1745,8 +1746,8 @@ enp0s8
 </div>
 </div>
 </div>
-<div id="outline-container-org44f91a4" class="outline-3">
-<h3 id="org44f91a4"><span class="section-number-3">6.13.</span> Verify Routing</h3>
+<div id="outline-container-org0b605db" class="outline-3">
+<h3 id="org0b605db"><span class="section-number-3">6.13.</span> Verify Routing</h3>
 <div class="outline-text-3" id="text-6-13">
 <div class="org-src-container">
 <pre class="src src-bash"><code>ip route
@@ -1757,18 +1758,18 @@ enp0s8
 Expected:
 </p>
 
-<pre class="example" id="orgea3ce7c">
+<pre class="example" id="orgcf1542f">
 default via 10.0.2.2 dev enp0s3
 10.10.10.0/24 dev enp0s8
 </pre>
 </div>
 </div>
-<div id="outline-container-org573012e" class="outline-3">
-<h3 id="org573012e"><span class="section-number-3">6.14.</span> Verify Connectivity</h3>
+<div id="outline-container-org2585384" class="outline-3">
+<h3 id="org2585384"><span class="section-number-3">6.14.</span> Verify Connectivity</h3>
 <div class="outline-text-3" id="text-6-14">
 </div>
 <ol class="org-ol">
-<li><a id="orgd34eb33"></a>Ping Between Nodes<br />
+<li><a id="orgb5d5cdf"></a>Ping Between Nodes<br />
 <div class="outline-text-4" id="text-6-14-1">
 <div class="org-src-container">
 <pre class="src src-bash"><code>ping master
@@ -1788,15 +1789,15 @@ default via 10.0.2.2 dev enp0s3
 </li>
 </ol>
 </div>
-<div id="outline-container-org22b030f" class="outline-3">
-<h3 id="org22b030f"><span class="section-number-3">6.15.</span> SSH Verification</h3>
+<div id="outline-container-org0eb9e00" class="outline-3">
+<h3 id="org0eb9e00"><span class="section-number-3">6.15.</span> SSH Verification</h3>
 <div class="outline-text-3" id="text-6-15">
 <p>
 From host:
 </p>
 </div>
 <ol class="org-ol">
-<li><a id="orgbbfa29d"></a>Master<br />
+<li><a id="orgd4e3399"></a>Master<br />
 <div class="outline-text-4" id="text-6-15-1">
 <div class="org-src-container">
 <pre class="src src-bash"><code>ssh -p 2221 hpcadmin@localhost
@@ -1804,7 +1805,7 @@ From host:
 </div>
 </div>
 </li>
-<li><a id="org856cf6c"></a>Login<br />
+<li><a id="org2f313f7"></a>Login<br />
 <div class="outline-text-4" id="text-6-15-2">
 <div class="org-src-container">
 <pre class="src src-bash"><code>ssh -p 2222 hpcadmin@localhost
@@ -1812,7 +1813,7 @@ From host:
 </div>
 </div>
 </li>
-<li><a id="org0f2b75c"></a>Compute01<br />
+<li><a id="org125e1f8"></a>Compute01<br />
 <div class="outline-text-4" id="text-6-15-3">
 <div class="org-src-container">
 <pre class="src src-bash"><code>ssh -p 2223 hpcadmin@localhost
@@ -1820,7 +1821,7 @@ From host:
 </div>
 </div>
 </li>
-<li><a id="org4c3f4d9"></a>Compute02<br />
+<li><a id="orgcac96c4"></a>Compute02<br />
 <div class="outline-text-4" id="text-6-15-4">
 <div class="org-src-container">
 <pre class="src src-bash"><code>ssh -p 2224 hpcadmin@localhost
@@ -1828,7 +1829,7 @@ From host:
 </div>
 </div>
 </li>
-<li><a id="org82169f2"></a>Compute03<br />
+<li><a id="org95647d0"></a>Compute03<br />
 <div class="outline-text-4" id="text-6-15-5">
 <div class="org-src-container">
 <pre class="src src-bash"><code>ssh -p 2225 hpcadmin@localhost
@@ -1839,8 +1840,8 @@ From host:
 </ol>
 </div>
 </div>
-<div id="outline-container-org1d08342" class="outline-2">
-<h2 id="org1d08342"><span class="section-number-2">7.</span> Shared Infrastructure Services</h2>
+<div id="outline-container-org95b9441" class="outline-2">
+<h2 id="org95b9441"><span class="section-number-2">7.</span> Shared Infrastructure Services</h2>
 <div class="outline-text-2" id="text-7">
 <p>
 Goal:
@@ -1872,12 +1873,12 @@ By the end of this phase:
 <li>cluster behaves like a real HPC environment</li>
 </ul>
 </div>
-<div id="outline-container-org78b4035" class="outline-3">
-<h3 id="org78b4035"><span class="section-number-3">7.1.</span> Cluster Role Architecture</h3>
+<div id="outline-container-org47190b1" class="outline-3">
+<h3 id="org47190b1"><span class="section-number-3">7.1.</span> Cluster Role Architecture</h3>
 <div class="outline-text-3" id="text-7-1">
 </div>
 <ol class="org-ol">
-<li><a id="org5e18f69"></a>Master Node<br />
+<li><a id="orgefb01d4"></a>Master Node<br />
 <div class="outline-text-4" id="text-7-1-1">
 <p>
 Purpose:
@@ -1928,7 +1929,7 @@ Services:
 </table>
 </div>
 </li>
-<li><a id="orgee72008"></a>Login Node<br />
+<li><a id="orgf3bec67"></a>Login Node<br />
 <div class="outline-text-4" id="text-7-1-2">
 <p>
 Purpose:
@@ -1950,7 +1951,7 @@ Users should:
 </ul>
 </div>
 </li>
-<li><a id="orgeb08a6b"></a>Compute Nodes<br />
+<li><a id="orgf3897ff"></a>Compute Nodes<br />
 <div class="outline-text-4" id="text-7-1-3">
 <p>
 Purpose:
@@ -1994,8 +1995,8 @@ Future services:
 </li>
 </ol>
 </div>
-<div id="outline-container-org0376bd3" class="outline-3">
-<h3 id="org0376bd3"><span class="section-number-3">7.2.</span> Verify User Consistency</h3>
+<div id="outline-container-orgd531b3d" class="outline-3">
+<h3 id="orgd531b3d"><span class="section-number-3">7.2.</span> Verify User Consistency</h3>
 <div class="outline-text-3" id="text-7-2">
 <p>
 IMPORTANT:
@@ -2018,7 +2019,7 @@ Verify user identity on all nodes:
 Expected:
 </p>
 
-<pre class="example" id="org08e5c1f">
+<pre class="example" id="org5acf34b">
 uid=1000(hpcadmin) gid=1000(hpcadmin)
 </pre>
 
@@ -2027,8 +2028,8 @@ All nodes must match.
 </p>
 </div>
 </div>
-<div id="outline-container-orgb267d52" class="outline-3">
-<h3 id="orgb267d52"><span class="section-number-3">7.3.</span> Passwordless SSH Configuration</h3>
+<div id="outline-container-org9a0a679" class="outline-3">
+<h3 id="org9a0a679"><span class="section-number-3">7.3.</span> Passwordless SSH Configuration</h3>
 <div class="outline-text-3" id="text-7-3">
 <p>
 Purpose:
@@ -2049,13 +2050,13 @@ SSH trust is generated ONLY from login node.
 This mimics real HPC architecture:
 </p>
 
-<pre class="example" id="org9d87271">
+<pre class="example" id="orged326cd">
 User -&gt; Login Node -&gt; Compute Nodes
 </pre>
 </div>
 </div>
-<div id="outline-container-org3774ed5" class="outline-3">
-<h3 id="org3774ed5"><span class="section-number-3">7.4.</span> Generate SSH Key on Login Node</h3>
+<div id="outline-container-orgb152bfc" class="outline-3">
+<h3 id="orgb152bfc"><span class="section-number-3">7.4.</span> Generate SSH Key on Login Node</h3>
 <div class="outline-text-3" id="text-7-4">
 <p>
 SSH into login node from host:
@@ -2083,18 +2084,18 @@ Press Enter for all prompts.
 Generated files:
 </p>
 
-<pre class="example" id="org3cc2c00">
+<pre class="example" id="org083e1d7">
 ~/.ssh/id_rsa
 ~/.ssh/id_rsa.pub
 </pre>
 </div>
 </div>
-<div id="outline-container-org8150e9c" class="outline-3">
-<h3 id="org8150e9c"><span class="section-number-3">7.5.</span> Copy SSH Keys to Cluster Nodes</h3>
+<div id="outline-container-orge00115a" class="outline-3">
+<h3 id="orge00115a"><span class="section-number-3">7.5.</span> Copy SSH Keys to Cluster Nodes</h3>
 <div class="outline-text-3" id="text-7-5">
 </div>
 <ol class="org-ol">
-<li><a id="org8212a6c"></a>Master<br />
+<li><a id="org8386678"></a>Master<br />
 <div class="outline-text-4" id="text-7-5-1">
 <div class="org-src-container">
 <pre class="src src-bash"><code>ssh-copy-id hpcadmin@master
@@ -2102,7 +2103,7 @@ Generated files:
 </div>
 </div>
 </li>
-<li><a id="org16f2429"></a>Compute01<br />
+<li><a id="org4ab6b27"></a>Compute01<br />
 <div class="outline-text-4" id="text-7-5-2">
 <div class="org-src-container">
 <pre class="src src-bash"><code>ssh-copy-id hpcadmin@compute01
@@ -2110,7 +2111,7 @@ Generated files:
 </div>
 </div>
 </li>
-<li><a id="orgd3d5cfc"></a>Compute02<br />
+<li><a id="org870816e"></a>Compute02<br />
 <div class="outline-text-4" id="text-7-5-3">
 <div class="org-src-container">
 <pre class="src src-bash"><code>ssh-copy-id hpcadmin@compute02
@@ -2118,7 +2119,7 @@ Generated files:
 </div>
 </div>
 </li>
-<li><a id="orgd4cd459"></a>Compute03<br />
+<li><a id="org788fe5b"></a>Compute03<br />
 <div class="outline-text-4" id="text-7-5-4">
 <div class="org-src-container">
 <pre class="src src-bash"><code>ssh-copy-id hpcadmin@compute03
@@ -2128,12 +2129,12 @@ Generated files:
 </li>
 </ol>
 </div>
-<div id="outline-container-org66101b1" class="outline-3">
-<h3 id="org66101b1"><span class="section-number-3">7.6.</span> Verify Passwordless SSH</h3>
+<div id="outline-container-orgad7042f" class="outline-3">
+<h3 id="orgad7042f"><span class="section-number-3">7.6.</span> Verify Passwordless SSH</h3>
 <div class="outline-text-3" id="text-7-6">
 </div>
 <ol class="org-ol">
-<li><a id="org1aa0657"></a>Test Master<br />
+<li><a id="org126ae87"></a>Test Master<br />
 <div class="outline-text-4" id="text-7-6-1">
 <div class="org-src-container">
 <pre class="src src-bash"><code>ssh master hostname
@@ -2144,12 +2145,12 @@ Generated files:
 Expected:
 </p>
 
-<pre class="example" id="org28b92f2">
+<pre class="example" id="orgeeb5ed3">
 master.local
 </pre>
 </div>
 </li>
-<li><a id="org991f921"></a>Test Compute01<br />
+<li><a id="org14faed9"></a>Test Compute01<br />
 <div class="outline-text-4" id="text-7-6-2">
 <div class="org-src-container">
 <pre class="src src-bash"><code>ssh compute01 hostname
@@ -2160,12 +2161,12 @@ master.local
 Expected:
 </p>
 
-<pre class="example" id="org6d6bdf9">
+<pre class="example" id="orgfd57e17">
 compute01.local
 </pre>
 </div>
 </li>
-<li><a id="orgbbe4337"></a>Test Compute02<br />
+<li><a id="org5b85716"></a>Test Compute02<br />
 <div class="outline-text-4" id="text-7-6-3">
 <div class="org-src-container">
 <pre class="src src-bash"><code>ssh compute02 hostname
@@ -2173,7 +2174,7 @@ compute01.local
 </div>
 </div>
 </li>
-<li><a id="org54979d8"></a>Test Compute03<br />
+<li><a id="org2075efa"></a>Test Compute03<br />
 <div class="outline-text-4" id="text-7-6-4">
 <div class="org-src-container">
 <pre class="src src-bash"><code>ssh compute03 hostname
@@ -2187,8 +2188,8 @@ No password prompts should appear.
 </li>
 </ol>
 </div>
-<div id="outline-container-org3e52ea2" class="outline-3">
-<h3 id="org3e52ea2"><span class="section-number-3">7.7.</span> HPC Concept — Why Passwordless SSH Matters</h3>
+<div id="outline-container-org9177dac" class="outline-3">
+<h3 id="org9177dac"><span class="section-number-3">7.7.</span> HPC Concept — Why Passwordless SSH Matters</h3>
 <div class="outline-text-3" id="text-7-7">
 <p>
 Passwordless SSH becomes essential for:
@@ -2232,8 +2233,8 @@ Passwordless SSH becomes essential for:
 </table>
 </div>
 </div>
-<div id="outline-container-org3dbd624" class="outline-3">
-<h3 id="org3dbd624"><span class="section-number-3">7.8.</span> NFS Shared Storage Setup</h3>
+<div id="outline-container-orgf875e84" class="outline-3">
+<h3 id="orgf875e84"><span class="section-number-3">7.8.</span> NFS Shared Storage Setup</h3>
 <div class="outline-text-3" id="text-7-8">
 <p>
 Purpose:
@@ -2274,8 +2275,8 @@ This lab begins with NFS.
 </p>
 </div>
 </div>
-<div id="outline-container-org130fbd9" class="outline-3">
-<h3 id="org130fbd9"><span class="section-number-3">7.9.</span> Install NFS Packages</h3>
+<div id="outline-container-orgafaaa05" class="outline-3">
+<h3 id="orgafaaa05"><span class="section-number-3">7.9.</span> Install NFS Packages</h3>
 <div class="outline-text-3" id="text-7-9">
 <p>
 Install on ALL nodes:
@@ -2287,16 +2288,16 @@ Install on ALL nodes:
 </div>
 </div>
 </div>
-<div id="outline-container-org1f8bb46" class="outline-3">
-<h3 id="org1f8bb46"><span class="section-number-3">7.10.</span> Configure NFS Server on Master</h3>
+<div id="outline-container-orga3c1a9a" class="outline-3">
+<h3 id="orga3c1a9a"><span class="section-number-3">7.10.</span> Configure NFS Server on Master</h3>
 <div class="outline-text-3" id="text-7-10">
 <p>
 SSH into master node.
 </p>
 </div>
 </div>
-<div id="outline-container-orgd560858" class="outline-3">
-<h3 id="orgd560858"><span class="section-number-3">7.11.</span> Enable NFS Services</h3>
+<div id="outline-container-orge426cd1" class="outline-3">
+<h3 id="orge426cd1"><span class="section-number-3">7.11.</span> Enable NFS Services</h3>
 <div class="outline-text-3" id="text-7-11">
 <div class="org-src-container">
 <pre class="src src-bash"><code>sudo systemctl enable --now nfs-server
@@ -2316,13 +2317,13 @@ Verify:
 Expected:
 </p>
 
-<pre class="example" id="org5bfa0a6">
+<pre class="example" id="org578fe7d">
 active (running)
 </pre>
 </div>
 </div>
-<div id="outline-container-orgb887fa3" class="outline-3">
-<h3 id="orgb887fa3"><span class="section-number-3">7.12.</span> Configure NFS Exports</h3>
+<div id="outline-container-org45322f2" class="outline-3">
+<h3 id="org45322f2"><span class="section-number-3">7.12.</span> Configure NFS Exports</h3>
 <div class="outline-text-3" id="text-7-12">
 <p>
 Edit exports file:
@@ -2337,13 +2338,13 @@ Edit exports file:
 Add:
 </p>
 
-<pre class="example" id="orgba7a4cc">
+<pre class="example" id="orga24b138">
 /home 10.10.10.0/24(rw,sync,no_root_squash)
 </pre>
 </div>
 </div>
-<div id="outline-container-org463d5de" class="outline-3">
-<h3 id="org463d5de"><span class="section-number-3">7.13.</span> Export Option Explanation</h3>
+<div id="outline-container-orgaf3e5c7" class="outline-3">
+<h3 id="orgaf3e5c7"><span class="section-number-3">7.13.</span> Export Option Explanation</h3>
 <div class="outline-text-3" id="text-7-13">
 <table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
 
@@ -2378,8 +2379,8 @@ Add:
 </table>
 </div>
 </div>
-<div id="outline-container-org469e5ed" class="outline-3">
-<h3 id="org469e5ed"><span class="section-number-3">7.14.</span> Apply Exports</h3>
+<div id="outline-container-orgc689430" class="outline-3">
+<h3 id="orgc689430"><span class="section-number-3">7.14.</span> Apply Exports</h3>
 <div class="outline-text-3" id="text-7-14">
 <div class="org-src-container">
 <pre class="src src-bash"><code>sudo exportfs -rav
@@ -2387,8 +2388,8 @@ Add:
 </div>
 </div>
 </div>
-<div id="outline-container-org77c3291" class="outline-3">
-<h3 id="org77c3291"><span class="section-number-3">7.15.</span> Verify Exports</h3>
+<div id="outline-container-orgc504329" class="outline-3">
+<h3 id="orgc504329"><span class="section-number-3">7.15.</span> Verify Exports</h3>
 <div class="outline-text-3" id="text-7-15">
 <div class="org-src-container">
 <pre class="src src-bash"><code>sudo exportfs -v
@@ -2399,13 +2400,13 @@ Add:
 Expected export:
 </p>
 
-<pre class="example" id="org0a225ca">
+<pre class="example" id="orga15f8d4">
 /home 10.10.10.0/24(...)
 </pre>
 </div>
 </div>
-<div id="outline-container-orgf0ab2e7" class="outline-3">
-<h3 id="orgf0ab2e7"><span class="section-number-3">7.16.</span> Configure NFS Clients</h3>
+<div id="outline-container-org45029af" class="outline-3">
+<h3 id="org45029af"><span class="section-number-3">7.16.</span> Configure NFS Clients</h3>
 <div class="outline-text-3" id="text-7-16">
 <p>
 Perform on:
@@ -2419,8 +2420,8 @@ Perform on:
 </ul>
 </div>
 </div>
-<div id="outline-container-org7c68e94" class="outline-3">
-<h3 id="org7c68e94"><span class="section-number-3">7.17.</span> Backup Existing Home Directory</h3>
+<div id="outline-container-org23857a9" class="outline-3">
+<h3 id="org23857a9"><span class="section-number-3">7.17.</span> Backup Existing Home Directory</h3>
 <div class="outline-text-3" id="text-7-17">
 <div class="org-src-container">
 <pre class="src src-bash"><code>sudo mv /home /home.local
@@ -2436,8 +2437,8 @@ Preserve original local home directory.
 </p>
 </div>
 </div>
-<div id="outline-container-orga8abcfb" class="outline-3">
-<h3 id="orga8abcfb"><span class="section-number-3">7.18.</span> Create New Mount Point</h3>
+<div id="outline-container-orge309ac0" class="outline-3">
+<h3 id="orge309ac0"><span class="section-number-3">7.18.</span> Create New Mount Point</h3>
 <div class="outline-text-3" id="text-7-18">
 <div class="org-src-container">
 <pre class="src src-bash"><code>sudo mkdir /home
@@ -2445,8 +2446,8 @@ Preserve original local home directory.
 </div>
 </div>
 </div>
-<div id="outline-container-org345316c" class="outline-3">
-<h3 id="org345316c"><span class="section-number-3">7.19.</span> Mount Shared NFS Home</h3>
+<div id="outline-container-org337b889" class="outline-3">
+<h3 id="org337b889"><span class="section-number-3">7.19.</span> Mount Shared NFS Home</h3>
 <div class="outline-text-3" id="text-7-19">
 <div class="org-src-container">
 <pre class="src src-bash"><code>sudo mount master:/home /home
@@ -2454,8 +2455,8 @@ Preserve original local home directory.
 </div>
 </div>
 </div>
-<div id="outline-container-org7490922" class="outline-3">
-<h3 id="org7490922"><span class="section-number-3">7.20.</span> Verify Mount</h3>
+<div id="outline-container-org72c0516" class="outline-3">
+<h3 id="org72c0516"><span class="section-number-3">7.20.</span> Verify Mount</h3>
 <div class="outline-text-3" id="text-7-20">
 <div class="org-src-container">
 <pre class="src src-bash"><code>df -h
@@ -2466,7 +2467,7 @@ Preserve original local home directory.
 Expected:
 </p>
 
-<pre class="example" id="org83d9882">
+<pre class="example" id="org607b58f">
 master:/home
 </pre>
 
@@ -2474,13 +2475,13 @@ master:/home
 mounted on:
 </p>
 
-<pre class="example" id="org0f874f4">
+<pre class="example" id="orgdbf3c54">
 /home
 </pre>
 </div>
 </div>
-<div id="outline-container-org11e2341" class="outline-3">
-<h3 id="org11e2341"><span class="section-number-3">7.21.</span> Verify Shared Filesystem</h3>
+<div id="outline-container-org4e27583" class="outline-3">
+<h3 id="org4e27583"><span class="section-number-3">7.21.</span> Verify Shared Filesystem</h3>
 <div class="outline-text-3" id="text-7-21">
 <p>
 From login node:
@@ -2504,7 +2505,7 @@ From compute01:
 Expected:
 </p>
 
-<pre class="example" id="org2eb20ff">
+<pre class="example" id="orgea6213a">
 shared_test
 </pre>
 
@@ -2513,8 +2514,8 @@ This confirms successful shared filesystem operation.
 </p>
 </div>
 </div>
-<div id="outline-container-org526828c" class="outline-3">
-<h3 id="org526828c"><span class="section-number-3">7.22.</span> Configure Persistent NFS Mounts</h3>
+<div id="outline-container-org0afd01a" class="outline-3">
+<h3 id="org0afd01a"><span class="section-number-3">7.22.</span> Configure Persistent NFS Mounts</h3>
 <div class="outline-text-3" id="text-7-22">
 <p>
 Without this configuration:
@@ -2525,8 +2526,8 @@ Without this configuration:
 </ul>
 </div>
 </div>
-<div id="outline-container-org844bbd6" class="outline-3">
-<h3 id="org844bbd6"><span class="section-number-3">7.23.</span> Configure /etc/fstab</h3>
+<div id="outline-container-orgbfb6a0b" class="outline-3">
+<h3 id="orgbfb6a0b"><span class="section-number-3">7.23.</span> Configure /etc/fstab</h3>
 <div class="outline-text-3" id="text-7-23">
 <p>
 On ALL client nodes:
@@ -2541,13 +2542,13 @@ On ALL client nodes:
 Add:
 </p>
 
-<pre class="example" id="org0ce2fe7">
+<pre class="example" id="org8e5c0a2">
 master:/home   /home   nfs   defaults   0 0
 </pre>
 </div>
 </div>
-<div id="outline-container-orgcaadec1" class="outline-3">
-<h3 id="orgcaadec1"><span class="section-number-3">7.24.</span> Verify fstab Before Reboot</h3>
+<div id="outline-container-orgae46888" class="outline-3">
+<h3 id="orgae46888"><span class="section-number-3">7.24.</span> Verify fstab Before Reboot</h3>
 <div class="outline-text-3" id="text-7-24">
 <p>
 IMPORTANT:
@@ -2574,8 +2575,8 @@ If no errors appear:
 </ul>
 </div>
 </div>
-<div id="outline-container-orgb7f4d7b" class="outline-3">
-<h3 id="orgb7f4d7b"><span class="section-number-3">7.25.</span> Reboot Validation Procedure</h3>
+<div id="outline-container-orgf24b1fa" class="outline-3">
+<h3 id="orgf24b1fa"><span class="section-number-3">7.25.</span> Reboot Validation Procedure</h3>
 <div class="outline-text-3" id="text-7-25">
 <p>
 Purpose:
@@ -2590,12 +2591,12 @@ This is important real-world HPC administration practice.
 </p>
 </div>
 </div>
-<div id="outline-container-orgc9099c7" class="outline-3">
-<h3 id="orgc9099c7"><span class="section-number-3">7.26.</span> Reboot Order</h3>
+<div id="outline-container-org3938ceb" class="outline-3">
+<h3 id="org3938ceb"><span class="section-number-3">7.26.</span> Reboot Order</h3>
 <div class="outline-text-3" id="text-7-26">
 </div>
 <ol class="org-ol">
-<li><a id="org7cdc44e"></a>Reboot Master First<br />
+<li><a id="org555e8ad"></a>Reboot Master First<br />
 <div class="outline-text-4" id="text-7-26-1">
 <div class="org-src-container">
 <pre class="src src-bash"><code>sudo reboot
@@ -2620,7 +2621,7 @@ Verify:
 </div>
 </div>
 </li>
-<li><a id="orgff2cb9c"></a>Reboot Login Node<br />
+<li><a id="org74a0bfa"></a>Reboot Login Node<br />
 <div class="outline-text-4" id="text-7-26-2">
 <div class="org-src-container">
 <pre class="src src-bash"><code>sudo reboot
@@ -2628,7 +2629,7 @@ Verify:
 </div>
 </div>
 </li>
-<li><a id="orge47adf5"></a>Reboot Compute Nodes<br />
+<li><a id="org7245c6f"></a>Reboot Compute Nodes<br />
 <div class="outline-text-4" id="text-7-26-3">
 <div class="org-src-container">
 <pre class="src src-bash"><code>sudo reboot
@@ -2647,8 +2648,8 @@ Perform for:
 </li>
 </ol>
 </div>
-<div id="outline-container-orgddd0660" class="outline-3">
-<h3 id="orgddd0660"><span class="section-number-3">7.27.</span> Verify Persistent Mounts After Reboot</h3>
+<div id="outline-container-org434d4ae" class="outline-3">
+<h3 id="org434d4ae"><span class="section-number-3">7.27.</span> Verify Persistent Mounts After Reboot</h3>
 <div class="outline-text-3" id="text-7-27">
 <p>
 On login node:
@@ -2663,7 +2664,7 @@ On login node:
 Expected:
 </p>
 
-<pre class="example" id="org62d7f74">
+<pre class="example" id="org5e19f86">
 master:/home
 </pre>
 
@@ -2672,8 +2673,8 @@ mounted automatically.
 </p>
 </div>
 </div>
-<div id="outline-container-orgff689fb" class="outline-3">
-<h3 id="orgff689fb"><span class="section-number-3">7.28.</span> Verify Active NFS Mount</h3>
+<div id="outline-container-orgd285dfd" class="outline-3">
+<h3 id="orgd285dfd"><span class="section-number-3">7.28.</span> Verify Active NFS Mount</h3>
 <div class="outline-text-3" id="text-7-28">
 <div class="org-src-container">
 <pre class="src src-bash"><code>mount | grep home
@@ -2684,13 +2685,13 @@ mounted automatically.
 Expected:
 </p>
 
-<pre class="example" id="orga76506b">
+<pre class="example" id="org4c808b7">
 master:/home on /home type nfs
 </pre>
 </div>
 </div>
-<div id="outline-container-orgdeca548" class="outline-3">
-<h3 id="orgdeca548"><span class="section-number-3">7.29.</span> Verify Shared Files After Reboot</h3>
+<div id="outline-container-org90f22ab" class="outline-3">
+<h3 id="org90f22ab"><span class="section-number-3">7.29.</span> Verify Shared Files After Reboot</h3>
 <div class="outline-text-3" id="text-7-29">
 <div class="org-src-container">
 <pre class="src src-bash"><code>ls ~
@@ -2706,8 +2707,8 @@ Expected:
 </div>
 </div>
 </div>
-<div id="outline-container-orgd06e638" class="outline-2">
-<h2 id="orgd06e638"><span class="section-number-2">8.</span> Munge Authentication + Slurm Scheduler</h2>
+<div id="outline-container-orgd294a19" class="outline-2">
+<h2 id="orgd294a19"><span class="section-number-2">8.</span> Munge Authentication + Slurm Scheduler</h2>
 <div class="outline-text-2" id="text-8">
 <p>
 Goal:
@@ -2742,12 +2743,12 @@ By the end of this phase:
 <li>scheduler topology becomes operational</li>
 </ul>
 </div>
-<div id="outline-container-org777c86c" class="outline-3">
-<h3 id="org777c86c"><span class="section-number-3">8.1.</span> HPC Scheduler Architecture</h3>
+<div id="outline-container-orgc695df2" class="outline-3">
+<h3 id="orgc695df2"><span class="section-number-3">8.1.</span> HPC Scheduler Architecture</h3>
 <div class="outline-text-3" id="text-8-1">
 </div>
 <ol class="org-ol">
-<li><a id="org636565f"></a>Master Node<br />
+<li><a id="org4667a9a"></a>Master Node<br />
 <div class="outline-text-4" id="text-8-1-1">
 <p>
 Purpose:
@@ -2792,7 +2793,7 @@ Services:
 </table>
 </div>
 </li>
-<li><a id="orge71550f"></a>Login Node<br />
+<li><a id="org8e2ffb1"></a>Login Node<br />
 <div class="outline-text-4" id="text-8-1-2">
 <p>
 Purpose:
@@ -2815,7 +2816,7 @@ Users should:
 </ul>
 </div>
 </li>
-<li><a id="orgef5ffc4"></a>Compute Nodes<br />
+<li><a id="orgc511705"></a>Compute Nodes<br />
 <div class="outline-text-4" id="text-8-1-3">
 <p>
 Purpose:
@@ -2859,14 +2860,14 @@ Services:
 </li>
 </ol>
 </div>
-<div id="outline-container-org4cd0000" class="outline-3">
-<h3 id="org4cd0000"><span class="section-number-3">8.2.</span> IMPORTANT Rocky Linux 10 Issue</h3>
+<div id="outline-container-orge7056bd" class="outline-3">
+<h3 id="orge7056bd"><span class="section-number-3">8.2.</span> IMPORTANT Rocky Linux 10 Issue</h3>
 <div class="outline-text-3" id="text-8-2">
 <p>
 Originally the cluster was created using:
 </p>
 
-<pre class="example" id="org3710b42">
+<pre class="example" id="org38f6acd">
 Rocky Linux 10
 </pre>
 
@@ -2874,7 +2875,7 @@ Rocky Linux 10
 Problem encountered:
 </p>
 
-<pre class="example" id="orgb02c787">
+<pre class="example" id="orgbf792e9">
 No match for argument: slurm
 </pre>
 
@@ -2911,8 +2912,8 @@ Production HPC clusters usually avoid bleeding-edge enterprise releases because:
 </ul>
 </div>
 </div>
-<div id="outline-container-org89fcb0a" class="outline-3">
-<h3 id="org89fcb0a"><span class="section-number-3">8.3.</span> Install EPEL Repository</h3>
+<div id="outline-container-org215c01d" class="outline-3">
+<h3 id="org215c01d"><span class="section-number-3">8.3.</span> Install EPEL Repository</h3>
 <div class="outline-text-3" id="text-8-3">
 <p>
 Install on ALL nodes:
@@ -2924,8 +2925,8 @@ Install on ALL nodes:
 </div>
 </div>
 </div>
-<div id="outline-container-org0bfdf7e" class="outline-3">
-<h3 id="org0bfdf7e"><span class="section-number-3">8.4.</span> Enable CRB Repository</h3>
+<div id="outline-container-org600d2b5" class="outline-3">
+<h3 id="org600d2b5"><span class="section-number-3">8.4.</span> Enable CRB Repository</h3>
 <div class="outline-text-3" id="text-8-4">
 <p>
 Required on Rocky Linux 9.
@@ -2941,8 +2942,8 @@ Install on ALL nodes:
 </div>
 </div>
 </div>
-<div id="outline-container-org246e4c6" class="outline-3">
-<h3 id="org246e4c6"><span class="section-number-3">8.5.</span> Install Munge + Slurm Packages</h3>
+<div id="outline-container-orge28c037" class="outline-3">
+<h3 id="orge28c037"><span class="section-number-3">8.5.</span> Install Munge + Slurm Packages</h3>
 <div class="outline-text-3" id="text-8-5">
 <p>
 Install on ALL nodes:
@@ -2956,12 +2957,12 @@ slurm slurm-slurmd slurm-slurmctld
 </div>
 </div>
 </div>
-<div id="outline-container-org25e8530" class="outline-3">
-<h3 id="org25e8530"><span class="section-number-3">8.6.</span> Verify Installed Packages</h3>
+<div id="outline-container-orge6cadd4" class="outline-3">
+<h3 id="orge6cadd4"><span class="section-number-3">8.6.</span> Verify Installed Packages</h3>
 <div class="outline-text-3" id="text-8-6">
 </div>
 <ol class="org-ol">
-<li><a id="org406b6be"></a>Verify Munge<br />
+<li><a id="orgbc12340"></a>Verify Munge<br />
 <div class="outline-text-4" id="text-8-6-1">
 <div class="org-src-container">
 <pre class="src src-bash"><code>rpm -qa | grep munge
@@ -2972,13 +2973,13 @@ slurm slurm-slurmd slurm-slurmctld
 Expected:
 </p>
 
-<pre class="example" id="org5f89ff3">
+<pre class="example" id="org004216a">
 munge
 munge-libs
 </pre>
 </div>
 </li>
-<li><a id="org66b3307"></a>Verify Slurm<br />
+<li><a id="org8d0151f"></a>Verify Slurm<br />
 <div class="outline-text-4" id="text-8-6-2">
 <div class="org-src-container">
 <pre class="src src-bash"><code>rpm -qa | grep slurm
@@ -2989,7 +2990,7 @@ munge-libs
 Expected:
 </p>
 
-<pre class="example" id="orgad04cd0">
+<pre class="example" id="orgefcd52a">
 slurm
 slurm-slurmd
 slurm-slurmctld
@@ -2998,12 +2999,12 @@ slurm-slurmctld
 </li>
 </ol>
 </div>
-<div id="outline-container-org6fc0693" class="outline-3">
-<h3 id="org6fc0693"><span class="section-number-3">8.7.</span> Verify System Users</h3>
+<div id="outline-container-org305981a" class="outline-3">
+<h3 id="org305981a"><span class="section-number-3">8.7.</span> Verify System Users</h3>
 <div class="outline-text-3" id="text-8-7">
 </div>
 <ol class="org-ol">
-<li><a id="org00ef52e"></a>Verify Munge User<br />
+<li><a id="org5bdba98"></a>Verify Munge User<br />
 <div class="outline-text-4" id="text-8-7-1">
 <div class="org-src-container">
 <pre class="src src-bash"><code>id munge
@@ -3011,7 +3012,7 @@ slurm-slurmctld
 </div>
 </div>
 </li>
-<li><a id="orgdecbb74"></a>Verify Slurm User<br />
+<li><a id="org926ee97"></a>Verify Slurm User<br />
 <div class="outline-text-4" id="text-8-7-2">
 <div class="org-src-container">
 <pre class="src src-bash"><code>id slurm
@@ -3021,14 +3022,14 @@ slurm-slurmctld
 </li>
 </ol>
 </div>
-<div id="outline-container-org351e3cc" class="outline-3">
-<h3 id="org351e3cc"><span class="section-number-3">8.8.</span> IMPORTANT Issue Encountered — Missing slurm User</h3>
+<div id="outline-container-orgeb87513" class="outline-3">
+<h3 id="orgeb87513"><span class="section-number-3">8.8.</span> IMPORTANT Issue Encountered — Missing slurm User</h3>
 <div class="outline-text-3" id="text-8-8">
 <p>
 Problem:
 </p>
 
-<pre class="example" id="orgfe6d08a">
+<pre class="example" id="orgfab2e8f">
 id: ‘slurm’: no such user
 </pre>
 
@@ -3049,8 +3050,8 @@ Create manually on ALL nodes.
 </p>
 </div>
 </div>
-<div id="outline-container-org96e58f5" class="outline-3">
-<h3 id="org96e58f5"><span class="section-number-3">8.9.</span> Create Slurm Group</h3>
+<div id="outline-container-org65831f0" class="outline-3">
+<h3 id="org65831f0"><span class="section-number-3">8.9.</span> Create Slurm Group</h3>
 <div class="outline-text-3" id="text-8-9">
 <div class="org-src-container">
 <pre class="src src-bash"><code>sudo groupadd slurm
@@ -3058,8 +3059,8 @@ Create manually on ALL nodes.
 </div>
 </div>
 </div>
-<div id="outline-container-orge3de75f" class="outline-3">
-<h3 id="orge3de75f"><span class="section-number-3">8.10.</span> Create Slurm User</h3>
+<div id="outline-container-orgb9dc4de" class="outline-3">
+<h3 id="orgb9dc4de"><span class="section-number-3">8.10.</span> Create Slurm User</h3>
 <div class="outline-text-3" id="text-8-10">
 <div class="org-src-container">
 <pre class="src src-bash"><code>sudo useradd -r -g slurm -s /sbin/nologin slurm
@@ -3103,8 +3104,8 @@ Explanation:
 </table>
 </div>
 </div>
-<div id="outline-container-orgff144ea" class="outline-3">
-<h3 id="orgff144ea"><span class="section-number-3">8.11.</span> Verify Slurm User</h3>
+<div id="outline-container-orgdb49790" class="outline-3">
+<h3 id="orgdb49790"><span class="section-number-3">8.11.</span> Verify Slurm User</h3>
 <div class="outline-text-3" id="text-8-11">
 <div class="org-src-container">
 <pre class="src src-bash"><code>id slurm
@@ -3115,14 +3116,14 @@ Explanation:
 Expected:
 </p>
 
-<pre class="example" id="orgaa71fdc">
+<pre class="example" id="orgddd5293">
 uid=...
 gid=...
 </pre>
 </div>
 </div>
-<div id="outline-container-orgceee4bd" class="outline-3">
-<h3 id="orgceee4bd"><span class="section-number-3">8.12.</span> IMPORTANT HPC Security Concept</h3>
+<div id="outline-container-org95d41ee" class="outline-3">
+<h3 id="org95d41ee"><span class="section-number-3">8.12.</span> IMPORTANT HPC Security Concept</h3>
 <div class="outline-text-3" id="text-8-12">
 <p>
 Cluster daemons should not run permanently as root.
@@ -3142,8 +3143,8 @@ This is standard enterprise daemon security practice.
 </p>
 </div>
 </div>
-<div id="outline-container-org6a18e01" class="outline-3">
-<h3 id="org6a18e01"><span class="section-number-3">8.13.</span> Configure Munge Authentication</h3>
+<div id="outline-container-org692bd0f" class="outline-3">
+<h3 id="org692bd0f"><span class="section-number-3">8.13.</span> Configure Munge Authentication</h3>
 <div class="outline-text-3" id="text-8-13">
 <p>
 Purpose:
@@ -3161,7 +3162,7 @@ IMPORTANT:
 All nodes MUST use the same:
 </p>
 
-<pre class="example" id="org0c9e0a4">
+<pre class="example" id="org2a661b0">
 /etc/munge/munge.key
 </pre>
 
@@ -3170,8 +3171,8 @@ This key acts as the cluster-wide shared secret.
 </p>
 </div>
 </div>
-<div id="outline-container-org940c1c1" class="outline-3">
-<h3 id="org940c1c1"><span class="section-number-3">8.14.</span> Generate Munge Key on Master</h3>
+<div id="outline-container-org43d1b2b" class="outline-3">
+<h3 id="org43d1b2b"><span class="section-number-3">8.14.</span> Generate Munge Key on Master</h3>
 <div class="outline-text-3" id="text-8-14">
 <p>
 ONLY on master node:
@@ -3183,8 +3184,8 @@ ONLY on master node:
 </div>
 </div>
 </div>
-<div id="outline-container-org46d18bc" class="outline-3">
-<h3 id="org46d18bc"><span class="section-number-3">8.15.</span> Verify Munge Key</h3>
+<div id="outline-container-orgc7ea37d" class="outline-3">
+<h3 id="orgc7ea37d"><span class="section-number-3">8.15.</span> Verify Munge Key</h3>
 <div class="outline-text-3" id="text-8-15">
 <div class="org-src-container">
 <pre class="src src-bash"><code>ls -l /etc/munge/munge.key
@@ -3195,7 +3196,7 @@ ONLY on master node:
 Expected:
 </p>
 
-<pre class="example" id="org7a13786">
+<pre class="example" id="org25008f7">
 -rw-------
 </pre>
 
@@ -3203,13 +3204,13 @@ Expected:
 owned by:
 </p>
 
-<pre class="example" id="orgceeccff">
+<pre class="example" id="org9f21c99">
 munge munge
 </pre>
 </div>
 </div>
-<div id="outline-container-org937ed6e" class="outline-3">
-<h3 id="org937ed6e"><span class="section-number-3">8.16.</span> IMPORTANT Mistake Encountered — Munge Key Generated on All Nodes</h3>
+<div id="outline-container-orgb8aab1b" class="outline-3">
+<h3 id="orgb8aab1b"><span class="section-number-3">8.16.</span> IMPORTANT Mistake Encountered — Munge Key Generated on All Nodes</h3>
 <div class="outline-text-3" id="text-8-16">
 <p>
 Problem:
@@ -3235,7 +3236,7 @@ Important HPC lesson:
 Munge works using a:
 </p>
 
-<pre class="example" id="org1182b90">
+<pre class="example" id="orgb878df9">
 shared trust model
 </pre>
 
@@ -3244,12 +3245,12 @@ All nodes MUST share identical munge.key.
 </p>
 </div>
 </div>
-<div id="outline-container-org1f37b27" class="outline-3">
-<h3 id="org1f37b27"><span class="section-number-3">8.17.</span> Correct Munge Key Distribution</h3>
+<div id="outline-container-org75978d6" class="outline-3">
+<h3 id="org75978d6"><span class="section-number-3">8.17.</span> Correct Munge Key Distribution</h3>
 <div class="outline-text-3" id="text-8-17">
 </div>
 <ol class="org-ol">
-<li><a id="orge7a0f91"></a>Copy Key Temporarily<br />
+<li><a id="org239dfaa"></a>Copy Key Temporarily<br />
 <div class="outline-text-4" id="text-8-17-1">
 <p>
 On master:
@@ -3261,7 +3262,7 @@ On master:
 </div>
 </div>
 </li>
-<li><a id="org25253b6"></a>Temporary Permission Adjustment<br />
+<li><a id="org8a49bba"></a>Temporary Permission Adjustment<br />
 <div class="outline-text-4" id="text-8-17-2">
 <div class="org-src-container">
 <pre class="src src-bash"><code>sudo chmod 644 /tmp/munge.key
@@ -3279,14 +3280,14 @@ Allow normal user SCP transfer.
 </li>
 </ol>
 </div>
-<div id="outline-container-org149219c" class="outline-3">
-<h3 id="org149219c"><span class="section-number-3">8.18.</span> IMPORTANT SSH Root Login Issue</h3>
+<div id="outline-container-org265eefe" class="outline-3">
+<h3 id="org265eefe"><span class="section-number-3">8.18.</span> IMPORTANT SSH Root Login Issue</h3>
 <div class="outline-text-3" id="text-8-18">
 <p>
 Problem encountered:
 </p>
 
-<pre class="example" id="org5198f96">
+<pre class="example" id="org42f1766">
 Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password)
 </pre>
 
@@ -3320,8 +3321,8 @@ Use normal user SCP.
 </p>
 </div>
 </div>
-<div id="outline-container-org41844fc" class="outline-3">
-<h3 id="org41844fc"><span class="section-number-3">8.19.</span> Copy Munge Key to Login Node</h3>
+<div id="outline-container-orgc2610f7" class="outline-3">
+<h3 id="orgc2610f7"><span class="section-number-3">8.19.</span> Copy Munge Key to Login Node</h3>
 <div class="outline-text-3" id="text-8-19">
 <div class="org-src-container">
 <pre class="src src-bash"><code>scp /tmp/munge.key login:/tmp/
@@ -3329,8 +3330,8 @@ Use normal user SCP.
 </div>
 </div>
 </div>
-<div id="outline-container-org386ce28" class="outline-3">
-<h3 id="org386ce28"><span class="section-number-3">8.20.</span> Copy Munge Key to Compute01</h3>
+<div id="outline-container-orgc9cda71" class="outline-3">
+<h3 id="orgc9cda71"><span class="section-number-3">8.20.</span> Copy Munge Key to Compute01</h3>
 <div class="outline-text-3" id="text-8-20">
 <div class="org-src-container">
 <pre class="src src-bash"><code>scp /tmp/munge.key compute01:/tmp/
@@ -3338,8 +3339,8 @@ Use normal user SCP.
 </div>
 </div>
 </div>
-<div id="outline-container-org62b83a2" class="outline-3">
-<h3 id="org62b83a2"><span class="section-number-3">8.21.</span> Copy Munge Key to Compute02</h3>
+<div id="outline-container-orgf238194" class="outline-3">
+<h3 id="orgf238194"><span class="section-number-3">8.21.</span> Copy Munge Key to Compute02</h3>
 <div class="outline-text-3" id="text-8-21">
 <div class="org-src-container">
 <pre class="src src-bash"><code>scp /tmp/munge.key compute02:/tmp/
@@ -3347,8 +3348,8 @@ Use normal user SCP.
 </div>
 </div>
 </div>
-<div id="outline-container-org3acba60" class="outline-3">
-<h3 id="org3acba60"><span class="section-number-3">8.22.</span> Copy Munge Key to Compute03</h3>
+<div id="outline-container-orgef0908f" class="outline-3">
+<h3 id="orgef0908f"><span class="section-number-3">8.22.</span> Copy Munge Key to Compute03</h3>
 <div class="outline-text-3" id="text-8-22">
 <div class="org-src-container">
 <pre class="src src-bash"><code>scp /tmp/munge.key compute03:/tmp/
@@ -3356,8 +3357,8 @@ Use normal user SCP.
 </div>
 </div>
 </div>
-<div id="outline-container-org73b56df" class="outline-3">
-<h3 id="org73b56df"><span class="section-number-3">8.23.</span> Remove Temporary Key Copy</h3>
+<div id="outline-container-orgf8bbab1" class="outline-3">
+<h3 id="orgf8bbab1"><span class="section-number-3">8.23.</span> Remove Temporary Key Copy</h3>
 <div class="outline-text-3" id="text-8-23">
 <p>
 On master:
@@ -3369,8 +3370,8 @@ On master:
 </div>
 </div>
 </div>
-<div id="outline-container-org337ed37" class="outline-3">
-<h3 id="org337ed37"><span class="section-number-3">8.24.</span> Install Munge Key on Client Nodes</h3>
+<div id="outline-container-orgcfd83a1" class="outline-3">
+<h3 id="orgcfd83a1"><span class="section-number-3">8.24.</span> Install Munge Key on Client Nodes</h3>
 <div class="outline-text-3" id="text-8-24">
 <p>
 Perform on:
@@ -3384,8 +3385,8 @@ Perform on:
 </ul>
 </div>
 </div>
-<div id="outline-container-org61349e8" class="outline-3">
-<h3 id="org61349e8"><span class="section-number-3">8.25.</span> Stop Munge Service</h3>
+<div id="outline-container-orga4f94a6" class="outline-3">
+<h3 id="orga4f94a6"><span class="section-number-3">8.25.</span> Stop Munge Service</h3>
 <div class="outline-text-3" id="text-8-25">
 <div class="org-src-container">
 <pre class="src src-bash"><code>sudo systemctl stop munge
@@ -3393,8 +3394,8 @@ Perform on:
 </div>
 </div>
 </div>
-<div id="outline-container-orgca090e2" class="outline-3">
-<h3 id="orgca090e2"><span class="section-number-3">8.26.</span> Install Key</h3>
+<div id="outline-container-org55c7e7e" class="outline-3">
+<h3 id="org55c7e7e"><span class="section-number-3">8.26.</span> Install Key</h3>
 <div class="outline-text-3" id="text-8-26">
 <div class="org-src-container">
 <pre class="src src-bash"><code>sudo mv /tmp/munge.key /etc/munge/
@@ -3402,8 +3403,8 @@ Perform on:
 </div>
 </div>
 </div>
-<div id="outline-container-org4186d69" class="outline-3">
-<h3 id="org4186d69"><span class="section-number-3">8.27.</span> Fix Ownership</h3>
+<div id="outline-container-org34260fc" class="outline-3">
+<h3 id="org34260fc"><span class="section-number-3">8.27.</span> Fix Ownership</h3>
 <div class="outline-text-3" id="text-8-27">
 <div class="org-src-container">
 <pre class="src src-bash"><code>sudo chown munge:munge /etc/munge/munge.key
@@ -3411,8 +3412,8 @@ Perform on:
 </div>
 </div>
 </div>
-<div id="outline-container-orgef730ec" class="outline-3">
-<h3 id="orgef730ec"><span class="section-number-3">8.28.</span> Fix Permissions</h3>
+<div id="outline-container-orgbc5ac48" class="outline-3">
+<h3 id="orgbc5ac48"><span class="section-number-3">8.28.</span> Fix Permissions</h3>
 <div class="outline-text-3" id="text-8-28">
 <div class="org-src-container">
 <pre class="src src-bash"><code>sudo chmod 400 /etc/munge/munge.key
@@ -3420,8 +3421,8 @@ Perform on:
 </div>
 </div>
 </div>
-<div id="outline-container-orgc0fc251" class="outline-3">
-<h3 id="orgc0fc251"><span class="section-number-3">8.29.</span> Start Munge</h3>
+<div id="outline-container-org9cd7519" class="outline-3">
+<h3 id="org9cd7519"><span class="section-number-3">8.29.</span> Start Munge</h3>
 <div class="outline-text-3" id="text-8-29">
 <p>
 On ALL nodes:
@@ -3433,14 +3434,14 @@ On ALL nodes:
 </div>
 </div>
 </div>
-<div id="outline-container-orge18c90e" class="outline-3">
-<h3 id="orge18c90e"><span class="section-number-3">8.30.</span> IMPORTANT Issue Encountered — Munge Not Running on Master</h3>
+<div id="outline-container-org6ccdbea" class="outline-3">
+<h3 id="org6ccdbea"><span class="section-number-3">8.30.</span> IMPORTANT Issue Encountered — Munge Not Running on Master</h3>
 <div class="outline-text-3" id="text-8-30">
 <p>
 Problem:
 </p>
 
-<pre class="example" id="orgf5171bf">
+<pre class="example" id="org54c0c64">
 munge: Error: Failed to access "/var/run/munge/munge.socket.2"
 </pre>
 
@@ -3497,8 +3498,8 @@ Difference between:
 </table>
 </div>
 </div>
-<div id="outline-container-orgc196fef" class="outline-3">
-<h3 id="orgc196fef"><span class="section-number-3">8.31.</span> Verify Munge Service</h3>
+<div id="outline-container-orgfc82066" class="outline-3">
+<h3 id="orgfc82066"><span class="section-number-3">8.31.</span> Verify Munge Service</h3>
 <div class="outline-text-3" id="text-8-31">
 <div class="org-src-container">
 <pre class="src src-bash"><code>systemctl status munge
@@ -3509,13 +3510,13 @@ Difference between:
 Expected:
 </p>
 
-<pre class="example" id="orgb1a9dcf">
+<pre class="example" id="org4fcfb94">
 active (running)
 </pre>
 </div>
 </div>
-<div id="outline-container-orgef4c95c" class="outline-3">
-<h3 id="orgef4c95c"><span class="section-number-3">8.32.</span> Verify Munge Authentication</h3>
+<div id="outline-container-org8c1aa08" class="outline-3">
+<h3 id="org8c1aa08"><span class="section-number-3">8.32.</span> Verify Munge Authentication</h3>
 <div class="outline-text-3" id="text-8-32">
 <p>
 From master:
@@ -3527,8 +3528,8 @@ From master:
 </div>
 </div>
 </div>
-<div id="outline-container-org61f9fbb" class="outline-3">
-<h3 id="org61f9fbb"><span class="section-number-3">8.33.</span> Test Compute02</h3>
+<div id="outline-container-org269a228" class="outline-3">
+<h3 id="org269a228"><span class="section-number-3">8.33.</span> Test Compute02</h3>
 <div class="outline-text-3" id="text-8-33">
 <div class="org-src-container">
 <pre class="src src-bash"><code>munge -n | ssh compute02 unmunge
@@ -3536,8 +3537,8 @@ From master:
 </div>
 </div>
 </div>
-<div id="outline-container-org17acaaa" class="outline-3">
-<h3 id="org17acaaa"><span class="section-number-3">8.34.</span> Test Compute03</h3>
+<div id="outline-container-orgdf14733" class="outline-3">
+<h3 id="orgdf14733"><span class="section-number-3">8.34.</span> Test Compute03</h3>
 <div class="outline-text-3" id="text-8-34">
 <div class="org-src-container">
 <pre class="src src-bash"><code>munge -n | ssh compute03 unmunge
@@ -3545,8 +3546,8 @@ From master:
 </div>
 </div>
 </div>
-<div id="outline-container-org094064a" class="outline-3">
-<h3 id="org094064a"><span class="section-number-3">8.35.</span> Test Login Node</h3>
+<div id="outline-container-orga8a0835" class="outline-3">
+<h3 id="orga8a0835"><span class="section-number-3">8.35.</span> Test Login Node</h3>
 <div class="outline-text-3" id="text-8-35">
 <div class="org-src-container">
 <pre class="src src-bash"><code>munge -n | ssh login unmunge
@@ -3557,13 +3558,13 @@ From master:
 Expected:
 </p>
 
-<pre class="example" id="org2d384c3">
+<pre class="example" id="org10ea6c9">
 STATUS: Success
 </pre>
 </div>
 </div>
-<div id="outline-container-org732322c" class="outline-3">
-<h3 id="org732322c"><span class="section-number-3">8.36.</span> HPC Concepts Learned</h3>
+<div id="outline-container-org3ad69fc" class="outline-3">
+<h3 id="org3ad69fc"><span class="section-number-3">8.36.</span> HPC Concepts Learned</h3>
 <div class="outline-text-3" id="text-8-36">
 <p>
 Munge introduced:
@@ -3578,8 +3579,8 @@ Munge introduced:
 </ul>
 </div>
 </div>
-<div id="outline-container-orga41ef3a" class="outline-3">
-<h3 id="orga41ef3a"><span class="section-number-3">8.37.</span> Configure Slurm Scheduler</h3>
+<div id="outline-container-orga8f7100" class="outline-3">
+<h3 id="orga8f7100"><span class="section-number-3">8.37.</span> Configure Slurm Scheduler</h3>
 <div class="outline-text-3" id="text-8-37">
 <p>
 Purpose:
@@ -3593,7 +3594,7 @@ Enable centralized resource scheduling.
 IMPORTANT:
 </p>
 
-<pre class="example" id="orgbc95d2c">
+<pre class="example" id="org44316c3">
 /etc/slurm/slurm.conf
 </pre>
 
@@ -3602,14 +3603,14 @@ must be IDENTICAL on ALL nodes.
 </p>
 </div>
 </div>
-<div id="outline-container-org3221230" class="outline-3">
-<h3 id="org3221230"><span class="section-number-3">8.38.</span> IMPORTANT Issue Encountered — Default localhost Configuration</h3>
+<div id="outline-container-org35b1441" class="outline-3">
+<h3 id="org35b1441"><span class="section-number-3">8.38.</span> IMPORTANT Issue Encountered — Default localhost Configuration</h3>
 <div class="outline-text-3" id="text-8-38">
 <p>
 Problem:
 </p>
 
-<pre class="example" id="org9ecad18">
+<pre class="example" id="org68e96cc">
 sinfo
 -&gt; localhost
 </pre>
@@ -3639,8 +3640,8 @@ Incorrect topology configuration is one of the most common Slurm admin problems.
 </p>
 </div>
 </div>
-<div id="outline-container-orgbe232fd" class="outline-3">
-<h3 id="orgbe232fd"><span class="section-number-3">8.39.</span> Create Slurm Configuration</h3>
+<div id="outline-container-org499c8a6" class="outline-3">
+<h3 id="org499c8a6"><span class="section-number-3">8.39.</span> Create Slurm Configuration</h3>
 <div class="outline-text-3" id="text-8-39">
 <p>
 On master:
@@ -3690,8 +3691,8 @@ PartitionName=debug Nodes=ALL Default=YES MaxTime=INFINITE State=UP
 </div>
 </div>
 </div>
-<div id="outline-container-org278481e" class="outline-3">
-<h3 id="org278481e"><span class="section-number-3">8.40.</span> Configuration Explanation</h3>
+<div id="outline-container-orgf5f2bdd" class="outline-3">
+<h3 id="orgf5f2bdd"><span class="section-number-3">8.40.</span> Configuration Explanation</h3>
 <div class="outline-text-3" id="text-8-40">
 <table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
 
@@ -3736,12 +3737,12 @@ PartitionName=debug Nodes=ALL Default=YES MaxTime=INFINITE State=UP
 </table>
 </div>
 </div>
-<div id="outline-container-orge112ab0" class="outline-3">
-<h3 id="orge112ab0"><span class="section-number-3">8.41.</span> Create Slurm Runtime Directories</h3>
+<div id="outline-container-org2db28b8" class="outline-3">
+<h3 id="org2db28b8"><span class="section-number-3">8.41.</span> Create Slurm Runtime Directories</h3>
 <div class="outline-text-3" id="text-8-41">
 </div>
 <ol class="org-ol">
-<li><a id="orgadee327"></a>On Master<br />
+<li><a id="org83a6e8a"></a>On Master<br />
 <div class="outline-text-4" id="text-8-41-1">
 <div class="org-src-container">
 <pre class="src src-bash"><code>sudo mkdir -p /var/spool/slurmctld
@@ -3756,8 +3757,8 @@ PartitionName=debug Nodes=ALL Default=YES MaxTime=INFINITE State=UP
 </li>
 </ol>
 </div>
-<div id="outline-container-org162d463" class="outline-3">
-<h3 id="org162d463"><span class="section-number-3">8.42.</span> Set Ownership</h3>
+<div id="outline-container-orga89f37a" class="outline-3">
+<h3 id="orga89f37a"><span class="section-number-3">8.42.</span> Set Ownership</h3>
 <div class="outline-text-3" id="text-8-42">
 <div class="org-src-container">
 <pre class="src src-bash"><code>sudo chown slurm:slurm /var/spool/slurmctld
@@ -3770,12 +3771,12 @@ PartitionName=debug Nodes=ALL Default=YES MaxTime=INFINITE State=UP
 </div>
 </div>
 </div>
-<div id="outline-container-orgce3286b" class="outline-3">
-<h3 id="orgce3286b"><span class="section-number-3">8.43.</span> Create slurmd Directories on Compute Nodes</h3>
+<div id="outline-container-orgff3f15d" class="outline-3">
+<h3 id="orgff3f15d"><span class="section-number-3">8.43.</span> Create slurmd Directories on Compute Nodes</h3>
 <div class="outline-text-3" id="text-8-43">
 </div>
 <ol class="org-ol">
-<li><a id="org6dc8858"></a>Compute01<br />
+<li><a id="org603771b"></a>Compute01<br />
 <div class="outline-text-4" id="text-8-43-1">
 <div class="org-src-container">
 <pre class="src src-bash"><code>ssh compute01 sudo -S mkdir -p /var/spool/slurmd
@@ -3783,7 +3784,7 @@ PartitionName=debug Nodes=ALL Default=YES MaxTime=INFINITE State=UP
 </div>
 </div>
 </li>
-<li><a id="org2f96fdf"></a>Compute02<br />
+<li><a id="org63d7889"></a>Compute02<br />
 <div class="outline-text-4" id="text-8-43-2">
 <div class="org-src-container">
 <pre class="src src-bash"><code>ssh compute02 sudo -S mkdir -p /var/spool/slurmd
@@ -3791,7 +3792,7 @@ PartitionName=debug Nodes=ALL Default=YES MaxTime=INFINITE State=UP
 </div>
 </div>
 </li>
-<li><a id="orgb866d52"></a>Compute03<br />
+<li><a id="org3fc49ed"></a>Compute03<br />
 <div class="outline-text-4" id="text-8-43-3">
 <div class="org-src-container">
 <pre class="src src-bash"><code>ssh compute03 sudo -S mkdir -p /var/spool/slurmd
@@ -3801,14 +3802,14 @@ PartitionName=debug Nodes=ALL Default=YES MaxTime=INFINITE State=UP
 </li>
 </ol>
 </div>
-<div id="outline-container-org533d262" class="outline-3">
-<h3 id="org533d262"><span class="section-number-3">8.44.</span> IMPORTANT sudo Over SSH Issue</h3>
+<div id="outline-container-orgce8e635" class="outline-3">
+<h3 id="orgce8e635"><span class="section-number-3">8.44.</span> IMPORTANT sudo Over SSH Issue</h3>
 <div class="outline-text-3" id="text-8-44">
 <p>
 Problem:
 </p>
 
-<pre class="example" id="org3a2e616">
+<pre class="example" id="org2d43666">
 sudo: a terminal is required to read the password
 </pre>
 
@@ -3834,12 +3835,12 @@ sudo over non-interactive SSH requires stdin password handling.
 </p>
 </div>
 </div>
-<div id="outline-container-orge3a21c7" class="outline-3">
-<h3 id="orge3a21c7"><span class="section-number-3">8.45.</span> Fix Ownership on Compute Nodes</h3>
+<div id="outline-container-org0848613" class="outline-3">
+<h3 id="org0848613"><span class="section-number-3">8.45.</span> Fix Ownership on Compute Nodes</h3>
 <div class="outline-text-3" id="text-8-45">
 </div>
 <ol class="org-ol">
-<li><a id="orgfee4ab6"></a>Compute01<br />
+<li><a id="orgd43c44c"></a>Compute01<br />
 <div class="outline-text-4" id="text-8-45-1">
 <div class="org-src-container">
 <pre class="src src-bash"><code>ssh compute01 sudo -S chown slurm:slurm /var/spool/slurmd
@@ -3847,7 +3848,7 @@ sudo over non-interactive SSH requires stdin password handling.
 </div>
 </div>
 </li>
-<li><a id="orge513272"></a>Compute02<br />
+<li><a id="org440f8ad"></a>Compute02<br />
 <div class="outline-text-4" id="text-8-45-2">
 <div class="org-src-container">
 <pre class="src src-bash"><code>ssh compute02 sudo -S chown slurm:slurm /var/spool/slurmd
@@ -3855,7 +3856,7 @@ sudo over non-interactive SSH requires stdin password handling.
 </div>
 </div>
 </li>
-<li><a id="org0678dc8"></a>Compute03<br />
+<li><a id="org826623b"></a>Compute03<br />
 <div class="outline-text-4" id="text-8-45-3">
 <div class="org-src-container">
 <pre class="src src-bash"><code>ssh compute03 sudo -S chown slurm:slurm /var/spool/slurmd
@@ -3865,8 +3866,8 @@ sudo over non-interactive SSH requires stdin password handling.
 </li>
 </ol>
 </div>
-<div id="outline-container-org6fd98ce" class="outline-3">
-<h3 id="org6fd98ce"><span class="section-number-3">8.46.</span> Verify Runtime Directories</h3>
+<div id="outline-container-orgd91e587" class="outline-3">
+<h3 id="orgd91e587"><span class="section-number-3">8.46.</span> Verify Runtime Directories</h3>
 <div class="outline-text-3" id="text-8-46">
 <div class="org-src-container">
 <pre class="src src-bash"><code>ls -ld /var/spool/slurmctld
@@ -3877,17 +3878,17 @@ sudo over non-interactive SSH requires stdin password handling.
 Expected:
 </p>
 
-<pre class="example" id="orgab7a8d3">
+<pre class="example" id="org8b5207d">
 slurm slurm
 </pre>
 </div>
 </div>
-<div id="outline-container-org966d115" class="outline-3">
-<h3 id="org966d115"><span class="section-number-3">8.47.</span> Distribute slurm.conf</h3>
+<div id="outline-container-org1b527a5" class="outline-3">
+<h3 id="org1b527a5"><span class="section-number-3">8.47.</span> Distribute slurm.conf</h3>
 <div class="outline-text-3" id="text-8-47">
 </div>
 <ol class="org-ol">
-<li><a id="org782d5d2"></a>Login<br />
+<li><a id="orgfc103d6"></a>Login<br />
 <div class="outline-text-4" id="text-8-47-1">
 <div class="org-src-container">
 <pre class="src src-bash"><code>scp /etc/slurm/slurm.conf login:/tmp/
@@ -3895,7 +3896,7 @@ slurm slurm
 </div>
 </div>
 </li>
-<li><a id="orgf39313e"></a>Compute01<br />
+<li><a id="orgfa76b53"></a>Compute01<br />
 <div class="outline-text-4" id="text-8-47-2">
 <div class="org-src-container">
 <pre class="src src-bash"><code>scp /etc/slurm/slurm.conf compute01:/tmp/
@@ -3903,7 +3904,7 @@ slurm slurm
 </div>
 </div>
 </li>
-<li><a id="orgadadcef"></a>Compute02<br />
+<li><a id="orgb93bb07"></a>Compute02<br />
 <div class="outline-text-4" id="text-8-47-3">
 <div class="org-src-container">
 <pre class="src src-bash"><code>scp /etc/slurm/slurm.conf compute02:/tmp/
@@ -3911,7 +3912,7 @@ slurm slurm
 </div>
 </div>
 </li>
-<li><a id="orga981b0b"></a>Compute03<br />
+<li><a id="orga8d34e8"></a>Compute03<br />
 <div class="outline-text-4" id="text-8-47-4">
 <div class="org-src-container">
 <pre class="src src-bash"><code>scp /etc/slurm/slurm.conf compute03:/tmp/
@@ -3921,8 +3922,8 @@ slurm slurm
 </li>
 </ol>
 </div>
-<div id="outline-container-orgabbc51c" class="outline-3">
-<h3 id="orgabbc51c"><span class="section-number-3">8.48.</span> Install Configuration on Nodes</h3>
+<div id="outline-container-org7499737" class="outline-3">
+<h3 id="org7499737"><span class="section-number-3">8.48.</span> Install Configuration on Nodes</h3>
 <div class="outline-text-3" id="text-8-48">
 <p>
 On ALL nodes:
@@ -3934,8 +3935,8 @@ On ALL nodes:
 </div>
 </div>
 </div>
-<div id="outline-container-orgf50ae35" class="outline-3">
-<h3 id="orgf50ae35"><span class="section-number-3">8.49.</span> Start Slurm Controller</h3>
+<div id="outline-container-org012257f" class="outline-3">
+<h3 id="org012257f"><span class="section-number-3">8.49.</span> Start Slurm Controller</h3>
 <div class="outline-text-3" id="text-8-49">
 <p>
 ONLY on master:
@@ -3947,8 +3948,8 @@ ONLY on master:
 </div>
 </div>
 </div>
-<div id="outline-container-org3e29480" class="outline-3">
-<h3 id="org3e29480"><span class="section-number-3">8.50.</span> Verify Controller</h3>
+<div id="outline-container-orgcad3b23" class="outline-3">
+<h3 id="orgcad3b23"><span class="section-number-3">8.50.</span> Verify Controller</h3>
 <div class="outline-text-3" id="text-8-50">
 <div class="org-src-container">
 <pre class="src src-bash"><code>systemctl status slurmctld
@@ -3959,13 +3960,13 @@ ONLY on master:
 Expected:
 </p>
 
-<pre class="example" id="org5d37499">
+<pre class="example" id="org77f7acd">
 active (running)
 </pre>
 </div>
 </div>
-<div id="outline-container-orgde25cd7" class="outline-3">
-<h3 id="orgde25cd7"><span class="section-number-3">8.51.</span> Start slurmd on Compute Nodes</h3>
+<div id="outline-container-orgdc33b30" class="outline-3">
+<h3 id="orgdc33b30"><span class="section-number-3">8.51.</span> Start slurmd on Compute Nodes</h3>
 <div class="outline-text-3" id="text-8-51">
 <p>
 On:
@@ -3982,8 +3983,8 @@ On:
 </div>
 </div>
 </div>
-<div id="outline-container-org96bec4c" class="outline-3">
-<h3 id="org96bec4c"><span class="section-number-3">8.52.</span> Verify slurmd</h3>
+<div id="outline-container-orgcb16568" class="outline-3">
+<h3 id="orgcb16568"><span class="section-number-3">8.52.</span> Verify slurmd</h3>
 <div class="outline-text-3" id="text-8-52">
 <div class="org-src-container">
 <pre class="src src-bash"><code>systemctl status slurmd
@@ -3994,13 +3995,13 @@ On:
 Expected:
 </p>
 
-<pre class="example" id="org3319490">
+<pre class="example" id="org1b896de">
 active (running)
 </pre>
 </div>
 </div>
-<div id="outline-container-org6746520" class="outline-3">
-<h3 id="org6746520"><span class="section-number-3">8.53.</span> Reconfigure Slurm</h3>
+<div id="outline-container-org0ff99a5" class="outline-3">
+<h3 id="org0ff99a5"><span class="section-number-3">8.53.</span> Reconfigure Slurm</h3>
 <div class="outline-text-3" id="text-8-53">
 <p>
 On master:
@@ -4012,8 +4013,8 @@ On master:
 </div>
 </div>
 </div>
-<div id="outline-container-org3ed6825" class="outline-3">
-<h3 id="org3ed6825"><span class="section-number-3">8.54.</span> IMPORTANT Issue Encountered — Nodes in DRAIN State</h3>
+<div id="outline-container-orgf11a89f" class="outline-3">
+<h3 id="orgf11a89f"><span class="section-number-3">8.54.</span> IMPORTANT Issue Encountered — Nodes in DRAIN State</h3>
 <div class="outline-text-3" id="text-8-54">
 <p>
 Problem:
@@ -4023,7 +4024,7 @@ Problem:
 Nodes entered:
 </p>
 
-<pre class="example" id="org5bfd052">
+<pre class="example" id="orgc8a7506">
 DRAIN
 </pre>
 
@@ -4052,8 +4053,8 @@ Clear stale slurmd state.
 </p>
 </div>
 </div>
-<div id="outline-container-orgf5f6799" class="outline-3">
-<h3 id="orgf5f6799"><span class="section-number-3">8.55.</span> Stop slurmd</h3>
+<div id="outline-container-org423c282" class="outline-3">
+<h3 id="org423c282"><span class="section-number-3">8.55.</span> Stop slurmd</h3>
 <div class="outline-text-3" id="text-8-55">
 <p>
 On compute nodes:
@@ -4065,8 +4066,8 @@ On compute nodes:
 </div>
 </div>
 </div>
-<div id="outline-container-org35223d7" class="outline-3">
-<h3 id="org35223d7"><span class="section-number-3">8.56.</span> Remove Old State</h3>
+<div id="outline-container-orgde2b8ba" class="outline-3">
+<h3 id="orgde2b8ba"><span class="section-number-3">8.56.</span> Remove Old State</h3>
 <div class="outline-text-3" id="text-8-56">
 <div class="org-src-container">
 <pre class="src src-bash"><code>sudo rm -rf /var/spool/slurmd/*
@@ -4074,8 +4075,8 @@ On compute nodes:
 </div>
 </div>
 </div>
-<div id="outline-container-org3da3b30" class="outline-3">
-<h3 id="org3da3b30"><span class="section-number-3">8.57.</span> Restart slurmd</h3>
+<div id="outline-container-orgdc7878a" class="outline-3">
+<h3 id="orgdc7878a"><span class="section-number-3">8.57.</span> Restart slurmd</h3>
 <div class="outline-text-3" id="text-8-57">
 <div class="org-src-container">
 <pre class="src src-bash"><code>sudo systemctl start slurmd
@@ -4083,8 +4084,8 @@ On compute nodes:
 </div>
 </div>
 </div>
-<div id="outline-container-orge789e72" class="outline-3">
-<h3 id="orge789e72"><span class="section-number-3">8.58.</span> Resume Nodes</h3>
+<div id="outline-container-orgc6d2613" class="outline-3">
+<h3 id="orgc6d2613"><span class="section-number-3">8.58.</span> Resume Nodes</h3>
 <div class="outline-text-3" id="text-8-58">
 <p>
 On master:
@@ -4106,8 +4107,8 @@ On master:
 </div>
 </div>
 </div>
-<div id="outline-container-org097147d" class="outline-3">
-<h3 id="org097147d"><span class="section-number-3">8.59.</span> Verify Cluster Status</h3>
+<div id="outline-container-orgcdc9cb2" class="outline-3">
+<h3 id="orgcdc9cb2"><span class="section-number-3">8.59.</span> Verify Cluster Status</h3>
 <div class="outline-text-3" id="text-8-59">
 <div class="org-src-container">
 <pre class="src src-bash"><code>sinfo
@@ -4118,14 +4119,14 @@ On master:
 Expected:
 </p>
 
-<pre class="example" id="org9f34730">
+<pre class="example" id="org98127ad">
 PARTITION AVAIL TIMELIMIT NODES STATE NODELIST
 debug* up infinite 3 idle compute[01-03]
 </pre>
 </div>
 </div>
-<div id="outline-container-org671db09" class="outline-3">
-<h3 id="org671db09"><span class="section-number-3">8.60.</span> Verify Node Details</h3>
+<div id="outline-container-org12bdd92" class="outline-3">
+<h3 id="org12bdd92"><span class="section-number-3">8.60.</span> Verify Node Details</h3>
 <div class="outline-text-3" id="text-8-60">
 <div class="org-src-container">
 <pre class="src src-bash"><code>scontrol show nodes
@@ -4145,12 +4146,12 @@ This displays:
 </ul>
 </div>
 </div>
-<div id="outline-container-org59ecf9c" class="outline-3">
-<h3 id="org59ecf9c"><span class="section-number-3">8.61.</span> Test Slurm Execution</h3>
+<div id="outline-container-org711fd7a" class="outline-3">
+<h3 id="org711fd7a"><span class="section-number-3">8.61.</span> Test Slurm Execution</h3>
 <div class="outline-text-3" id="text-8-61">
 </div>
 <ol class="org-ol">
-<li><a id="org0d26229"></a>Single Node Test<br />
+<li><a id="orga2cb08b"></a>Single Node Test<br />
 <div class="outline-text-4" id="text-8-61-1">
 <p>
 From login node:
@@ -4165,15 +4166,15 @@ From login node:
 Expected:
 </p>
 
-<pre class="example" id="org0606172">
+<pre class="example" id="org8e79271">
 compute01.local
 </pre>
 </div>
 </li>
 </ol>
 </div>
-<div id="outline-container-org4fde9f3" class="outline-3">
-<h3 id="org4fde9f3"><span class="section-number-3">8.62.</span> Multi-node Execution</h3>
+<div id="outline-container-orgfea5180" class="outline-3">
+<h3 id="orgfea5180"><span class="section-number-3">8.62.</span> Multi-node Execution</h3>
 <div class="outline-text-3" id="text-8-62">
 <div class="org-src-container">
 <pre class="src src-bash"><code>srun -N 3 hostname
@@ -4184,15 +4185,15 @@ compute01.local
 Expected:
 </p>
 
-<pre class="example" id="org786b2ab">
+<pre class="example" id="orgc162d5c">
 compute01.local
 compute02.local
 compute03.local
 </pre>
 </div>
 </div>
-<div id="outline-container-org399abb3" class="outline-3">
-<h3 id="org399abb3"><span class="section-number-3">8.63.</span> Multi-task Multi-node Execution</h3>
+<div id="outline-container-org82c6870" class="outline-3">
+<h3 id="org82c6870"><span class="section-number-3">8.63.</span> Multi-task Multi-node Execution</h3>
 <div class="outline-text-3" id="text-8-63">
 <div class="org-src-container">
 <pre class="src src-bash"><code>srun -N 3 -n 6 hostname
@@ -4210,8 +4211,8 @@ This verifies:
 </ul>
 </div>
 </div>
-<div id="outline-container-org1575660" class="outline-3">
-<h3 id="org1575660"><span class="section-number-3">8.64.</span> Multi-core Single-node Execution</h3>
+<div id="outline-container-orgeb24170" class="outline-3">
+<h3 id="orgeb24170"><span class="section-number-3">8.64.</span> Multi-core Single-node Execution</h3>
 <div class="outline-text-3" id="text-8-64">
 <div class="org-src-container">
 <pre class="src src-bash"><code>srun -N 1 -n 2 hostname
@@ -4222,14 +4223,14 @@ This verifies:
 Expected:
 </p>
 
-<pre class="example" id="org56b4813">
+<pre class="example" id="orgddb7856">
 compute01.local
 compute01.local
 </pre>
 </div>
 </div>
-<div id="outline-container-org1ab3ca8" class="outline-3">
-<h3 id="org1ab3ca8"><span class="section-number-3">8.65.</span> IMPORTANT Slurm Scheduling Concept</h3>
+<div id="outline-container-org1527744" class="outline-3">
+<h3 id="org1527744"><span class="section-number-3">8.65.</span> IMPORTANT Slurm Scheduling Concept</h3>
 <div class="outline-text-3" id="text-8-65">
 <p>
 Earlier:
@@ -4244,7 +4245,7 @@ Earlier:
 failed because nodes initially had:
 </p>
 
-<pre class="example" id="orge6050a7">
+<pre class="example" id="org4aa62ec">
 CPUs=1
 </pre>
 
@@ -4252,7 +4253,7 @@ CPUs=1
 After increasing VM CPUs and updating slurm.conf:
 </p>
 
-<pre class="example" id="org510271c">
+<pre class="example" id="orgbb89b42">
 CPUs=2
 </pre>
 
@@ -4276,8 +4277,8 @@ Slurm strictly enforces:
 </div>
 </div>
 </div>
-<div id="outline-container-org21ce0fe" class="outline-2">
-<h2 id="org21ce0fe"><span class="section-number-2">9.</span> Shared Software Filesystem (/apps) + HPC Software Stack</h2>
+<div id="outline-container-orgd5147b6" class="outline-2">
+<h2 id="orgd5147b6"><span class="section-number-2">9.</span> Shared Software Filesystem (/apps) + HPC Software Stack</h2>
 <div class="outline-text-2" id="text-9">
 <p>
 Goal:
@@ -4300,7 +4301,7 @@ Create a dedicated shared software filesystem for:
 This phase transitions the cluster from:
 </p>
 
-<pre class="example" id="orgd7c3276">
+<pre class="example" id="orga89bea5">
 basic scheduler infrastructure
 </pre>
 
@@ -4308,12 +4309,12 @@ basic scheduler infrastructure
 to:
 </p>
 
-<pre class="example" id="org4f75b49">
+<pre class="example" id="org85c9d84">
 realistic HPC software environment
 </pre>
 </div>
-<div id="outline-container-orgdc7e324" class="outline-3">
-<h3 id="orgdc7e324"><span class="section-number-3">9.1.</span> Why Separate /apps Filesystem?</h3>
+<div id="outline-container-org16027ac" class="outline-3">
+<h3 id="org16027ac"><span class="section-number-3">9.1.</span> Why Separate /apps Filesystem?</h3>
 <div class="outline-text-3" id="text-9-1">
 <p>
 Initially:
@@ -4328,7 +4329,7 @@ Initially:
 Concern encountered:
 </p>
 
-<pre class="example" id="orgb9bafbe">
+<pre class="example" id="orgeeea842">
 Shared /home only had ~30 GB available.
 Spack and HPC software stacks can become very large.
 </pre>
@@ -4382,7 +4383,7 @@ Real HPC clusters usually separate:
 Therefore a dedicated:
 </p>
 
-<pre class="example" id="org5fe83aa">
+<pre class="example" id="org0243029">
 /apps
 </pre>
 
@@ -4395,8 +4396,8 @@ This is significantly closer to real HPC architecture.
 </p>
 </div>
 </div>
-<div id="outline-container-org8831097" class="outline-3">
-<h3 id="org8831097"><span class="section-number-3">9.2.</span> IMPORTANT Storage Architecture Concept</h3>
+<div id="outline-container-org68fb07d" class="outline-3">
+<h3 id="org68fb07d"><span class="section-number-3">9.2.</span> IMPORTANT Storage Architecture Concept</h3>
 <div class="outline-text-3" id="text-9-2">
 <p>
 Each VM still has its own independent local storage.
@@ -4452,7 +4453,7 @@ Example:
 When:
 </p>
 
-<pre class="example" id="org8ea9a05">
+<pre class="example" id="org7839a83">
 master:/home
 </pre>
 
@@ -4473,7 +4474,7 @@ Only the exported filesystem becomes shared.
 Therefore:
 </p>
 
-<pre class="example" id="org1183185">
+<pre class="example" id="org764dc71">
 /apps
 </pre>
 
@@ -4482,14 +4483,14 @@ was created as a dedicated shared software layer.
 </p>
 </div>
 </div>
-<div id="outline-container-org4a72143" class="outline-3">
-<h3 id="org4a72143"><span class="section-number-3">9.3.</span> Add New Virtual Disk to Master</h3>
+<div id="outline-container-orgef22bb7" class="outline-3">
+<h3 id="orgef22bb7"><span class="section-number-3">9.3.</span> Add New Virtual Disk to Master</h3>
 <div class="outline-text-3" id="text-9-3">
 <p>
 A second virtual disk was attached ONLY to:
 </p>
 
-<pre class="example" id="org88ebb01">
+<pre class="example" id="org25f7033">
 master
 </pre>
 
@@ -4507,7 +4508,7 @@ Purpose:
 Disk size selected:
 </p>
 
-<pre class="example" id="orgfd26382">
+<pre class="example" id="orgcc3463e">
 60 GB
 </pre>
 
@@ -4515,13 +4516,13 @@ Disk size selected:
 Disk type:
 </p>
 
-<pre class="example" id="org128f0e2">
+<pre class="example" id="org748959e">
 VDI (Dynamically Allocated)
 </pre>
 </div>
 </div>
-<div id="outline-container-org90b35c5" class="outline-3">
-<h3 id="org90b35c5"><span class="section-number-3">9.4.</span> Verify New Disk Detection</h3>
+<div id="outline-container-org42b82bb" class="outline-3">
+<h3 id="org42b82bb"><span class="section-number-3">9.4.</span> Verify New Disk Detection</h3>
 <div class="outline-text-3" id="text-9-4">
 <p>
 After booting master:
@@ -4536,7 +4537,7 @@ After booting master:
 Expected:
 </p>
 
-<pre class="example" id="org273af37">
+<pre class="example" id="orgb8106f1">
 sda    30G
 sdb    60G
 </pre>
@@ -4576,7 +4577,7 @@ Important:
 Only:
 </p>
 
-<pre class="example" id="orgb0a73e5">
+<pre class="example" id="orgfeb52c9">
 sdb
 </pre>
 
@@ -4585,8 +4586,8 @@ was modified.
 </p>
 </div>
 </div>
-<div id="outline-container-orgf20ef3a" class="outline-3">
-<h3 id="orgf20ef3a"><span class="section-number-3">9.5.</span> Create GPT Partition Table</h3>
+<div id="outline-container-org36579f1" class="outline-3">
+<h3 id="org36579f1"><span class="section-number-3">9.5.</span> Create GPT Partition Table</h3>
 <div class="outline-text-3" id="text-9-5">
 <div class="org-src-container">
 <pre class="src src-bash"><code>sudo fdisk /dev/sdb
@@ -4601,7 +4602,7 @@ Inside fdisk:
 Create GPT label:
 </p>
 
-<pre class="example" id="org59dea9f">
+<pre class="example" id="org0c0df07">
 g
 </pre>
 
@@ -4609,7 +4610,7 @@ g
 Create partition:
 </p>
 
-<pre class="example" id="org487de06">
+<pre class="example" id="org6588723">
 n
 </pre>
 
@@ -4621,13 +4622,13 @@ Accept defaults.
 Write changes:
 </p>
 
-<pre class="example" id="org1de24c6">
+<pre class="example" id="org678637a">
 w
 </pre>
 </div>
 </div>
-<div id="outline-container-orge39441c" class="outline-3">
-<h3 id="orge39441c"><span class="section-number-3">9.6.</span> Verify Partition</h3>
+<div id="outline-container-orgde41f0f" class="outline-3">
+<h3 id="orgde41f0f"><span class="section-number-3">9.6.</span> Verify Partition</h3>
 <div class="outline-text-3" id="text-9-6">
 <div class="org-src-container">
 <pre class="src src-bash"><code>lsblk
@@ -4638,14 +4639,14 @@ w
 Expected:
 </p>
 
-<pre class="example" id="org3715cc1">
+<pre class="example" id="org4922fd6">
 sdb
 └── sdb1
 </pre>
 </div>
 </div>
-<div id="outline-container-org131e6d9" class="outline-3">
-<h3 id="org131e6d9"><span class="section-number-3">9.7.</span> Create XFS Filesystem</h3>
+<div id="outline-container-org27e8fc5" class="outline-3">
+<h3 id="org27e8fc5"><span class="section-number-3">9.7.</span> Create XFS Filesystem</h3>
 <div class="outline-text-3" id="text-9-7">
 <div class="org-src-container">
 <pre class="src src-bash"><code>sudo mkfs.xfs /dev/sdb1
@@ -4664,8 +4665,8 @@ Why XFS?
 </ul>
 </div>
 </div>
-<div id="outline-container-orgdcf92e0" class="outline-3">
-<h3 id="orgdcf92e0"><span class="section-number-3">9.8.</span> Create Mount Point</h3>
+<div id="outline-container-org4e30db2" class="outline-3">
+<h3 id="org4e30db2"><span class="section-number-3">9.8.</span> Create Mount Point</h3>
 <div class="outline-text-3" id="text-9-8">
 <div class="org-src-container">
 <pre class="src src-bash"><code>sudo mkdir -p /apps
@@ -4673,8 +4674,8 @@ Why XFS?
 </div>
 </div>
 </div>
-<div id="outline-container-org6d4e512" class="outline-3">
-<h3 id="org6d4e512"><span class="section-number-3">9.9.</span> Get Filesystem UUID</h3>
+<div id="outline-container-org78ccd64" class="outline-3">
+<h3 id="org78ccd64"><span class="section-number-3">9.9.</span> Get Filesystem UUID</h3>
 <div class="outline-text-3" id="text-9-9">
 <div class="org-src-container">
 <pre class="src src-bash"><code>sudo blkid /dev/sdb1
@@ -4685,13 +4686,13 @@ Why XFS?
 Example:
 </p>
 
-<pre class="example" id="org0ee5790">
+<pre class="example" id="orgd336b23">
 UUID="xxxxxxxx-xxxx-xxxx"
 </pre>
 </div>
 </div>
-<div id="outline-container-orgc8f7154" class="outline-3">
-<h3 id="orgc8f7154"><span class="section-number-3">9.10.</span> Configure Persistent Mount</h3>
+<div id="outline-container-org9a0e636" class="outline-3">
+<h3 id="org9a0e636"><span class="section-number-3">9.10.</span> Configure Persistent Mount</h3>
 <div class="outline-text-3" id="text-9-10">
 <p>
 Edit:
@@ -4719,7 +4720,7 @@ Important Linux administration concept:
 UUIDs are preferred over:
 </p>
 
-<pre class="example" id="org0590c30">
+<pre class="example" id="org56635fa">
 /dev/sdb1
 </pre>
 
@@ -4728,8 +4729,8 @@ because device names can change after reboot.
 </p>
 </div>
 </div>
-<div id="outline-container-org5e55255" class="outline-3">
-<h3 id="org5e55255"><span class="section-number-3">9.11.</span> Mount Filesystem</h3>
+<div id="outline-container-org9ed5c5d" class="outline-3">
+<h3 id="org9ed5c5d"><span class="section-number-3">9.11.</span> Mount Filesystem</h3>
 <div class="outline-text-3" id="text-9-11">
 <div class="org-src-container">
 <pre class="src src-bash"><code>sudo mount -a
@@ -4737,8 +4738,8 @@ because device names can change after reboot.
 </div>
 </div>
 </div>
-<div id="outline-container-org8375223" class="outline-3">
-<h3 id="org8375223"><span class="section-number-3">9.12.</span> Verify Mount</h3>
+<div id="outline-container-orgac2649e" class="outline-3">
+<h3 id="orgac2649e"><span class="section-number-3">9.12.</span> Verify Mount</h3>
 <div class="outline-text-3" id="text-9-12">
 <div class="org-src-container">
 <pre class="src src-bash"><code>df -h
@@ -4749,7 +4750,7 @@ because device names can change after reboot.
 Expected:
 </p>
 
-<pre class="example" id="orgb817e67">
+<pre class="example" id="org476ec86">
 /apps
 </pre>
 
@@ -4757,13 +4758,13 @@ Expected:
 mounted with approximately:
 </p>
 
-<pre class="example" id="org9346326">
+<pre class="example" id="orgf5f9c90">
 60 GB
 </pre>
 </div>
 </div>
-<div id="outline-container-org9eb8843" class="outline-3">
-<h3 id="org9eb8843"><span class="section-number-3">9.13.</span> Configure Ownership</h3>
+<div id="outline-container-org3e85256" class="outline-3">
+<h3 id="org3e85256"><span class="section-number-3">9.13.</span> Configure Ownership</h3>
 <div class="outline-text-3" id="text-9-13">
 <div class="org-src-container">
 <pre class="src src-bash"><code>sudo chown hpcadmin:hpcadmin /apps
@@ -4771,8 +4772,8 @@ mounted with approximately:
 </div>
 </div>
 </div>
-<div id="outline-container-org48c1750" class="outline-3">
-<h3 id="org48c1750"><span class="section-number-3">9.14.</span> Create Shared HPC Software Hierarchy</h3>
+<div id="outline-container-orgb52ca32" class="outline-3">
+<h3 id="orgb52ca32"><span class="section-number-3">9.14.</span> Create Shared HPC Software Hierarchy</h3>
 <div class="outline-text-3" id="text-9-14">
 <div class="org-src-container">
 <pre class="src src-bash"><code>mkdir -p /apps/{spack,modulefiles,software,sources}
@@ -4783,7 +4784,7 @@ mounted with approximately:
 Resulting structure:
 </p>
 
-<pre class="example" id="org3f72145">
+<pre class="example" id="orgd91bd1a">
 /apps
 ├── spack
 ├── modulefiles
@@ -4792,8 +4793,8 @@ Resulting structure:
 </pre>
 </div>
 </div>
-<div id="outline-container-orge577e72" class="outline-3">
-<h3 id="orge577e72"><span class="section-number-3">9.15.</span> HPC Software Hierarchy Concept</h3>
+<div id="outline-container-org3dd9998" class="outline-3">
+<h3 id="org3dd9998"><span class="section-number-3">9.15.</span> HPC Software Hierarchy Concept</h3>
 <div class="outline-text-3" id="text-9-15">
 <p>
 Purpose of directories:
@@ -4841,8 +4842,8 @@ This is similar to production HPC software layouts.
 </p>
 </div>
 </div>
-<div id="outline-container-org87998f5" class="outline-3">
-<h3 id="org87998f5"><span class="section-number-3">9.16.</span> Export /apps via NFS</h3>
+<div id="outline-container-org42f6090" class="outline-3">
+<h3 id="org42f6090"><span class="section-number-3">9.16.</span> Export /apps via NFS</h3>
 <div class="outline-text-3" id="text-9-16">
 <p>
 Edit exports file:
@@ -4863,8 +4864,8 @@ Add:
 </div>
 </div>
 </div>
-<div id="outline-container-org71931b5" class="outline-3">
-<h3 id="org71931b5"><span class="section-number-3">9.17.</span> Apply NFS Exports</h3>
+<div id="outline-container-orgb3a2560" class="outline-3">
+<h3 id="orgb3a2560"><span class="section-number-3">9.17.</span> Apply NFS Exports</h3>
 <div class="outline-text-3" id="text-9-17">
 <div class="org-src-container">
 <pre class="src src-bash"><code>sudo exportfs -rav
@@ -4872,8 +4873,8 @@ Add:
 </div>
 </div>
 </div>
-<div id="outline-container-org70d23d3" class="outline-3">
-<h3 id="org70d23d3"><span class="section-number-3">9.18.</span> Verify Exports</h3>
+<div id="outline-container-orga3e363e" class="outline-3">
+<h3 id="orga3e363e"><span class="section-number-3">9.18.</span> Verify Exports</h3>
 <div class="outline-text-3" id="text-9-18">
 <div class="org-src-container">
 <pre class="src src-bash"><code>showmount -e localhost
@@ -4884,14 +4885,14 @@ Add:
 Expected:
 </p>
 
-<pre class="example" id="orgd47475c">
+<pre class="example" id="orge40fb42">
 /apps
 /home
 </pre>
 </div>
 </div>
-<div id="outline-container-org76d6234" class="outline-3">
-<h3 id="org76d6234"><span class="section-number-3">9.19.</span> Create Mount Points on Client Nodes</h3>
+<div id="outline-container-orga4b3650" class="outline-3">
+<h3 id="orga4b3650"><span class="section-number-3">9.19.</span> Create Mount Points on Client Nodes</h3>
 <div class="outline-text-3" id="text-9-19">
 <p>
 On:
@@ -4913,8 +4914,8 @@ Create:
 </div>
 </div>
 </div>
-<div id="outline-container-orgcbccaba" class="outline-3">
-<h3 id="orgcbccaba"><span class="section-number-3">9.20.</span> Configure Persistent NFS Mounts</h3>
+<div id="outline-container-org8e52537" class="outline-3">
+<h3 id="org8e52537"><span class="section-number-3">9.20.</span> Configure Persistent NFS Mounts</h3>
 <div class="outline-text-3" id="text-9-20">
 <p>
 Edit:
@@ -4935,8 +4936,8 @@ Add:
 </div>
 </div>
 </div>
-<div id="outline-container-orgd4d3551" class="outline-3">
-<h3 id="orgd4d3551"><span class="section-number-3">9.21.</span> Mount Shared /apps Filesystem</h3>
+<div id="outline-container-orgbd6c02f" class="outline-3">
+<h3 id="orgbd6c02f"><span class="section-number-3">9.21.</span> Mount Shared /apps Filesystem</h3>
 <div class="outline-text-3" id="text-9-21">
 <div class="org-src-container">
 <pre class="src src-bash"><code>sudo mount -a
@@ -4944,8 +4945,8 @@ Add:
 </div>
 </div>
 </div>
-<div id="outline-container-org54e1238" class="outline-3">
-<h3 id="org54e1238"><span class="section-number-3">9.22.</span> Verify Shared Mount</h3>
+<div id="outline-container-org36522a4" class="outline-3">
+<h3 id="org36522a4"><span class="section-number-3">9.22.</span> Verify Shared Mount</h3>
 <div class="outline-text-3" id="text-9-22">
 <div class="org-src-container">
 <pre class="src src-bash"><code>df -h
@@ -4956,7 +4957,7 @@ Add:
 Expected:
 </p>
 
-<pre class="example" id="orgb57da88">
+<pre class="example" id="orge25d972">
 master:/apps
 </pre>
 
@@ -4965,8 +4966,8 @@ mounted on all nodes.
 </p>
 </div>
 </div>
-<div id="outline-container-org94d971c" class="outline-3">
-<h3 id="org94d971c"><span class="section-number-3">9.23.</span> Verify Shared Filesystem Functionality</h3>
+<div id="outline-container-orgf77b204" class="outline-3">
+<h3 id="orgf77b204"><span class="section-number-3">9.23.</span> Verify Shared Filesystem Functionality</h3>
 <div class="outline-text-3" id="text-9-23">
 <p>
 On master:
@@ -4990,7 +4991,7 @@ On compute node:
 Expected:
 </p>
 
-<pre class="example" id="org18d18bf">
+<pre class="example" id="orgf90b8c3">
 testfile
 </pre>
 
@@ -5005,8 +5006,8 @@ This verifies:
 </ul>
 </div>
 </div>
-<div id="outline-container-org286b748" class="outline-3">
-<h3 id="org286b748"><span class="section-number-3">9.24.</span> HPC Architecture After /apps Setup</h3>
+<div id="outline-container-org4d60182" class="outline-3">
+<h3 id="org4d60182"><span class="section-number-3">9.24.</span> HPC Architecture After /apps Setup</h3>
 <div class="outline-text-3" id="text-9-24">
 <p>
 Current cluster storage architecture:
@@ -5049,8 +5050,8 @@ This resembles real HPC environments significantly more closely.
 </p>
 </div>
 </div>
-<div id="outline-container-orgf591efe" class="outline-3">
-<h3 id="orgf591efe"><span class="section-number-3">9.25.</span> PHASE 1G — Spack Software Stack + MPI Runtime Validation</h3>
+<div id="outline-container-org12eb08a" class="outline-3">
+<h3 id="org12eb08a"><span class="section-number-3">9.25.</span> PHASE 1G — Spack Software Stack + MPI Runtime Validation</h3>
 <div class="outline-text-3" id="text-9-25">
 <p>
 Goal:
@@ -5080,14 +5081,14 @@ This phase validates:
 </ul>
 </div>
 </div>
-<div id="outline-container-org5459357" class="outline-3">
-<h3 id="org5459357"><span class="section-number-3">9.26.</span> IMPORTANT HPC Software Stack Concept</h3>
+<div id="outline-container-org69ef523" class="outline-3">
+<h3 id="org69ef523"><span class="section-number-3">9.26.</span> IMPORTANT HPC Software Stack Concept</h3>
 <div class="outline-text-3" id="text-9-26">
 <p>
 Instead of:
 </p>
 
-<pre class="example" id="orgaf642d0">
+<pre class="example" id="orgcdf892f">
 dnf install openmpi
 </pre>
 
@@ -5112,8 +5113,8 @@ This approach is significantly closer to real HPC centers.
 </p>
 </div>
 </div>
-<div id="outline-container-orgdb2d076" class="outline-3">
-<h3 id="orgdb2d076"><span class="section-number-3">9.27.</span> Install Development Tools</h3>
+<div id="outline-container-org90d671f" class="outline-3">
+<h3 id="org90d671f"><span class="section-number-3">9.27.</span> Install Development Tools</h3>
 <div class="outline-text-3" id="text-9-27">
 <p>
 Installed manually on ALL nodes:
@@ -5150,8 +5151,8 @@ System compilers are still required even when using Spack.
 </p>
 </div>
 </div>
-<div id="outline-container-org0cf6311" class="outline-3">
-<h3 id="org0cf6311"><span class="section-number-3">9.28.</span> Clone Spack into Shared Filesystem</h3>
+<div id="outline-container-org6dfad36" class="outline-3">
+<h3 id="org6dfad36"><span class="section-number-3">9.28.</span> Clone Spack into Shared Filesystem</h3>
 <div class="outline-text-3" id="text-9-28">
 <p>
 Move to:
@@ -5172,8 +5173,8 @@ Clone Spack:
 </div>
 </div>
 </div>
-<div id="outline-container-org46fb883" class="outline-3">
-<h3 id="org46fb883"><span class="section-number-3">9.29.</span> Enter Spack Directory</h3>
+<div id="outline-container-org3be771d" class="outline-3">
+<h3 id="org3be771d"><span class="section-number-3">9.29.</span> Enter Spack Directory</h3>
 <div class="outline-text-3" id="text-9-29">
 <div class="org-src-container">
 <pre class="src src-bash"><code>cd spack
@@ -5181,8 +5182,8 @@ Clone Spack:
 </div>
 </div>
 </div>
-<div id="outline-container-orgcbaa4fd" class="outline-3">
-<h3 id="orgcbaa4fd"><span class="section-number-3">9.30.</span> Initialize Spack Environment</h3>
+<div id="outline-container-orgf68a3a2" class="outline-3">
+<h3 id="orgf68a3a2"><span class="section-number-3">9.30.</span> Initialize Spack Environment</h3>
 <div class="outline-text-3" id="text-9-30">
 <div class="org-src-container">
 <pre class="src src-bash"><code>source share/spack/setup-env.sh
@@ -5208,8 +5209,8 @@ to current shell session.
 </p>
 </div>
 </div>
-<div id="outline-container-orge70b9e9" class="outline-3">
-<h3 id="orge70b9e9"><span class="section-number-3">9.31.</span> Clone Additional Spack Repository</h3>
+<div id="outline-container-org3e94a9a" class="outline-3">
+<h3 id="org3e94a9a"><span class="section-number-3">9.31.</span> Clone Additional Spack Repository</h3>
 <div class="outline-text-3" id="text-9-31">
 <div class="org-src-container">
 <pre class="src src-bash"><code>git clone https://github.com/spack/spack-packages.git
@@ -5217,8 +5218,8 @@ to current shell session.
 </div>
 </div>
 </div>
-<div id="outline-container-org842d616" class="outline-3">
-<h3 id="org842d616"><span class="section-number-3">9.32.</span> Configure Spack Repository</h3>
+<div id="outline-container-org2ce0474" class="outline-3">
+<h3 id="org2ce0474"><span class="section-number-3">9.32.</span> Configure Spack Repository</h3>
 <div class="outline-text-3" id="text-9-32">
 <div class="org-src-container">
 <pre class="src src-bash"><code>spack repo set --destination "$(pwd)/spack-packages" builtin
@@ -5234,8 +5235,8 @@ Configure additional package repository support.
 </p>
 </div>
 </div>
-<div id="outline-container-org234f433" class="outline-3">
-<h3 id="org234f433"><span class="section-number-3">9.33.</span> Verify Spack Functionality</h3>
+<div id="outline-container-orge9b89ac" class="outline-3">
+<h3 id="orge9b89ac"><span class="section-number-3">9.33.</span> Verify Spack Functionality</h3>
 <div class="outline-text-3" id="text-9-33">
 <div class="org-src-container">
 <pre class="src src-bash"><code>spack info gcc
@@ -5261,14 +5262,14 @@ This verifies:
 </ul>
 </div>
 </div>
-<div id="outline-container-orgcf19789" class="outline-3">
-<h3 id="orgcf19789"><span class="section-number-3">9.34.</span> IMPORTANT HPC Software Stack Concept</h3>
+<div id="outline-container-org6824087" class="outline-3">
+<h3 id="org6824087"><span class="section-number-3">9.34.</span> IMPORTANT HPC Software Stack Concept</h3>
 <div class="outline-text-3" id="text-9-34">
 <p>
 Spack operates as:
 </p>
 
-<pre class="example" id="org16546c8">
+<pre class="example" id="orgfbf21ab">
 source-based HPC package manager
 </pre>
 
@@ -5317,8 +5318,8 @@ exactly like this setup.
 </p>
 </div>
 </div>
-<div id="outline-container-org5974286" class="outline-3">
-<h3 id="org5974286"><span class="section-number-3">9.35.</span> Install GCC Using Spack</h3>
+<div id="outline-container-org96a372c" class="outline-3">
+<h3 id="org96a372c"><span class="section-number-3">9.35.</span> Install GCC Using Spack</h3>
 <div class="outline-text-3" id="text-9-35">
 <p>
 Install GCC version:
@@ -5349,7 +5350,7 @@ Production HPC systems frequently maintain multiple compiler versions simultaneo
 Example:
 </p>
 
-<pre class="example" id="org732bd8a">
+<pre class="example" id="orgfe03d8e">
 gcc@11
 gcc@12
 gcc@13
@@ -5358,8 +5359,8 @@ nvhpc
 </pre>
 </div>
 </div>
-<div id="outline-container-orgdba92d7" class="outline-3">
-<h3 id="orgdba92d7"><span class="section-number-3">9.36.</span> Load Installed GCC Compiler</h3>
+<div id="outline-container-org3e68d9f" class="outline-3">
+<h3 id="org3e68d9f"><span class="section-number-3">9.36.</span> Load Installed GCC Compiler</h3>
 <div class="outline-text-3" id="text-9-36">
 <div class="org-src-container">
 <pre class="src src-bash"><code>spack load gcc@13.4.0
@@ -5367,8 +5368,8 @@ nvhpc
 </div>
 </div>
 </div>
-<div id="outline-container-org7235712" class="outline-3">
-<h3 id="org7235712"><span class="section-number-3">9.37.</span> Verify Loaded Compiler</h3>
+<div id="outline-container-org2e710cc" class="outline-3">
+<h3 id="org2e710cc"><span class="section-number-3">9.37.</span> Verify Loaded Compiler</h3>
 <div class="outline-text-3" id="text-9-37">
 <div class="org-src-container">
 <pre class="src src-bash"><code>which gcc
@@ -5384,8 +5385,8 @@ Spack-managed GCC path.
 </p>
 </div>
 </div>
-<div id="outline-container-orgf010fb2" class="outline-3">
-<h3 id="orgf010fb2"><span class="section-number-3">9.38.</span> Install OpenMPI Using Spack</h3>
+<div id="outline-container-org67a8f02" class="outline-3">
+<h3 id="org67a8f02"><span class="section-number-3">9.38.</span> Install OpenMPI Using Spack</h3>
 <div class="outline-text-3" id="text-9-38">
 <div class="org-src-container">
 <pre class="src src-bash"><code>spack install openmpi
@@ -5409,8 +5410,8 @@ MPI stacks are usually tightly coupled with compiler toolchains.
 </p>
 </div>
 </div>
-<div id="outline-container-orgbf9b925" class="outline-3">
-<h3 id="orgbf9b925"><span class="section-number-3">9.39.</span> Load OpenMPI Environment</h3>
+<div id="outline-container-orgd06d0b3" class="outline-3">
+<h3 id="orgd06d0b3"><span class="section-number-3">9.39.</span> Load OpenMPI Environment</h3>
 <div class="outline-text-3" id="text-9-39">
 <div class="org-src-container">
 <pre class="src src-bash"><code>spack load openmpi
@@ -5418,8 +5419,8 @@ MPI stacks are usually tightly coupled with compiler toolchains.
 </div>
 </div>
 </div>
-<div id="outline-container-org97a0e24" class="outline-3">
-<h3 id="org97a0e24"><span class="section-number-3">9.40.</span> Verify MPI Compiler Wrapper</h3>
+<div id="outline-container-orgf0af6af" class="outline-3">
+<h3 id="orgf0af6af"><span class="section-number-3">9.40.</span> Verify MPI Compiler Wrapper</h3>
 <div class="outline-text-3" id="text-9-40">
 <div class="org-src-container">
 <pre class="src src-bash"><code>which mpicc
@@ -5435,10 +5436,10 @@ Spack OpenMPI compiler wrapper path.
 </p>
 </div>
 </div>
-<div id="outline-container-orge360afc" class="outline-3">
-<h3 id="orge360afc"><span class="section-number-3">9.41.</span> IMPORTANT MPI Wrapper Concept</h3>
+<div id="outline-container-orge2970ea" class="outline-3">
+<h3 id="orge2970ea"><span class="section-number-3">9.41.</span> IMPORTANT MPI Wrapper Concept</h3>
 <div class="outline-text-3" id="text-9-41">
-<pre class="example" id="org8e7b37a">
+<pre class="example" id="orgd47b25b">
 mpicc
 </pre>
 
@@ -5465,8 +5466,8 @@ This is a critical HPC build concept.
 </p>
 </div>
 </div>
-<div id="outline-container-org49d0fb7" class="outline-3">
-<h3 id="org49d0fb7"><span class="section-number-3">9.42.</span> Create MPI Sum Program</h3>
+<div id="outline-container-orgef21a05" class="outline-3">
+<h3 id="orgef21a05"><span class="section-number-3">9.42.</span> Create MPI Sum Program</h3>
 <div class="outline-text-3" id="text-9-42">
 <p>
 Create source file:
@@ -5488,8 +5489,8 @@ Program purpose:
 </ul>
 </div>
 </div>
-<div id="outline-container-org0e664ae" class="outline-3">
-<h3 id="org0e664ae"><span class="section-number-3">9.43.</span> Compile MPI Program</h3>
+<div id="outline-container-org5a89227" class="outline-3">
+<h3 id="org5a89227"><span class="section-number-3">9.43.</span> Compile MPI Program</h3>
 <div class="outline-text-3" id="text-9-43">
 <div class="org-src-container">
 <pre class="src src-bash"><code>mpicc mpi_sum.c -o mpi_sum
@@ -5508,14 +5509,14 @@ This validates:
 </ul>
 </div>
 </div>
-<div id="outline-container-org4f3d0e8" class="outline-3">
-<h3 id="org4f3d0e8"><span class="section-number-3">9.44.</span> IMPORTANT Shared Filesystem Advantage</h3>
+<div id="outline-container-org3e0bc6e" class="outline-3">
+<h3 id="org3e0bc6e"><span class="section-number-3">9.44.</span> IMPORTANT Shared Filesystem Advantage</h3>
 <div class="outline-text-3" id="text-9-44">
 <p>
 Because compilation occurred inside shared:
 </p>
 
-<pre class="example" id="orga9a21ce">
+<pre class="example" id="orgb6f0c36">
 /apps
 </pre>
 
@@ -5533,8 +5534,8 @@ This is one of the major advantages of shared HPC software stacks.
 </p>
 </div>
 </div>
-<div id="outline-container-org6eefdd3" class="outline-3">
-<h3 id="org6eefdd3"><span class="section-number-3">9.45.</span> Create Slurm Batch Script</h3>
+<div id="outline-container-orgfa3ca6a" class="outline-3">
+<h3 id="orgfa3ca6a"><span class="section-number-3">9.45.</span> Create Slurm Batch Script</h3>
 <div class="outline-text-3" id="text-9-45">
 <p>
 Create script:
@@ -5556,8 +5557,8 @@ Submit script purpose:
 </ul>
 </div>
 </div>
-<div id="outline-container-org41ff322" class="outline-3">
-<h3 id="org41ff322"><span class="section-number-3">9.46.</span> Submit MPI Job</h3>
+<div id="outline-container-org671461f" class="outline-3">
+<h3 id="org671461f"><span class="section-number-3">9.46.</span> Submit MPI Job</h3>
 <div class="outline-text-3" id="text-9-46">
 <div class="org-src-container">
 <pre class="src src-bash"><code>sbatch script.sh
@@ -5576,8 +5577,8 @@ This validates:
 </ul>
 </div>
 </div>
-<div id="outline-container-orgf412833" class="outline-3">
-<h3 id="orgf412833"><span class="section-number-3">9.47.</span> Verify Job Execution</h3>
+<div id="outline-container-orgfe451d4" class="outline-3">
+<h3 id="orgfe451d4"><span class="section-number-3">9.47.</span> Verify Job Execution</h3>
 <div class="outline-text-3" id="text-9-47">
 <p>
 Check queue:
@@ -5604,8 +5605,8 @@ Expected:
 </div>
 </div>
 </div>
-<div id="outline-container-org3f53508" class="outline-2">
-<h2 id="org3f53508"><span class="section-number-2">10.</span> Centralized Identity Management using OpenLDAP + nslcd</h2>
+<div id="outline-container-orga9b627e" class="outline-2">
+<h2 id="orga9b627e"><span class="section-number-2">10.</span> Centralized Identity Management using OpenLDAP + nslcd</h2>
 <div class="outline-text-2" id="text-10">
 <p>
 Goal:
@@ -5615,7 +5616,7 @@ Goal:
 Transform the cluster from:
 </p>
 
-<pre class="example" id="org9ab9703">
+<pre class="example" id="org701e73c">
 local-user-only infrastructure
 </pre>
 
@@ -5623,7 +5624,7 @@ local-user-only infrastructure
 into:
 </p>
 
-<pre class="example" id="orgd645cae">
+<pre class="example" id="org396b40e">
 centralized multi-user HPC environment
 </pre>
 
@@ -5655,8 +5656,8 @@ After completion:
 <li>Slurm can later use centralized identities</li>
 </ul>
 </div>
-<div id="outline-container-org231a95e" class="outline-3">
-<h3 id="org231a95e"><span class="section-number-3">10.1.</span> Important Architecture</h3>
+<div id="outline-container-orgc90dc65" class="outline-3">
+<h3 id="orgc90dc65"><span class="section-number-3">10.1.</span> Important Architecture</h3>
 <div class="outline-text-3" id="text-10-1">
 <p>
 Cluster roles:
@@ -5708,15 +5709,15 @@ Cluster roles:
 Important concept:
 </p>
 
-<pre class="example" id="org843c502">
+<pre class="example" id="org7200542">
 Only master runs LDAP SERVER (slapd).
 
 Login and compute nodes run LDAP CLIENTS (nslcd).
 </pre>
 </div>
 </div>
-<div id="outline-container-orgea1bd7f" class="outline-3">
-<h3 id="orgea1bd7f"><span class="section-number-3">10.2.</span> Important Linux Authentication Concepts</h3>
+<div id="outline-container-orge21828d" class="outline-3">
+<h3 id="orge21828d"><span class="section-number-3">10.2.</span> Important Linux Authentication Concepts</h3>
 <div class="outline-text-3" id="text-10-2">
 <p>
 Before starting, understand the layers.
@@ -5763,7 +5764,7 @@ Before starting, understand the layers.
 Authentication flow:
 </p>
 
-<pre class="example" id="org1a6ea52">
+<pre class="example" id="org7bd5928">
 SSH Login
    ↓
 PAM
@@ -5774,14 +5775,14 @@ LDAP server
 </pre>
 </div>
 </div>
-<div id="outline-container-org546508c" class="outline-3">
-<h3 id="org546508c"><span class="section-number-3">10.3.</span> Install OpenLDAP Server on Master Node</h3>
+<div id="outline-container-orgeb29beb" class="outline-3">
+<h3 id="orgeb29beb"><span class="section-number-3">10.3.</span> Install OpenLDAP Server on Master Node</h3>
 <div class="outline-text-3" id="text-10-3">
 <p>
 Run ONLY on:
 </p>
 
-<pre class="example" id="org058423a">
+<pre class="example" id="org7115de2">
 master
 </pre>
 
@@ -5834,14 +5835,14 @@ Package explanation:
 </table>
 </div>
 </div>
-<div id="outline-container-orgc444573" class="outline-3">
-<h3 id="orgc444573"><span class="section-number-3">10.4.</span> Enable LDAP Server</h3>
+<div id="outline-container-orgf2e8eec" class="outline-3">
+<h3 id="orgf2e8eec"><span class="section-number-3">10.4.</span> Enable LDAP Server</h3>
 <div class="outline-text-3" id="text-10-4">
 <p>
 Run ONLY on:
 </p>
 
-<pre class="example" id="orgef1057d">
+<pre class="example" id="org94904f1">
 master
 </pre>
 
@@ -5867,19 +5868,19 @@ Verify:
 Expected:
 </p>
 
-<pre class="example" id="org7424827">
+<pre class="example" id="org5bc0ae6">
 active (running)
 </pre>
 </div>
 </div>
-<div id="outline-container-org31036bb" class="outline-3">
-<h3 id="org31036bb"><span class="section-number-3">10.5.</span> Generate LDAP Admin Password Hash</h3>
+<div id="outline-container-org4e7fcd3" class="outline-3">
+<h3 id="org4e7fcd3"><span class="section-number-3">10.5.</span> Generate LDAP Admin Password Hash</h3>
 <div class="outline-text-3" id="text-10-5">
 <p>
 Run ONLY on:
 </p>
 
-<pre class="example" id="org6f19989">
+<pre class="example" id="org8ba84eb">
 master
 </pre>
 
@@ -5900,7 +5901,7 @@ Enter desired password.
 Example:
 </p>
 
-<pre class="example" id="org8032c26">
+<pre class="example" id="orgdc0150d">
 cluster123
 </pre>
 
@@ -5908,7 +5909,7 @@ cluster123
 Example output:
 </p>
 
-<pre class="example" id="orgd1001a4">
+<pre class="example" id="orgaa0d032">
 {SSHA}xxxxxxxxxxxxxxxx
 </pre>
 
@@ -5916,7 +5917,7 @@ Example output:
 Important:
 </p>
 
-<pre class="example" id="org8ef9ff7">
+<pre class="example" id="org9fd5696">
 Copy this hash carefully.
 </pre>
 
@@ -5925,14 +5926,14 @@ It will be used in LDAP database configuration.
 </p>
 </div>
 </div>
-<div id="outline-container-org8ac4554" class="outline-3">
-<h3 id="org8ac4554"><span class="section-number-3">10.6.</span> Configure LDAP Database</h3>
+<div id="outline-container-orgd5913d7" class="outline-3">
+<h3 id="orgd5913d7"><span class="section-number-3">10.6.</span> Configure LDAP Database</h3>
 <div class="outline-text-3" id="text-10-6">
 <p>
 Run ONLY on:
 </p>
 
-<pre class="example" id="org385f6d2">
+<pre class="example" id="org3e4699b">
 master
 </pre>
 
@@ -5971,7 +5972,7 @@ olcRootPW: PASTE_HASH_HERE
 Replace:
 </p>
 
-<pre class="example" id="org4937642">
+<pre class="example" id="orgd31868b">
 PASTE_HASH_HERE
 </pre>
 
@@ -5979,19 +5980,19 @@ PASTE_HASH_HERE
 with the hash generated using:
 </p>
 
-<pre class="example" id="org15b57e3">
+<pre class="example" id="orga54f67d">
 slappasswd
 </pre>
 </div>
 </div>
-<div id="outline-container-org8c080aa" class="outline-3">
-<h3 id="org8c080aa"><span class="section-number-3">10.7.</span> Important LDAP Concepts</h3>
+<div id="outline-container-orgb012760" class="outline-3">
+<h3 id="orgb012760"><span class="section-number-3">10.7.</span> Important LDAP Concepts</h3>
 <div class="outline-text-3" id="text-10-7">
 <p>
 LDAP uses a hierarchical tree called:
 </p>
 
-<pre class="example" id="org98a6608">
+<pre class="example" id="orgd7ae3c8">
 DIT — Directory Information Tree
 </pre>
 
@@ -5999,7 +6000,7 @@ DIT — Directory Information Tree
 Example structure:
 </p>
 
-<pre class="example" id="org9a072bd">
+<pre class="example" id="org227f64b">
 dc=hpc,dc=local
  ├── ou=People
  └── ou=Groups
@@ -6042,14 +6043,14 @@ Meaning of terms:
 </table>
 </div>
 </div>
-<div id="outline-container-org258a62a" class="outline-3">
-<h3 id="org258a62a"><span class="section-number-3">10.8.</span> Apply LDAP Database Configuration</h3>
+<div id="outline-container-org5f63c73" class="outline-3">
+<h3 id="org5f63c73"><span class="section-number-3">10.8.</span> Apply LDAP Database Configuration</h3>
 <div class="outline-text-3" id="text-10-8">
 <p>
 Run ONLY on:
 </p>
 
-<pre class="example" id="org560a8fb">
+<pre class="example" id="org2aa4199">
 master
 </pre>
 
@@ -6067,13 +6068,13 @@ Apply configuration:
 Expected:
 </p>
 
-<pre class="example" id="org01e15ce">
+<pre class="example" id="org47b19ba">
 modifying entry
 </pre>
 </div>
 </div>
-<div id="outline-container-orgfe1e063" class="outline-3">
-<h3 id="orgfe1e063"><span class="section-number-3">10.9.</span> Import LDAP Schemas</h3>
+<div id="outline-container-org87dc4ed" class="outline-3">
+<h3 id="org87dc4ed"><span class="section-number-3">10.9.</span> Import LDAP Schemas</h3>
 <div class="outline-text-3" id="text-10-9">
 <p>
 Schemas define:
@@ -6089,7 +6090,7 @@ Schemas define:
 Run ONLY on:
 </p>
 
-<pre class="example" id="org27e6853">
+<pre class="example" id="orga33c17f">
 master
 </pre>
 
@@ -6160,14 +6161,14 @@ Schema explanation:
 </table>
 </div>
 </div>
-<div id="outline-container-org12c983b" class="outline-3">
-<h3 id="org12c983b"><span class="section-number-3">10.10.</span> Create LDAP Base Tree</h3>
+<div id="outline-container-org69a36ed" class="outline-3">
+<h3 id="org69a36ed"><span class="section-number-3">10.10.</span> Create LDAP Base Tree</h3>
 <div class="outline-text-3" id="text-10-10">
 <p>
 Run ONLY on:
 </p>
 
-<pre class="example" id="org92bcceb">
+<pre class="example" id="orgf9213ba">
 master
 </pre>
 
@@ -6219,14 +6220,14 @@ Enter LDAP admin password.
 </p>
 </div>
 </div>
-<div id="outline-container-org447588f" class="outline-3">
-<h3 id="org447588f"><span class="section-number-3">10.11.</span> Verify LDAP Tree</h3>
+<div id="outline-container-org26c0cb0" class="outline-3">
+<h3 id="org26c0cb0"><span class="section-number-3">10.11.</span> Verify LDAP Tree</h3>
 <div class="outline-text-3" id="text-10-11">
 <p>
 Run ONLY on:
 </p>
 
-<pre class="example" id="org106464a">
+<pre class="example" id="orgf4c6ea0">
 master
 </pre>
 
@@ -6250,14 +6251,14 @@ Expected:
 </ul>
 </div>
 </div>
-<div id="outline-container-org6d46fac" class="outline-3">
-<h3 id="org6d46fac"><span class="section-number-3">10.12.</span> Create LDAP Group</h3>
+<div id="outline-container-orgeafecd3" class="outline-3">
+<h3 id="orgeafecd3"><span class="section-number-3">10.12.</span> Create LDAP Group</h3>
 <div class="outline-text-3" id="text-10-12">
 <p>
 Run ONLY on:
 </p>
 
-<pre class="example" id="org7b1e083">
+<pre class="example" id="org55915dc">
 master
 </pre>
 
@@ -6295,14 +6296,14 @@ Add group:
 </div>
 </div>
 </div>
-<div id="outline-container-org68b0727" class="outline-3">
-<h3 id="org68b0727"><span class="section-number-3">10.13.</span> Create LDAP User Password Hash</h3>
+<div id="outline-container-org7ac929b" class="outline-3">
+<h3 id="org7ac929b"><span class="section-number-3">10.13.</span> Create LDAP User Password Hash</h3>
 <div class="outline-text-3" id="text-10-13">
 <p>
 Run ONLY on:
 </p>
 
-<pre class="example" id="org1d1fff5">
+<pre class="example" id="org49fdeae">
 master
 </pre>
 
@@ -6319,7 +6320,7 @@ Generate password hash:
 Example password:
 </p>
 
-<pre class="example" id="org3c598fa">
+<pre class="example" id="org5a5bb3f">
 test123
 </pre>
 
@@ -6328,14 +6329,14 @@ Copy generated hash carefully.
 </p>
 </div>
 </div>
-<div id="outline-container-org651a981" class="outline-3">
-<h3 id="org651a981"><span class="section-number-3">10.14.</span> Create LDAP User</h3>
+<div id="outline-container-orgf323495" class="outline-3">
+<h3 id="orgf323495"><span class="section-number-3">10.14.</span> Create LDAP User</h3>
 <div class="outline-text-3" id="text-10-14">
 <p>
 Run ONLY on:
 </p>
 
-<pre class="example" id="org6fe733f">
+<pre class="example" id="org4d7648d">
 master
 </pre>
 
@@ -6372,7 +6373,7 @@ userPassword: PASTE_HASH_HERE
 Replace:
 </p>
 
-<pre class="example" id="orgac9ba49">
+<pre class="example" id="org1737524">
 PASTE_HASH_HERE
 </pre>
 
@@ -6380,7 +6381,7 @@ PASTE_HASH_HERE
 with actual hash from:
 </p>
 
-<pre class="example" id="org64d08e4">
+<pre class="example" id="orgf73d8cf">
 slappasswd
 </pre>
 
@@ -6397,8 +6398,8 @@ Add user:
 </div>
 </div>
 </div>
-<div id="outline-container-orgeb1218c" class="outline-3">
-<h3 id="orgeb1218c"><span class="section-number-3">10.15.</span> Important LDAP User Attributes</h3>
+<div id="outline-container-org3abe1b4" class="outline-3">
+<h3 id="org3abe1b4"><span class="section-number-3">10.15.</span> Important LDAP User Attributes</h3>
 <div class="outline-text-3" id="text-10-15">
 <table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
 
@@ -6453,14 +6454,14 @@ Add user:
 </table>
 </div>
 </div>
-<div id="outline-container-org351fdca" class="outline-3">
-<h3 id="org351fdca"><span class="section-number-3">10.16.</span> Verify LDAP User</h3>
+<div id="outline-container-orgb15dea1" class="outline-3">
+<h3 id="orgb15dea1"><span class="section-number-3">10.16.</span> Verify LDAP User</h3>
 <div class="outline-text-3" id="text-10-16">
 <p>
 Run ONLY on:
 </p>
 
-<pre class="example" id="org80cafcb">
+<pre class="example" id="orgb329c99">
 master
 </pre>
 
@@ -6482,8 +6483,8 @@ Expected:
 </ul>
 </div>
 </div>
-<div id="outline-container-org35ae25c" class="outline-3">
-<h3 id="org35ae25c"><span class="section-number-3">10.17.</span> Configure LDAP Client on Login Node</h3>
+<div id="outline-container-org116a170" class="outline-3">
+<h3 id="org116a170"><span class="section-number-3">10.17.</span> Configure LDAP Client on Login Node</h3>
 <div class="outline-text-3" id="text-10-17">
 <p>
 Now begin client-side integration.
@@ -6493,7 +6494,7 @@ Now begin client-side integration.
 Run ONLY on:
 </p>
 
-<pre class="example" id="orgbcfe15e">
+<pre class="example" id="orgfe54bdd">
 login
 </pre>
 
@@ -6509,14 +6510,14 @@ nss-pam-ldapd
 </div>
 </div>
 </div>
-<div id="outline-container-orgdd29ade" class="outline-3">
-<h3 id="orgdd29ade"><span class="section-number-3">10.18.</span> Configure nslcd</h3>
+<div id="outline-container-orga985b05" class="outline-3">
+<h3 id="orga985b05"><span class="section-number-3">10.18.</span> Configure nslcd</h3>
 <div class="outline-text-3" id="text-10-18">
 <p>
 Run ONLY on:
 </p>
 
-<pre class="example" id="org21b80aa">
+<pre class="example" id="org9c16d09">
 login
 </pre>
 
@@ -6583,14 +6584,14 @@ Secure configuration:
 </div>
 </div>
 </div>
-<div id="outline-container-org2db8169" class="outline-3">
-<h3 id="org2db8169"><span class="section-number-3">10.19.</span> Enable nslcd</h3>
+<div id="outline-container-org9a89472" class="outline-3">
+<h3 id="org9a89472"><span class="section-number-3">10.19.</span> Enable nslcd</h3>
 <div class="outline-text-3" id="text-10-19">
 <p>
 Run ONLY on:
 </p>
 
-<pre class="example" id="org921033a">
+<pre class="example" id="org0f5263a">
 login
 </pre>
 
@@ -6616,19 +6617,19 @@ Verify:
 Expected:
 </p>
 
-<pre class="example" id="org013913f">
+<pre class="example" id="org30250fe">
 active (running)
 </pre>
 </div>
 </div>
-<div id="outline-container-orgb5350f6" class="outline-3">
-<h3 id="orgb5350f6"><span class="section-number-3">10.20.</span> Verify LDAP Connectivity</h3>
+<div id="outline-container-orgc3e2c0a" class="outline-3">
+<h3 id="orgc3e2c0a"><span class="section-number-3">10.20.</span> Verify LDAP Connectivity</h3>
 <div class="outline-text-3" id="text-10-20">
 <p>
 Run ONLY on:
 </p>
 
-<pre class="example" id="orgc4e8b48">
+<pre class="example" id="orgeaede5c">
 login
 </pre>
 
@@ -6658,14 +6659,14 @@ This verifies:
 </ul>
 </div>
 </div>
-<div id="outline-container-org84e1024" class="outline-3">
-<h3 id="org84e1024"><span class="section-number-3">10.21.</span> Configure NSS</h3>
+<div id="outline-container-orgfb37fc8" class="outline-3">
+<h3 id="orgfb37fc8"><span class="section-number-3">10.21.</span> Configure NSS</h3>
 <div class="outline-text-3" id="text-10-21">
 <p>
 Run ONLY on:
 </p>
 
-<pre class="example" id="org5e03a14">
+<pre class="example" id="org0b7b1a4">
 login
 </pre>
 
@@ -6693,20 +6694,20 @@ shadow: files ldap
 Important:
 </p>
 
-<pre class="example" id="org6c880e5">
+<pre class="example" id="orga554558">
 This tells Linux:
 check local files first, then LDAP.
 </pre>
 </div>
 </div>
-<div id="outline-container-org8081651" class="outline-3">
-<h3 id="org8081651"><span class="section-number-3">10.22.</span> Restart nslcd</h3>
+<div id="outline-container-org64d67c9" class="outline-3">
+<h3 id="org64d67c9"><span class="section-number-3">10.22.</span> Restart nslcd</h3>
 <div class="outline-text-3" id="text-10-22">
 <p>
 Run ONLY on:
 </p>
 
-<pre class="example" id="org6fe82cb">
+<pre class="example" id="orga463cb0">
 login
 </pre>
 
@@ -6720,14 +6721,14 @@ Restart service:
 </div>
 </div>
 </div>
-<div id="outline-container-org9a95f7c" class="outline-3">
-<h3 id="org9a95f7c"><span class="section-number-3">10.23.</span> Verify LDAP User Resolution</h3>
+<div id="outline-container-org60c6688" class="outline-3">
+<h3 id="org60c6688"><span class="section-number-3">10.23.</span> Verify LDAP User Resolution</h3>
 <div class="outline-text-3" id="text-10-23">
 <p>
 Run ONLY on:
 </p>
 
-<pre class="example" id="orga3ff38b">
+<pre class="example" id="org0982ca6">
 login
 </pre>
 
@@ -6744,7 +6745,7 @@ Test centralized user lookup:
 Expected:
 </p>
 
-<pre class="example" id="orgd4c1a0f">
+<pre class="example" id="org2276038">
 testUser:x:10001:10000:Test User:/home/testUser:/bin/bash
 </pre>
 
@@ -6752,7 +6753,7 @@ testUser:x:10001:10000:Test User:/home/testUser:/bin/bash
 Important concept:
 </p>
 
-<pre class="example" id="orgf6c7faa">
+<pre class="example" id="org37b1dac">
 This proves Linux itself recognizes LDAP users.
 </pre>
 
@@ -6760,15 +6761,24 @@ This proves Linux itself recognizes LDAP users.
 This is one of the most important LDAP verification steps.
 </p>
 </div>
+<ol class="org-ol">
+<li><a id="orge8381b0"></a>NOTE<br />
+<div class="outline-text-4" id="text-10-23-1">
+<pre class="example">
+Now we must configure: *master* with EXACT same setup (master should be able to recognise the user).
+</pre>
 </div>
-<div id="outline-container-org28825ee" class="outline-3">
-<h3 id="org28825ee"><span class="section-number-3">10.24.</span> Install Automatic Home Directory Support</h3>
+</li>
+</ol>
+</div>
+<div id="outline-container-org6665dfb" class="outline-3">
+<h3 id="org6665dfb"><span class="section-number-3">10.24.</span> Install Automatic Home Directory Support</h3>
 <div class="outline-text-3" id="text-10-24">
 <p>
 Run ONLY on:
 </p>
 
-<pre class="example" id="orgdbc1d39">
+<pre class="example" id="org0a1625c">
 login
 </pre>
 
@@ -6794,20 +6804,20 @@ Enable service:
 Purpose:
 </p>
 
-<pre class="example" id="orgf7f75cf">
+<pre class="example" id="org8f702e6">
 Automatically creates user home directory
 during first successful login.
 </pre>
 </div>
 </div>
-<div id="outline-container-orga781ae8" class="outline-3">
-<h3 id="orga781ae8"><span class="section-number-3">10.25.</span> Configure PAM Authentication</h3>
+<div id="outline-container-org4f9c5cd" class="outline-3">
+<h3 id="org4f9c5cd"><span class="section-number-3">10.25.</span> Configure PAM Authentication</h3>
 <div class="outline-text-3" id="text-10-25">
 <p>
 Run ONLY on:
 </p>
 
-<pre class="example" id="org303f030">
+<pre class="example" id="org30aaaa3">
 login
 </pre>
 
@@ -6865,19 +6875,19 @@ session     optional      pam_mkhomedir.so
 Important:
 </p>
 
-<pre class="example" id="orge70e2a8">
+<pre class="example" id="org9fd9862">
 Do NOT remove pam_unix.so lines.
 </pre>
 </div>
 </div>
-<div id="outline-container-org13306df" class="outline-3">
-<h3 id="org13306df"><span class="section-number-3">10.26.</span> Configure Second PAM File</h3>
+<div id="outline-container-orgd40167f" class="outline-3">
+<h3 id="orgd40167f"><span class="section-number-3">10.26.</span> Configure Second PAM File</h3>
 <div class="outline-text-3" id="text-10-26">
 <p>
 Run ONLY on:
 </p>
 
-<pre class="example" id="orga481df2">
+<pre class="example" id="orga05778b">
 login
 </pre>
 
@@ -6898,19 +6908,19 @@ Add SAME LDAP PAM lines.
 Reason:
 </p>
 
-<pre class="example" id="orgac756ed">
+<pre class="example" id="org7e9a3e8">
 Different login methods use different PAM stacks.
 </pre>
 </div>
 </div>
-<div id="outline-container-orgf2c8ea9" class="outline-3">
-<h3 id="orgf2c8ea9"><span class="section-number-3">10.27.</span> Restart Services</h3>
+<div id="outline-container-orgae45247" class="outline-3">
+<h3 id="orgae45247"><span class="section-number-3">10.27.</span> Restart Services</h3>
 <div class="outline-text-3" id="text-10-27">
 <p>
 Run ONLY on:
 </p>
 
-<pre class="example" id="org288845b">
+<pre class="example" id="org9cd6dd9">
 login
 </pre>
 
@@ -6925,14 +6935,14 @@ sudo systemctl restart oddjobd
 </div>
 </div>
 </div>
-<div id="outline-container-orgc407a5d" class="outline-3">
-<h3 id="orgc407a5d"><span class="section-number-3">10.28.</span> Verify LDAP Authentication</h3>
+<div id="outline-container-org2e415a7" class="outline-3">
+<h3 id="org2e415a7"><span class="section-number-3">10.28.</span> Verify LDAP Authentication</h3>
 <div class="outline-text-3" id="text-10-28">
 <p>
 Run ONLY on:
 </p>
 
-<pre class="example" id="orgc8a9c83">
+<pre class="example" id="org26faa9c">
 login
 </pre>
 
@@ -6953,7 +6963,7 @@ Enter LDAP password.
 Expected:
 </p>
 
-<pre class="example" id="orgf480e91">
+<pre class="example" id="orgf187498">
 Creating directory '/home/testUser'
 </pre>
 
@@ -6968,14 +6978,14 @@ Successful login indicates:
 </ul>
 </div>
 </div>
-<div id="outline-container-org34fa9a1" class="outline-3">
-<h3 id="org34fa9a1"><span class="section-number-3">10.29.</span> Verify User Home</h3>
+<div id="outline-container-orgdeb3e35" class="outline-3">
+<h3 id="orgdeb3e35"><span class="section-number-3">10.29.</span> Verify User Home</h3>
 <div class="outline-text-3" id="text-10-29">
 <p>
 Run ONLY on:
 </p>
 
-<pre class="example" id="orgcc81ac2">
+<pre class="example" id="orgf781f79">
 login
 </pre>
 
@@ -6992,14 +7002,458 @@ After login:
 Expected:
 </p>
 
-<pre class="example" id="org4f82e43">
+<pre class="example" id="org7acc09d">
 /home/testUser
 </pre>
 </div>
+<ol class="org-ol">
+<li><a id="orgdd2e599"></a>NOW WE MUST REPLICATE TO COMPUTE NODES<br />
+<div class="outline-text-4" id="text-10-29-1">
+<p>
+Currently:
+</p>
+
+<pre class="example">
+login node works fully
+</pre>
+
+<p>
+Now we configure:
+</p>
+
+<ul class="org-ul">
+<li>compute01</li>
+<li>compute02</li>
+<li>compute03</li>
+</ul>
+
+<p>
+with EXACT same client setup.
+</p>
 </div>
-<div id="outline-container-org7d173e2" class="outline-3">
-<h3 id="org7d173e2"><span class="section-number-3">10.30.</span> Current Cluster State After LDAP Setup</h3>
+</li>
+</ol>
+</div>
+<div id="outline-container-org07d60f8" class="outline-3">
+<h3 id="org07d60f8"><span class="section-number-3">10.30.</span> Troubleshooting</h3>
 <div class="outline-text-3" id="text-10-30">
+</div>
+<ol class="org-ol">
+<li><a id="orgb97d859"></a>Important Slurm + LDAP Troubleshooting<br />
+<div class="outline-text-4" id="text-10-30-1">
+<p>
+This section explains one of the MOST common HPC setup issues.
+</p>
+</div>
+</li>
+<li><a id="org160fdbb"></a>Symptom<br />
+<div class="outline-text-4" id="text-10-30-2">
+<p>
+LDAP users:
+</p>
+
+<ul class="org-ul">
+<li>can SSH login</li>
+<li>can use su</li>
+<li>appear in getent passwd</li>
+</ul>
+
+<p>
+BUT:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sbatch submit.sh
+</code></pre>
+</div>
+
+<p>
+results in:
+</p>
+
+<ul class="org-ul">
+<li>jobs stuck in pending</li>
+<li>BeginTime state</li>
+<li>scheduler instability</li>
+<li>sinfo hanging</li>
+<li>Slurm credential errors</li>
+<li>slurmctld crashes</li>
+</ul>
+</div>
+</li>
+<li><a id="org22383f6"></a>Root Cause<br />
+<div class="outline-text-4" id="text-10-30-3">
+<p>
+Slurm internally works using:
+</p>
+
+<ul class="org-ul">
+<li>UID</li>
+<li>GID</li>
+<li>NSS identity resolution</li>
+</ul>
+
+<p>
+When launching jobs, Slurm performs internal user identity lookups.
+</p>
+
+<p>
+If master node cannot resolve LDAP users correctly through:
+</p>
+
+<ul class="org-ul">
+<li>NSS</li>
+<li>nslcd</li>
+<li>LDAP</li>
+</ul>
+
+<p>
+then:
+</p>
+
+<ul class="org-ul">
+<li>Slurm credential generation fails</li>
+<li>scheduler may crash</li>
+<li>jobs cannot launch</li>
+</ul>
+
+<p>
+Common error:
+</p>
+
+<pre class="example" id="orgb14b774">
+_fill_cred_gids: getpwuid failed for uid=10001
+</pre>
+
+<p>
+Meaning:
+</p>
+
+<pre class="example" id="orgc932852">
+Slurm cannot resolve LDAP user identity correctly.
+</pre>
+</div>
+</li>
+<li><a id="orgeb95eff"></a>Important Verification Commands<br />
+<div class="outline-text-4" id="text-10-30-4">
+<p>
+Run on:
+</p>
+
+<pre class="example" id="org78fa8ab">
+master
+login
+compute nodes
+</pre>
+
+<p>
+Verify LDAP resolution:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>getent passwd testUser
+id testUser
+</code></pre>
+</div>
+
+<p>
+Expected:
+</p>
+
+<pre class="example" id="orgb86f27e">
+uid=10001(testUser) gid=10000(hpcusers)
+</pre>
+
+<p>
+These commands MUST work correctly on ALL cluster nodes.
+</p>
+</div>
+</li>
+<li><a id="org0a647b3"></a>Important Master Node Verification<br />
+<div class="outline-text-4" id="text-10-30-5">
+<p>
+The master node MUST also resolve LDAP users correctly.
+</p>
+
+<p>
+Verify:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>getent passwd testUser
+</code></pre>
+</div>
+
+<p>
+If master cannot resolve LDAP users:
+</p>
+
+<ul class="org-ul">
+<li>slurmctld may fail</li>
+<li>scheduler may crash</li>
+<li>jobs remain pending</li>
+</ul>
+
+<p>
+Verify nslcd configuration on master:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo vim /etc/nslcd.conf
+</code></pre>
+</div>
+
+<p>
+Example:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-conf"><code>uid nslcd
+gid ldap
+
+uri ldap://master
+base dc=hpc,dc=local
+</code></pre>
+</div>
+
+<p>
+Verify NSS configuration:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo vim /etc/nsswitch.conf
+</code></pre>
+</div>
+
+<p>
+Ensure:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-text"><code>passwd: files ldap
+group: files ldap
+shadow: files ldap
+</code></pre>
+</div>
+
+<p>
+Restart LDAP client:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo systemctl restart nslcd
+</code></pre>
+</div>
+</div>
+</li>
+<li><a id="orgad20bd6"></a>Important Slurm Architecture<br />
+<div class="outline-text-4" id="text-10-30-6">
+<p>
+Correct architecture:
+</p>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">Node</th>
+<th scope="col" class="org-left">Service</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">master</td>
+<td class="org-left">slurmctld</td>
+</tr>
+
+<tr>
+<td class="org-left">login</td>
+<td class="org-left">login services only</td>
+</tr>
+
+<tr>
+<td class="org-left">compute01</td>
+<td class="org-left">slurmd</td>
+</tr>
+
+<tr>
+<td class="org-left">compute02</td>
+<td class="org-left">slurmd</td>
+</tr>
+
+<tr>
+<td class="org-left">compute03</td>
+<td class="org-left">slurmd</td>
+</tr>
+</tbody>
+</table>
+
+<p>
+IMPORTANT:
+</p>
+
+<pre class="example" id="org07ccdf5">
+Login node should NOT run slurmd.
+</pre>
+
+<p>
+Because login node is NOT configured as a compute node in:
+</p>
+
+<pre class="example" id="org7459595">
+/etc/slurm/slurm.conf
+</pre>
+
+<p>
+Attempting to start slurmd on login gives:
+</p>
+
+<pre class="example" id="org010f232">
+slurmd: fatal: Unable to determine this slurmd's NodeName
+</pre>
+
+<p>
+This is NORMAL and expected.
+</p>
+
+<p>
+Correct action on login node:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo systemctl stop slurmd
+sudo systemctl disable slurmd
+</code></pre>
+</div>
+
+<p>
+Expected afterward:
+</p>
+
+<pre class="example" id="org548401b">
+inactive (dead)
+</pre>
+
+<p>
+This is CORRECT for login nodes.
+</p>
+</div>
+</li>
+<li><a id="orgd95d3a3"></a>Important Slurm Recovery Commands<br />
+<div class="outline-text-4" id="text-10-30-7">
+<p>
+Whenever:
+</p>
+
+<ul class="org-ul">
+<li>LDAP users are added</li>
+<li>NSS configuration changes</li>
+<li>PAM configuration changes</li>
+<li>nslcd configuration changes</li>
+</ul>
+
+<p>
+restart Slurm services.
+</p>
+
+<p>
+Restart controller on master:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo systemctl restart slurmctld
+</code></pre>
+</div>
+
+<p>
+Restart compute daemons on compute nodes:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo systemctl restart slurmd
+</code></pre>
+</div>
+
+<p>
+Restart LDAP client:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sudo systemctl restart nslcd
+</code></pre>
+</div>
+
+<p>
+Verify cluster:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sinfo
+</code></pre>
+</div>
+
+<p>
+Expected:
+</p>
+
+<pre class="example" id="orgddb1114">
+debug* up infinite 3 idle compute[01-03]
+</pre>
+</div>
+</li>
+<li><a id="orgbed6998"></a>Important Scheduler Debugging<br />
+<div class="outline-text-4" id="text-10-30-8">
+<p>
+If:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>sinfo
+</code></pre>
+</div>
+
+<p>
+hangs indefinitely:
+</p>
+
+<p>
+Possible cause:
+</p>
+
+<pre class="example" id="org40ec491">
+slurmctld crashed
+</pre>
+
+<p>
+Verify:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>systemctl status slurmctld
+</code></pre>
+</div>
+
+<p>
+or:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><code>journalctl -u slurmctld -n 50
+</code></pre>
+</div>
+</div>
+</li>
+</ol>
+</div>
+<div id="outline-container-org4e72dcc" class="outline-3">
+<h3 id="org4e72dcc"><span class="section-number-3">10.31.</span> Current Cluster State After LDAP Setup</h3>
+<div class="outline-text-3" id="text-10-31">
 <p>
 Cluster now contains:
 </p>
@@ -7057,9 +7511,9 @@ Cluster now contains:
 </table>
 </div>
 </div>
-<div id="outline-container-org16d8e45" class="outline-3">
-<h3 id="org16d8e45"><span class="section-number-3">10.31.</span> Important Debugging Commands</h3>
-<div class="outline-text-3" id="text-10-31">
+<div id="outline-container-org4eab8fc" class="outline-3">
+<h3 id="org4eab8fc"><span class="section-number-3">10.32.</span> Important Debugging Commands</h3>
+<div class="outline-text-3" id="text-10-32">
 <p>
 Verify LDAP tree:
 </p>
@@ -7109,9 +7563,9 @@ Verify nslcd service:
 </div>
 </div>
 </div>
-<div id="outline-container-org26977be" class="outline-3">
-<h3 id="org26977be"><span class="section-number-3">10.32.</span> Important Architecture Understanding</h3>
-<div class="outline-text-3" id="text-10-32">
+<div id="outline-container-org85fdf89" class="outline-3">
+<h3 id="org85fdf89"><span class="section-number-3">10.33.</span> Important Architecture Understanding</h3>
+<div class="outline-text-3" id="text-10-33">
 <p>
 Master node:
 </p>
@@ -7138,7 +7592,7 @@ This separation is fundamental in distributed authentication systems.
 <div id="postamble" class="status">
 <p class="date">Date: 2026-03-14 Sat 00:35</p>
 <p class="author">Author: Cisco Ramon</p>
-<p class="date">Created: 2026-05-16 Sat 19:03</p>
+<p class="date">Created: 2026-05-17 Sun 23:00</p>
 </div>
 </body>
 </html>
