@@ -31,18 +31,17 @@ training.
 This documentation was prepared with the assistance of AI tools for:
 
 - structuring
-- explanations
 - formatting
 - workflow organization
 - command documentation
-- concept explanation
+- concept explanations
 
-However, the complete HPC cluster setup, configuration, testing,
-debugging, and validation were performed manually on a real working
-cluster environment.
+However, the complete HPC cluster setup, configuration, testing, and
+validation were performed manually by me in a fully working VirtualBox
+based cluster environment.
 
-Every major component documented in this guide was configured and tested
-practically, including:
+All commands, scripts, workflows, and configurations documented in this
+guide were tested successfully during the setup process, including:
 
 - cluster networking
 - shared storage
@@ -53,37 +52,82 @@ practically, including:
 - Spack software stack
 - MPI runtime environment
 - multinode execution
-- scheduler-aware MPI jobs
 
-All commands, workflows, scripts, and execution procedures were tested
-successfully from start to end.
-
-This guide is designed for:
+This guide is intended for:
 
 - students
 - beginners
-- HPC enthusiasts
 - Linux learners
+- HPC enthusiasts
 - system administrators
 - researchers
 
 who want practical hands-on experience in:
 
-- Linux cluster administration
 - HPC infrastructure setup
-- distributed systems
-- centralized authentication
+- cluster administration
 - workload scheduling
+- centralized authentication
 - parallel programming
 - MPI execution
 - software stack management
 
-The primary goal of this documentation is not only to provide commands,
-but also to explain the concepts behind real HPC environments in a
-simple, practical, and beginner-friendly manner.
+The goal of this documentation is not only to provide commands, but
+also to explain the practical concepts behind real HPC environments in a
+simple and beginner-friendly manner.
 
-The setup presented here follows real-world HPC center practices while
-remaining accessible for learning, experimentation, and self-study.
+* About the Author
+
+Hi 👋, I'm Abhishek Raj
+
+I work in the field of High Performance Computing (HPC), Linux systems,
+parallel programming, and scientific computing with experience in HPC
+application optimization and distributed computing environments,
+including the PARAM series of supercomputers.
+
+My primary areas of interest include:
+
+- HPC clusters and infrastructure
+- Linux systems and administration
+- MPI, OpenMP, CUDA, and OpenACC
+- scientific and research workloads
+- distributed systems
+- software optimization and performance tuning
+- automation and reproducible environments
+
+This project was created to gain a deeper understanding of how HPC
+clusters are designed and managed internally. The objective was not only
+to build a working cluster environment from scratch, but also to better
+understand the complete software and infrastructure stack behind
+parallel computing systems, which ultimately helps in writing and
+optimizing efficient HPC applications.
+
+GitHub Profile:
+
+*[[https://github.com/CISSSCO/][https://github.com/CISSSCO/]]*
+
+LinkedIn :
+
+*[[https://www.linkedin.com/in/abhi581b][https://www.linkedin.com/in/abhi581b]]*
+
+Project Repository:
+
+*[[https://github.com/CISSSCO/hpccfs][https://github.com/CISSSCO/hpccfs]]*
+
+Hosted Documentation:
+
+*[[https://cisssco.github.io/hpccfs][https://cisssco.github.io/hpccfs]]*
+
+Source codes, scripts, configuration files, and examples used in this
+guide are available in the project repository.
+
+For queries, suggestions, or discussions:
+
+*[[https://ciscoramon.pages.dev/][https://ciscoramon.pages.dev/]]*
+
+If you encounter any issue in the documentation, setup process, or
+configuration steps, feel free to create an issue in the GitHub
+repository.
 
 * Introduction
 
@@ -145,6 +189,7 @@ capable of running distributed parallel applications across multiple
 compute nodes.
 
 * Cluster Architecture
+
 The cluster consists of five virtual machines connected using an internal
 network.
 
@@ -247,6 +292,7 @@ ssh -p 2221 hpcuser@localhost
 #+end_src
 
 * Resource Allocation
+
 The following configuration is enough for a lightweight HPC lab.
 You can increase resources later depending on your host system.
 ** Master Node
@@ -274,6 +320,7 @@ You can increase resources later depending on your host system.
 | Disk     | 20 GB |
 
 * Master Node Setup
+
 This section covers the complete setup of the master node. The master node
 acts as the central management node of the cluster.
 
@@ -287,33 +334,40 @@ Main responsibilities:
 - Software management
   
 ** Install VirtualBox on Manjaro
+
 I'm using Manjaro (Arch) as my base system.
 *** Update packages
+
 #+begin_src bash
 sudo pacman -Syu
 #+end_src
 
 *** Install VirtualBox and host modules
+
 #+begin_src bash
 sudo pacman -S virtualbox virtualbox-host-modules-arch
 #+end_src
 
 *** Install VirtualBox extension pack
+
 #+begin_src bash
 sudo pacman -S virtualbox-ext-oracle
 #+end_src
 
 *** Load VirtualBox kernel module
+
 #+begin_src bash
 sudo modprobe vboxdrv
 #+end_src
 
 *** Add current user to VirtualBox group
+
 #+begin_src bash
 sudo usermod -aG vboxusers $USER
 #+end_src
 
 *** Reboot the system
+
 #+begin_src bash
 sudo reboot
 #+end_src
@@ -332,6 +386,7 @@ Choose:
 The minimal installation keeps the environment lightweight and avoids
 unnecessary packages.
 ** Create Master VM
+
 Open VirtualBox and create a new virtual machine.
 *** VM Name
 
@@ -362,8 +417,8 @@ Dynamically Allocated
 #+end_example
 
 This configuration is enough for a lightweight HPC lab environment.
-** Network Configuration
 
+** Network Configuration
 *** Adapter 1
 
 #+begin_example
@@ -376,6 +431,7 @@ Used for:
 - SSH access from host machine
   
 *** NAT Port Forwarding
+
 Open:
 
 #+begin_example
@@ -421,6 +477,7 @@ master.local
 #+end_example
 
 *** User Creation
+
 Create an administrative user during installation.
 
 | Field | Value |
@@ -543,6 +600,7 @@ These packages provide:
 - Basic administration tools
   
 ** Timezone Configuration
+
 Check timezone:
 
 #+begin_src bash
@@ -575,6 +633,7 @@ Add:
 This allows hostname-based communication between nodes.
 
 ** Disable Firewall (Temporary)
+
 For initial setup and testing:
 #+begin_src bash
 sudo systemctl disable --now firewalld
@@ -611,6 +670,7 @@ SELINUX=permissive
 This helps avoid permission-related issues during initial cluster setup.
 
 ** Verify Hostname
+
 #+begin_src bash
 hostnamectl
 #+end_src
@@ -668,7 +728,6 @@ Reinitialize the MAC address of all network cards
 | compute03 |
 
 ** Configure Port Forwarding
-
 *** Login Node
 
 | Host Port | Guest Port |
@@ -719,7 +778,6 @@ cat /etc/machine-id
 Ensure every node has unique machine-id.
 
 ** Configure Hostname
-
 *** Login Node
 
 Edit hostname:
@@ -838,7 +896,6 @@ default via 10.0.2.2 dev enp0s3
 #+end_example
 
 ** Verify Connectivity
-
 *** Ping Between Nodes
 
 #+begin_src bash
@@ -908,7 +965,6 @@ By the end of this phase:
 - cluster behaves like a real HPC environment
 
 ** Cluster Role Architecture
-
 *** Master Node
 
 Purpose:
@@ -1014,7 +1070,6 @@ Generated files:
 #+end_example
 
 ** Copy SSH Keys to Cluster Nodes
-
 *** Master
 
 #+begin_src bash
@@ -1040,7 +1095,6 @@ ssh-copy-id hpcadmin@compute03
 #+end_src
 
 ** Verify Passwordless SSH
-
 *** Test Master
 
 #+begin_src bash
@@ -1299,7 +1353,6 @@ Validate persistent cluster infrastructure after reboot.
 This is important real-world HPC administration practice.
 
 ** Reboot Order
-
 *** Reboot Master First
 
 #+begin_src bash
@@ -1369,6 +1422,7 @@ ls ~
 
 Expected:
 - previously created shared files still visible
+  
 * Munge Authentication + Slurm Scheduler
 
 Goal:
@@ -1393,7 +1447,6 @@ By the end of this phase:
 - scheduler topology becomes operational
 
 ** HPC Scheduler Architecture
-
 *** Master Node
 
 Purpose:
@@ -1479,7 +1532,7 @@ sudo dnf install -y epel-release
 
 ** Enable CRB Repository
 
-Required on Rocky Linux 9.
+Required on Rocky Linux 9 and 10.
 
 Install on ALL nodes:
 
@@ -1498,7 +1551,6 @@ slurm slurm-slurmd slurm-slurmctld
 #+end_src
 
 ** Verify Installed Packages
-
 *** Verify Munge
 
 #+begin_src bash
@@ -1527,7 +1579,6 @@ slurm-slurmctld
 #+end_example
 
 ** Verify System Users
-
 *** Verify Munge User
 
 #+begin_src bash
@@ -1663,7 +1714,6 @@ shared trust model
 All nodes MUST share identical munge.key.
 
 ** Correct Munge Key Distribution
-
 *** Copy Key Temporarily
 
 On master:
@@ -1905,7 +1955,7 @@ sudo vim /etc/slurm/slurm.conf
 
 Replace ENTIRE file with:
 
-#+begin_src ini
+#+begin_src ini :tangle slurm.conf
 ClusterName=hpccluster
 SlurmctldHost=master
 
@@ -1949,7 +1999,6 @@ PartitionName=debug Nodes=ALL Default=YES MaxTime=INFINITE State=UP
 | PartitionName | scheduler queue |
 
 ** Create Slurm Runtime Directories
-
 *** On Master
 
 #+begin_src bash
@@ -1971,7 +2020,6 @@ sudo chown slurm:slurm /var/spool/slurmd
 #+end_src
 
 ** Create slurmd Directories on Compute Nodes
-
 *** Compute01
 
 #+begin_src bash
@@ -2011,7 +2059,6 @@ Important Linux administration concept:
 sudo over non-interactive SSH requires stdin password handling.
 
 ** Fix Ownership on Compute Nodes
-
 *** Compute01
 
 #+begin_src bash
@@ -2043,7 +2090,6 @@ slurm slurm
 #+end_example
 
 ** Distribute slurm.conf
-
 *** Login
 
 #+begin_src bash
@@ -2213,7 +2259,6 @@ This displays:
 - resource allocation
 
 ** Test Slurm Execution
-
 *** Single Node Test
 
 From login node:
@@ -4030,6 +4075,7 @@ This architecture provides:
 - centralized administration
 - software consistency
 - runtime portability 
+  
 * Centralized Identity Management using OpenLDAP + nslcd
 
 Goal:
@@ -4701,8 +4747,8 @@ This proves Linux itself recognizes LDAP users.
 
 This is one of the most important LDAP verification steps.
 
-*** NOTE
-: Now we must configure: *master* with EXACT same setup (master should be able to recognise the user).
+** NOTE (Do this for master too)
+Now we must configure: *master* with EXACT same setup (master should be able to recognise the user).
 
 ** Install Automatic Home Directory Support
 
@@ -4876,6 +4922,7 @@ Now we configure:
 - compute03
 
 with EXACT same client setup.
+
 ** Troubleshooting
 *** Important Slurm + LDAP Troubleshooting
 
@@ -5190,6 +5237,7 @@ Login/compute nodes:
 - create user sessions
 
 This separation is fundamental in distributed authentication systems.
+
 * Automated LDAP User Creation Script
 
 Managing users manually using individual LDIF files becomes difficult
@@ -5575,6 +5623,7 @@ consistent unique UID/GID mappings
 across the entire cluster.
 
 This is one of the MOST important concepts in centralized HPC authentication.
+
 * Automated LDAP User Deletion Script
 
 Managing users manually using:
@@ -5918,6 +5967,7 @@ Improper deletion can create:
 - incorrect ownership mappings
 
 Therefore automated and controlled cleanup procedures are highly important in production HPC systems.
+
 * Automated LDAP Password Change Script
 
 Managing passwords manually using LDIF files becomes inconvenient
