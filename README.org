@@ -10,6 +10,18 @@
 #+PROPERTY: header-args :results output
 #+SETUPFILE: https://fniessen.github.io/org-html-themes/org/html-theme-readtheorg.setup
 #+HTML_HEAD: <style> pre.src { font-size: 15px !important;} code { font-size: 15px !important;} </style>
+#+LATEX_HEADER: \hypersetup{
+#+LATEX_HEADER:     colorlinks=true,
+#+LATEX_HEADER:     linkcolor=black,
+#+LATEX_HEADER:     filecolor=black,
+#+LATEX_HEADER:     urlcolor=blue,
+#+LATEX_HEADER:     citecolor=black,
+#+LATEX_HEADER:     pdfborder={0 0 0}
+#+LATEX_HEADER: }
+#+LATEX_HEADER: \usepackage{tocloft}
+#+LATEX_HEADER: \cftsetindents{section}{0em}{3em}
+#+LATEX_HEADER: \cftsetindents{subsection}{1.5em}{4em}
+#+LATEX_HEADER: \cftsetindents{subsubsection}{3.5em}{5em}
 
 * Abstract
 
@@ -78,7 +90,7 @@ simple and beginner-friendly manner.
 
 * About the Author
 
-Hi 👋, I'm Abhishek Raj
+Hi👋, I'm Abhishek Raj
 
 I work in the field of High Performance Computing (HPC), Linux systems,
 parallel programming, and scientific computing with experience in HPC
@@ -123,7 +135,7 @@ guide are available in the project repository.
 
 For queries, suggestions, or discussions:
 
-*[[https://ciscoramon.pages.dev/][https://ciscoramon.pages.dev/]]*
+*[[https://ciscoramon.netlify.app/][https://ciscoramon.netlify.app/]]*
 
 If you encounter any issue in the documentation, setup process, or
 configuration steps, feel free to create an issue in the GitHub

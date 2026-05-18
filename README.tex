@@ -1,4 +1,4 @@
-% Created 2026-05-18 Mon 08:51
+% Created 2026-05-18 Mon 10:08
 % Intended LaTeX compiler: pdflatex
 \documentclass[11pt]{article}
 
@@ -13,6 +13,18 @@
 \usepackage{amssymb}
 \usepackage{capt-of}
 \usepackage{hyperref}
+\hypersetup{
+colorlinks=true,
+linkcolor=black,
+filecolor=black,
+urlcolor=blue,
+citecolor=black,
+pdfborder={0 0 0}
+}
+\usepackage{tocloft}
+\cftsetindents{section}{0em}{3em}
+\cftsetindents{subsection}{1.5em}{4em}
+\cftsetindents{subsubsection}{3.5em}{5em}
 \author{Cisco Ramon}
 \date{\textit{{[}2026-03-14 Sat 00:35]}}
 \title{ClusterSetup}
@@ -30,7 +42,7 @@
 \tableofcontents
 
 \section{Abstract}
-\label{sec:org1b8916a}
+\label{sec:org0d634ef}
 
 This documentation presents the complete setup and configuration of a
 lightweight High Performance Computing (HPC) cluster environment using
@@ -45,7 +57,7 @@ runtime execution. The setup follows real-world HPC concepts while
 remaining suitable for learning, experimentation, and practical hands-on
 training.
 \section{Preface}
-\label{sec:org30868d6}
+\label{sec:org8789e4d}
 
 This documentation was prepared with the assistance of AI tools for:
 
@@ -103,9 +115,9 @@ The goal of this documentation is not only to provide commands, but
 also to explain the practical concepts behind real HPC environments in a
 simple and beginner-friendly manner.
 \section{About the Author}
-\label{sec:org830866d}
+\label{sec:orgdef02c0}
 
-Hi 👋, I'm Abhishek Raj
+Hi👋, I'm Abhishek Raj
 
 I work in the field of High Performance Computing (HPC), Linux systems,
 parallel programming, and scientific computing with experience in HPC
@@ -152,13 +164,13 @@ guide are available in the project repository.
 
 For queries, suggestions, or discussions:
 
-\textbf{\href{https://ciscoramon.pages.dev/}{https://ciscoramon.pages.dev/}}
+\textbf{\href{https://ciscoramon.netlify.app/}{https://ciscoramon.netlify.app/}}
 
 If you encounter any issue in the documentation, setup process, or
 configuration steps, feel free to create an issue in the GitHub
 repository.
 \section{Introduction}
-\label{sec:org6dc219a}
+\label{sec:org0f02642}
 
 High Performance Computing (HPC) clusters are distributed computing
 systems designed to execute computational workloads across multiple
@@ -227,7 +239,7 @@ The final environment provides a fully working multinode HPC cluster
 capable of running distributed parallel applications across multiple
 compute nodes.
 \section{Cluster Architecture}
-\label{sec:org3975cc6}
+\label{sec:orge876f82}
 
 The cluster consists of five virtual machines connected using an internal
 network.
@@ -251,12 +263,12 @@ compute02   10.10.10.12
 compute03   10.10.10.13
 \end{verbatim}
 \section{Node Details}
-\label{sec:org7cd68ab}
+\label{sec:orgb648cb3}
 \subsection{Node Role}
-\label{sec:org360a002}
+\label{sec:orgd4a7f8f}
 \begin{enumerate}
 \item Master Node
-\label{sec:orga0e0db0}
+\label{sec:org9cc97f1}
 
 The master node manages the overall cluster.
 
@@ -271,7 +283,7 @@ Main responsibilities:
 \item Cluster configuration
 \end{itemize}
 \item Login Node
-\label{sec:org156a8df}
+\label{sec:org475a5e0}
 
 The login node is the access point for users.
 
@@ -284,7 +296,7 @@ Typical tasks performed here:
 \item Accessing shared storage
 \end{itemize}
 \item Compute Nodes
-\label{sec:org5b286db}
+\label{sec:org639ea09}
 
 Compute nodes run the actual workloads.
 
@@ -298,12 +310,12 @@ These nodes are mainly used for:
 \end{itemize}
 \end{enumerate}
 \subsection{Networking Setup}
-\label{sec:org7c87208}
+\label{sec:org32afc8b}
 
 Two network adapters are used for each VM.
 \begin{enumerate}
 \item NAT Adapter
-\label{sec:orgbbc155e}
+\label{sec:orgab876a5}
 
 Used for:
 
@@ -313,7 +325,7 @@ Used for:
 \item SSH access from host system
 \end{itemize}
 \item Internal Network
-\label{sec:orga7b6543}
+\label{sec:orgb55728c}
 
 Used for communication between cluster nodes.
 
@@ -326,7 +338,7 @@ hpcnet
 This network is isolated and only used inside the cluster.
 \end{enumerate}
 \subsection{Static IP Addressing}
-\label{sec:orga12700a}
+\label{sec:orgcce526b}
 
 Each node uses a fixed IP address.
 
@@ -348,12 +360,12 @@ Example SSH access:
 ssh -p 2221 hpcuser@localhost
 \end{verbatim}
 \section{Resource Allocation}
-\label{sec:org88dc6ff}
+\label{sec:org9227bce}
 
 The following configuration is enough for a lightweight HPC lab.
 You can increase resources later depending on your host system.
 \subsection{Master Node}
-\label{sec:org0fba0cc}
+\label{sec:org0eac8db}
 
 \begin{center}
 \begin{tabular}{ll}
@@ -365,7 +377,7 @@ Disk & 30 GB\\
 \end{tabular}
 \end{center}
 \subsection{Login Node}
-\label{sec:org31941a8}
+\label{sec:org024f020}
 
 \begin{center}
 \begin{tabular}{ll}
@@ -377,7 +389,7 @@ Disk & 25 GB\\
 \end{tabular}
 \end{center}
 \subsection{Compute Nodes}
-\label{sec:orgeead451}
+\label{sec:org8918e37}
 
 \begin{center}
 \begin{tabular}{ll}
@@ -389,7 +401,7 @@ Disk & 20 GB\\
 \end{tabular}
 \end{center}
 \section{Master Node Setup}
-\label{sec:orgad89bcc}
+\label{sec:org111c02d}
 
 This section covers the complete setup of the master node. The master node
 acts as the central management node of the cluster.
@@ -405,49 +417,49 @@ Main responsibilities:
 \item Software management
 \end{itemize}
 \subsection{Install VirtualBox on Manjaro}
-\label{sec:orga953f9f}
+\label{sec:org2264c29}
 
 I'm using Manjaro (Arch) as my base system.
 \begin{enumerate}
 \item Update packages
-\label{sec:org103ca1d}
+\label{sec:orge062da1}
 
 \begin{verbatim}
 sudo pacman -Syu
 \end{verbatim}
 \item Install VirtualBox and host modules
-\label{sec:orgc2fa9a2}
+\label{sec:org01e1858}
 
 \begin{verbatim}
 sudo pacman -S virtualbox virtualbox-host-modules-arch
 \end{verbatim}
 \item Install VirtualBox extension pack
-\label{sec:org11e2f0f}
+\label{sec:org7ac3baf}
 
 \begin{verbatim}
 sudo pacman -S virtualbox-ext-oracle
 \end{verbatim}
 \item Load VirtualBox kernel module
-\label{sec:orgc7b496e}
+\label{sec:org6c7d589}
 
 \begin{verbatim}
 sudo modprobe vboxdrv
 \end{verbatim}
 \item Add current user to VirtualBox group
-\label{sec:org3e67ddc}
+\label{sec:org86abd61}
 
 \begin{verbatim}
 sudo usermod -aG vboxusers $USER
 \end{verbatim}
 \item Reboot the system
-\label{sec:orgfe8fcce}
+\label{sec:org5091f76}
 
 \begin{verbatim}
 sudo reboot
 \end{verbatim}
 \end{enumerate}
 \subsection{Download Rocky Linux}
-\label{sec:orgc22ca97}
+\label{sec:org3d16747}
 
 Download Rocky Linux Minimal ISO:
 
@@ -463,25 +475,25 @@ Choose:
 The minimal installation keeps the environment lightweight and avoids
 unnecessary packages.
 \subsection{Create Master VM}
-\label{sec:org526e136}
+\label{sec:org517734d}
 
 Open VirtualBox and create a new virtual machine.
 \begin{enumerate}
 \item VM Name
-\label{sec:org616298a}
+\label{sec:orge0e0e3a}
 
 \begin{verbatim}
 master
 \end{verbatim}
 \item Type
-\label{sec:org92673d4}
+\label{sec:org674ef29}
 
 \begin{verbatim}
 Linux
 Red Hat (64-bit)
 \end{verbatim}
 \item Hardware
-\label{sec:org4f9ae26}
+\label{sec:org9497b1a}
 
 \begin{center}
 \begin{tabular}{ll}
@@ -493,7 +505,7 @@ Disk & 30 GB\\
 \end{tabular}
 \end{center}
 \item Disk Type
-\label{sec:org5e2c7ec}
+\label{sec:org03f3cf1}
 
 \begin{verbatim}
 VDI
@@ -503,10 +515,10 @@ Dynamically Allocated
 This configuration is enough for a lightweight HPC lab environment.
 \end{enumerate}
 \subsection{Network Configuration}
-\label{sec:org002d291}
+\label{sec:orge476460}
 \begin{enumerate}
 \item Adapter 1
-\label{sec:org4bdddb8}
+\label{sec:org849ab2c}
 
 \begin{verbatim}
 Attached to: NAT
@@ -519,7 +531,7 @@ Used for:
 \item SSH access from host machine
 \end{itemize}
 \item NAT Port Forwarding
-\label{sec:orgfe9afc7}
+\label{sec:org8a9bb8a}
 
 Open:
 
@@ -535,7 +547,7 @@ ssh & TCP & 2221 & 22\\
 \end{tabular}
 \end{center}
 \item Adapter 2
-\label{sec:orga4a050a}
+\label{sec:org253b221}
 
 \begin{verbatim}
 Attached to: Internal Network
@@ -552,7 +564,7 @@ All nodes MUST use the same internal network name.
 This network is used for communication between cluster nodes.
 \end{enumerate}
 \subsection{Rocky Linux Installation}
-\label{sec:org5c0d95a}
+\label{sec:org1b9a889}
 
 Choose:
 
@@ -561,7 +573,7 @@ Minimal Install
 \end{verbatim}
 \begin{enumerate}
 \item Network and Hostname
-\label{sec:org0f9c6ac}
+\label{sec:org677a744}
 
 Enable BOTH network adapters.
 
@@ -571,7 +583,7 @@ Set hostname:
 master.local
 \end{verbatim}
 \item User Creation
-\label{sec:org9fb4ff5}
+\label{sec:orge701fc1}
 
 Create an administrative user during installation.
 
@@ -586,10 +598,10 @@ Administrator & YES\\
 After installation, log into the VM.
 \end{enumerate}
 \subsection{Initial System Verification}
-\label{sec:org85d0177}
+\label{sec:orgd9a9a99}
 \begin{enumerate}
 \item Check Interfaces
-\label{sec:orgdbdd2b6}
+\label{sec:orgd61f46e}
 
 \begin{verbatim}
 ip addr
@@ -606,10 +618,10 @@ Expected:
 \end{itemize}
 \end{enumerate}
 \subsection{Configure Static Internal Network}
-\label{sec:org2c4db32}
+\label{sec:orgc72966b}
 \begin{enumerate}
 \item Check Device Names
-\label{sec:org22d4d86}
+\label{sec:orgc4160c6}
 
 \begin{verbatim}
 nmcli device status
@@ -627,7 +639,7 @@ enp0s8 & Internal Network\\
 \end{center}
 \end{enumerate}
 \subsection{Configure Internal Interface}
-\label{sec:org64fa059}
+\label{sec:orgc1c93b8}
 
 Launch NetworkManager TUI:
 
@@ -662,13 +674,13 @@ DNS & blank\\
 
 DO NOT modify NAT interface.
 \subsection{Restart Networking}
-\label{sec:org01285b9}
+\label{sec:org476aec7}
 
 \begin{verbatim}
 sudo systemctl restart NetworkManager
 \end{verbatim}
 \subsection{Verify Networking}
-\label{sec:org6f55435}
+\label{sec:orgb056478}
 
 \begin{verbatim}
 ip addr
@@ -685,7 +697,7 @@ Internal & 10.10.10.1\\
 \end{tabular}
 \end{center}
 \subsection{SSH Access from Host}
-\label{sec:org9569b21}
+\label{sec:orgb70b94e}
 
 From host machine:
 
@@ -694,16 +706,16 @@ ssh -p 2221 hpcadmin@localhost
 \end{verbatim}
 If the connection works, port forwarding is configured correctly.
 \subsection{System Update and Packages}
-\label{sec:orge075d3a}
+\label{sec:org261ea45}
 \begin{enumerate}
 \item Update System
-\label{sec:orgca9c7fb}
+\label{sec:org42cd747}
 
 \begin{verbatim}
 sudo dnf update -y
 \end{verbatim}
 \item Install Base Packages
-\label{sec:org1973a59}
+\label{sec:org5d0446f}
 
 \begin{verbatim}
 sudo dnf install -y \
@@ -726,7 +738,7 @@ These packages provide:
 \end{itemize}
 \end{enumerate}
 \subsection{Timezone Configuration}
-\label{sec:org178e2cc}
+\label{sec:org5c79f33}
 
 Check timezone:
 
@@ -740,7 +752,7 @@ Set timezone if needed:
 sudo timedatectl set-timezone Asia/Kolkata
 \end{verbatim}
 \subsection{Configure /etc/hosts}
-\label{sec:org32af993}
+\label{sec:org2d493c6}
 
 Edit:
 
@@ -759,7 +771,7 @@ Add:
 \end{verbatim}
 This allows hostname-based communication between nodes.
 \subsection{Disable Firewall (Temporary)}
-\label{sec:orgf01d714}
+\label{sec:org33aaea1}
 
 For initial setup and testing:
 \begin{verbatim}
@@ -769,7 +781,7 @@ NOTE:
 
 Firewall rules can be configured properly later after cluster setup is complete.
 \subsection{SELinux Configuration}
-\label{sec:orgaf1bbf6}
+\label{sec:orgddc84f4}
 
 Check status:
 
@@ -796,7 +808,7 @@ SELINUX=permissive
 \end{verbatim}
 This helps avoid permission-related issues during initial cluster setup.
 \subsection{Verify Hostname}
-\label{sec:org3379bde}
+\label{sec:org35dc5ae}
 
 \begin{verbatim}
 hostnamectl
@@ -813,7 +825,7 @@ If hostname is not updated(showing previous), reboot the machine.
 At this point, the master node setup is complete and ready for cloning or
 further cluster configuration.
 \section{Cloning Nodes}
-\label{sec:org733443a}
+\label{sec:org177f952}
 
 Purpose:
 
@@ -822,7 +834,7 @@ Purpose:
 \item simulate real HPC image provisioning workflow
 \end{itemize}
 \subsection{Create Snapshot}
-\label{sec:org5973cea}
+\label{sec:org513a1fd}
 
 Power off VM:
 
@@ -836,7 +848,7 @@ Create snapshot in VirtualBox:
 clean-base-master
 \end{verbatim}
 \subsection{Clone Nodes}
-\label{sec:org76ac096}
+\label{sec:org8893729}
 
 Create FULL CLONES.
 
@@ -847,7 +859,7 @@ Enable:
 Reinitialize the MAC address of all network cards
 \end{verbatim}
 \subsection{Clone Names}
-\label{sec:org95359c9}
+\label{sec:orgd8903f1}
 
 \begin{center}
 \begin{tabular}{l}
@@ -860,10 +872,10 @@ compute03\\
 \end{tabular}
 \end{center}
 \subsection{Configure Port Forwarding}
-\label{sec:org8faf02a}
+\label{sec:orgb65958e}
 \begin{enumerate}
 \item Login Node
-\label{sec:org9f40653}
+\label{sec:orgd5f18fc}
 
 \begin{center}
 \begin{tabular}{rr}
@@ -873,7 +885,7 @@ Host Port & Guest Port\\
 \end{tabular}
 \end{center}
 \item Compute01
-\label{sec:org2f41b03}
+\label{sec:org9cdeb22}
 
 \begin{center}
 \begin{tabular}{rr}
@@ -883,7 +895,7 @@ Host Port & Guest Port\\
 \end{tabular}
 \end{center}
 \item Compute02
-\label{sec:org7731d76}
+\label{sec:orgf837120}
 
 \begin{center}
 \begin{tabular}{rr}
@@ -893,7 +905,7 @@ Host Port & Guest Port\\
 \end{tabular}
 \end{center}
 \item Compute03
-\label{sec:org6a58f77}
+\label{sec:org872815b}
 
 \begin{center}
 \begin{tabular}{rr}
@@ -904,24 +916,24 @@ Host Port & Guest Port\\
 \end{center}
 \end{enumerate}
 \subsection{Machine ID Regeneration}
-\label{sec:org0f71801}
+\label{sec:org44c8b2f}
 
 IMPORTANT:
 Each cloned Linux machine must have unique machine-id.
 \subsection{Remove Existing Machine ID}
-\label{sec:org24d3f81}
+\label{sec:org780689a}
 
 \begin{verbatim}
 sudo rm -f /etc/machine-id
 \end{verbatim}
 \subsection{Generate New Machine ID}
-\label{sec:orgc4669f6}
+\label{sec:org059a5a4}
 
 \begin{verbatim}
 sudo systemd-machine-id-setup
 \end{verbatim}
 \subsection{Verify Machine ID}
-\label{sec:org2f4837c}
+\label{sec:org7e7fa18}
 
 \begin{verbatim}
 cat /etc/machine-id
@@ -929,10 +941,10 @@ cat /etc/machine-id
 
 Ensure every node has unique machine-id.
 \subsection{Configure Hostname}
-\label{sec:orgabdd5e0}
+\label{sec:orgc809f23}
 \begin{enumerate}
 \item Login Node
-\label{sec:org8bbf406}
+\label{sec:org23f2475}
 
 Edit hostname:
 
@@ -952,7 +964,7 @@ Apply:
 sudo hostnamectl set-hostname login.local
 \end{verbatim}
 \item Compute01
-\label{sec:orgd181b27}
+\label{sec:orgaa1ffee}
 
 Set hostname:
 
@@ -966,7 +978,7 @@ Apply:
 sudo hostnamectl set-hostname compute01.local
 \end{verbatim}
 \item Compute02
-\label{sec:orgabf4e39}
+\label{sec:org136ea3c}
 
 \begin{verbatim}
 compute02.local
@@ -976,7 +988,7 @@ compute02.local
 sudo hostnamectl set-hostname compute02.local
 \end{verbatim}
 \item Compute03
-\label{sec:org2d145b2}
+\label{sec:org15de82f}
 
 \begin{verbatim}
 compute03.local
@@ -987,7 +999,7 @@ sudo hostnamectl set-hostname compute03.local
 \end{verbatim}
 \end{enumerate}
 \subsection{Configure Static Internal IPs}
-\label{sec:org3c2895d}
+\label{sec:org8fa98aa}
 
 Launch:
 
@@ -1002,44 +1014,44 @@ enp0s8
 \end{verbatim}
 \begin{enumerate}
 \item Login Node
-\label{sec:org300ecde}
+\label{sec:org36870a7}
 
 \begin{verbatim}
 10.10.10.2/24
 \end{verbatim}
 \item Compute01
-\label{sec:orga542e6e}
+\label{sec:org3d310e0}
 
 \begin{verbatim}
 10.10.10.11/24
 \end{verbatim}
 \item Compute02
-\label{sec:org8086f38}
+\label{sec:org08b3180}
 
 \begin{verbatim}
 10.10.10.12/24
 \end{verbatim}
 \item Compute03
-\label{sec:orgc87057f}
+\label{sec:org955868d}
 
 \begin{verbatim}
 10.10.10.13/24
 \end{verbatim}
 \end{enumerate}
 \subsection{Restart Networking}
-\label{sec:org2467d23}
+\label{sec:orgeb50306}
 
 \begin{verbatim}
 sudo systemctl restart NetworkManager
 \end{verbatim}
 \subsection{Verify Networking}
-\label{sec:orgb6b358d}
+\label{sec:org42b48a7}
 
 \begin{verbatim}
 ip addr
 \end{verbatim}
 \subsection{Verify Routing}
-\label{sec:orgc5c36ad}
+\label{sec:org7a6e4bb}
 
 \begin{verbatim}
 ip route
@@ -1052,10 +1064,10 @@ default via 10.0.2.2 dev enp0s3
 10.10.10.0/24 dev enp0s8
 \end{verbatim}
 \subsection{Verify Connectivity}
-\label{sec:org99bb80a}
+\label{sec:org1abf9d0}
 \begin{enumerate}
 \item Ping Between Nodes
-\label{sec:org3845f66}
+\label{sec:orgfbcb403}
 
 \begin{verbatim}
 ping master
@@ -1070,43 +1082,43 @@ ping compute01
 \end{verbatim}
 \end{enumerate}
 \subsection{SSH Verification}
-\label{sec:org16363e9}
+\label{sec:orgab9796e}
 
 From host:
 \begin{enumerate}
 \item Master
-\label{sec:org5e1b9ac}
+\label{sec:org7890147}
 
 \begin{verbatim}
 ssh -p 2221 hpcadmin@localhost
 \end{verbatim}
 \item Login
-\label{sec:org8ea4296}
+\label{sec:org9428dc0}
 
 \begin{verbatim}
 ssh -p 2222 hpcadmin@localhost
 \end{verbatim}
 \item Compute01
-\label{sec:orgb5bfbfd}
+\label{sec:org08b9c9c}
 
 \begin{verbatim}
 ssh -p 2223 hpcadmin@localhost
 \end{verbatim}
 \item Compute02
-\label{sec:org92b01ee}
+\label{sec:org44f94e2}
 
 \begin{verbatim}
 ssh -p 2224 hpcadmin@localhost
 \end{verbatim}
 \item Compute03
-\label{sec:org2535fc9}
+\label{sec:orge9e503c}
 
 \begin{verbatim}
 ssh -p 2225 hpcadmin@localhost
 \end{verbatim}
 \end{enumerate}
 \section{Shared Infrastructure Services}
-\label{sec:orgc36def5}
+\label{sec:orgb736f3c}
 
 Goal:
 
@@ -1130,10 +1142,10 @@ By the end of this phase:
 \item cluster behaves like a real HPC environment
 \end{itemize}
 \subsection{Cluster Role Architecture}
-\label{sec:orgb54ea02}
+\label{sec:orge6bacd0}
 \begin{enumerate}
 \item Master Node
-\label{sec:orgb616ec6}
+\label{sec:org893ea91}
 
 Purpose:
 
@@ -1157,7 +1169,7 @@ future munge & authentication\\
 \end{tabular}
 \end{center}
 \item Login Node
-\label{sec:org2175bb6}
+\label{sec:orgfac707c}
 
 Purpose:
 
@@ -1174,7 +1186,7 @@ Users should:
 \item submit jobs using Slurm
 \end{itemize}
 \item Compute Nodes
-\label{sec:orgc3a174b}
+\label{sec:orgfcaeb75}
 
 Purpose:
 
@@ -1194,7 +1206,7 @@ munge & authentication\\
 \end{center}
 \end{enumerate}
 \subsection{Verify User Consistency}
-\label{sec:org664b62a}
+\label{sec:org2bdf3fc}
 
 IMPORTANT:
 
@@ -1214,7 +1226,7 @@ uid=1000(hpcadmin) gid=1000(hpcadmin)
 
 All nodes must match.
 \subsection{Passwordless SSH Configuration}
-\label{sec:org71cbb1c}
+\label{sec:org4f1dc01}
 
 Purpose:
 
@@ -1233,7 +1245,7 @@ This mimics real HPC architecture:
 User -> Login Node -> Compute Nodes
 \end{verbatim}
 \subsection{Generate SSH Key on Login Node}
-\label{sec:orge43bf8f}
+\label{sec:orge13ccd1}
 
 SSH into login node from host:
 
@@ -1256,38 +1268,38 @@ Generated files:
 ~/.ssh/id_rsa.pub
 \end{verbatim}
 \subsection{Copy SSH Keys to Cluster Nodes}
-\label{sec:orgc25a067}
+\label{sec:org274bcfc}
 \begin{enumerate}
 \item Master
-\label{sec:orge5b5e4d}
+\label{sec:org6ea83ce}
 
 \begin{verbatim}
 ssh-copy-id hpcadmin@master
 \end{verbatim}
 \item Compute01
-\label{sec:orgc59a6e6}
+\label{sec:org0463a32}
 
 \begin{verbatim}
 ssh-copy-id hpcadmin@compute01
 \end{verbatim}
 \item Compute02
-\label{sec:org7afd088}
+\label{sec:org900c265}
 
 \begin{verbatim}
 ssh-copy-id hpcadmin@compute02
 \end{verbatim}
 \item Compute03
-\label{sec:org7f249e6}
+\label{sec:org9592ef0}
 
 \begin{verbatim}
 ssh-copy-id hpcadmin@compute03
 \end{verbatim}
 \end{enumerate}
 \subsection{Verify Passwordless SSH}
-\label{sec:org02af0f7}
+\label{sec:org2fba6d9}
 \begin{enumerate}
 \item Test Master
-\label{sec:orge16c6b4}
+\label{sec:org95c4166}
 
 \begin{verbatim}
 ssh master hostname
@@ -1299,7 +1311,7 @@ Expected:
 master.local
 \end{verbatim}
 \item Test Compute01
-\label{sec:org6598b89}
+\label{sec:orge7f81f4}
 
 \begin{verbatim}
 ssh compute01 hostname
@@ -1311,13 +1323,13 @@ Expected:
 compute01.local
 \end{verbatim}
 \item Test Compute02
-\label{sec:org089e802}
+\label{sec:org1d01420}
 
 \begin{verbatim}
 ssh compute02 hostname
 \end{verbatim}
 \item Test Compute03
-\label{sec:orgf23e008}
+\label{sec:orgff702af}
 
 \begin{verbatim}
 ssh compute03 hostname
@@ -1326,7 +1338,7 @@ ssh compute03 hostname
 No password prompts should appear.
 \end{enumerate}
 \subsection{HPC Concept — Why Passwordless SSH Matters}
-\label{sec:org24c6090}
+\label{sec:orga04dc49}
 
 Passwordless SSH becomes essential for:
 
@@ -1341,7 +1353,7 @@ monitoring & remote administration\\
 \end{tabular}
 \end{center}
 \subsection{NFS Shared Storage Setup}
-\label{sec:org8864621}
+\label{sec:orgbaf96f6}
 
 Purpose:
 
@@ -1369,7 +1381,7 @@ Real HPC systems commonly use:
 
 This lab begins with NFS.
 \subsection{Install NFS Packages}
-\label{sec:orge985083}
+\label{sec:org9881321}
 
 Install on ALL nodes:
 
@@ -1377,11 +1389,11 @@ Install on ALL nodes:
 sudo dnf install -y nfs-utils
 \end{verbatim}
 \subsection{Configure NFS Server on Master}
-\label{sec:orge404015}
+\label{sec:org748b54e}
 
 SSH into master node.
 \subsection{Enable NFS Services}
-\label{sec:org8398431}
+\label{sec:orge70c7b9}
 
 \begin{verbatim}
 sudo systemctl enable --now nfs-server
@@ -1399,7 +1411,7 @@ Expected:
 active (running)
 \end{verbatim}
 \subsection{Configure NFS Exports}
-\label{sec:org33dc423}
+\label{sec:orgc4f6d2a}
 
 Edit exports file:
 
@@ -1413,7 +1425,7 @@ Add:
 /home 10.10.10.0/24(rw,sync,no_root_squash)
 \end{verbatim}
 \subsection{Export Option Explanation}
-\label{sec:org83df700}
+\label{sec:org878d2b7}
 
 \begin{center}
 \begin{tabular}{ll}
@@ -1425,13 +1437,13 @@ no\_root\_squash & preserve root privileges\\
 \end{tabular}
 \end{center}
 \subsection{Apply Exports}
-\label{sec:org005e15a}
+\label{sec:orgb7649fc}
 
 \begin{verbatim}
 sudo exportfs -rav
 \end{verbatim}
 \subsection{Verify Exports}
-\label{sec:org06ed5b5}
+\label{sec:org58badc4}
 
 \begin{verbatim}
 sudo exportfs -v
@@ -1443,7 +1455,7 @@ Expected export:
 /home 10.10.10.0/24(...)
 \end{verbatim}
 \subsection{Configure NFS Clients}
-\label{sec:orgc2539e6}
+\label{sec:orgf415dd6}
 
 Perform on:
 
@@ -1454,7 +1466,7 @@ Perform on:
 \item compute03
 \end{itemize}
 \subsection{Backup Existing Home Directory}
-\label{sec:org44a30a3}
+\label{sec:orgd770efe}
 
 \begin{verbatim}
 sudo mv /home /home.local
@@ -1464,19 +1476,19 @@ Purpose:
 
 Preserve original local home directory.
 \subsection{Create New Mount Point}
-\label{sec:orgab6dcea}
+\label{sec:org2381290}
 
 \begin{verbatim}
 sudo mkdir /home
 \end{verbatim}
 \subsection{Mount Shared NFS Home}
-\label{sec:org923778d}
+\label{sec:org4916048}
 
 \begin{verbatim}
 sudo mount master:/home /home
 \end{verbatim}
 \subsection{Verify Mount}
-\label{sec:org086a3ec}
+\label{sec:org3cdeb6b}
 
 \begin{verbatim}
 df -h
@@ -1494,7 +1506,7 @@ mounted on:
 /home
 \end{verbatim}
 \subsection{Verify Shared Filesystem}
-\label{sec:orgdcb3fa9}
+\label{sec:orgb2965c2}
 
 From login node:
 
@@ -1516,7 +1528,7 @@ shared_test
 
 This confirms successful shared filesystem operation.
 \subsection{Configure Persistent NFS Mounts}
-\label{sec:orgf32234c}
+\label{sec:org4f99556}
 
 Without this configuration:
 
@@ -1524,7 +1536,7 @@ Without this configuration:
 \item NFS mount disappears after reboot
 \end{itemize}
 \subsection{Configure /etc/fstab}
-\label{sec:orgfc03d41}
+\label{sec:org1f5715c}
 
 On ALL client nodes:
 
@@ -1538,7 +1550,7 @@ Add:
 master:/home   /home   nfs   defaults   0 0
 \end{verbatim}
 \subsection{Verify fstab Before Reboot}
-\label{sec:org5ef16db}
+\label{sec:org75bf300}
 
 IMPORTANT:
 
@@ -1555,7 +1567,7 @@ If no errors appear:
 \item fstab configuration is correct
 \end{itemize}
 \subsection{Reboot Validation Procedure}
-\label{sec:org38acde6}
+\label{sec:orgb133a1e}
 
 Purpose:
 
@@ -1563,10 +1575,10 @@ Validate persistent cluster infrastructure after reboot.
 
 This is important real-world HPC administration practice.
 \subsection{Reboot Order}
-\label{sec:orgd14e8be}
+\label{sec:org5ebed57}
 \begin{enumerate}
 \item Reboot Master First
-\label{sec:org5bc1b4e}
+\label{sec:orgc73a730}
 
 \begin{verbatim}
 sudo reboot
@@ -1584,13 +1596,13 @@ Verify:
 systemctl status nfs-server
 \end{verbatim}
 \item Reboot Login Node
-\label{sec:org87e0749}
+\label{sec:org55c415c}
 
 \begin{verbatim}
 sudo reboot
 \end{verbatim}
 \item Reboot Compute Nodes
-\label{sec:org0aea1f8}
+\label{sec:orgefb07fe}
 
 \begin{verbatim}
 sudo reboot
@@ -1604,7 +1616,7 @@ Perform for:
 \end{itemize}
 \end{enumerate}
 \subsection{Verify Persistent Mounts After Reboot}
-\label{sec:orgaaa11ff}
+\label{sec:orgca6ee76}
 
 On login node:
 
@@ -1620,7 +1632,7 @@ master:/home
 
 mounted automatically.
 \subsection{Verify Active NFS Mount}
-\label{sec:org235be98}
+\label{sec:org4aaeacb}
 
 \begin{verbatim}
 mount | grep home
@@ -1632,7 +1644,7 @@ Expected:
 master:/home on /home type nfs
 \end{verbatim}
 \subsection{Verify Shared Files After Reboot}
-\label{sec:org37b7523}
+\label{sec:org98a9413}
 
 \begin{verbatim}
 ls ~
@@ -1643,7 +1655,7 @@ Expected:
 \item previously created shared files still visible
 \end{itemize}
 \section{Munge Authentication + Slurm Scheduler}
-\label{sec:org3171f44}
+\label{sec:org14d0376}
 
 Goal:
 
@@ -1670,10 +1682,10 @@ By the end of this phase:
 \item scheduler topology becomes operational
 \end{itemize}
 \subsection{HPC Scheduler Architecture}
-\label{sec:org49d3137}
+\label{sec:org5f86cd2}
 \begin{enumerate}
 \item Master Node
-\label{sec:orgcff816a}
+\label{sec:org49870db}
 
 Purpose:
 
@@ -1695,7 +1707,7 @@ slurmctld & scheduler controller\\
 \end{tabular}
 \end{center}
 \item Login Node
-\label{sec:orgd641f5c}
+\label{sec:orgf8a9d71}
 
 Purpose:
 
@@ -1713,7 +1725,7 @@ Users should:
 \item submit jobs here
 \end{itemize}
 \item Compute Nodes
-\label{sec:org1f30fda}
+\label{sec:org9ac9a5f}
 
 Purpose:
 
@@ -1733,7 +1745,7 @@ slurmd & compute execution daemon\\
 \end{center}
 \end{enumerate}
 \subsection{IMPORTANT Rocky Linux 10 Issue}
-\label{sec:org2be00f1}
+\label{sec:orgcb08d3d}
 
 Originally the cluster was created using:
 
@@ -1771,7 +1783,7 @@ Production HPC clusters usually avoid bleeding-edge enterprise releases because:
 \item compatibility becomes unstable
 \end{itemize}
 \subsection{Install EPEL Repository}
-\label{sec:orgbba9833}
+\label{sec:org4abe7e8}
 
 Install on ALL nodes:
 
@@ -1779,7 +1791,7 @@ Install on ALL nodes:
 sudo dnf install -y epel-release
 \end{verbatim}
 \subsection{Enable CRB Repository}
-\label{sec:org1f3685e}
+\label{sec:org3ae352c}
 
 Required on Rocky Linux 9 and 10.
 
@@ -1789,7 +1801,7 @@ Install on ALL nodes:
 sudo crb enable
 \end{verbatim}
 \subsection{Install Munge + Slurm Packages}
-\label{sec:orgd046c3d}
+\label{sec:orga898e65}
 
 Install on ALL nodes:
 
@@ -1799,10 +1811,10 @@ munge munge-libs \
 slurm slurm-slurmd slurm-slurmctld
 \end{verbatim}
 \subsection{Verify Installed Packages}
-\label{sec:org53b1698}
+\label{sec:org789cf6e}
 \begin{enumerate}
 \item Verify Munge
-\label{sec:orgec1ad7c}
+\label{sec:orgcf738f5}
 
 \begin{verbatim}
 rpm -qa | grep munge
@@ -1815,7 +1827,7 @@ munge
 munge-libs
 \end{verbatim}
 \item Verify Slurm
-\label{sec:orgd41c25e}
+\label{sec:org306027e}
 
 \begin{verbatim}
 rpm -qa | grep slurm
@@ -1830,23 +1842,23 @@ slurm-slurmctld
 \end{verbatim}
 \end{enumerate}
 \subsection{Verify System Users}
-\label{sec:orgbd4263d}
+\label{sec:orgd054971}
 \begin{enumerate}
 \item Verify Munge User
-\label{sec:org98092b4}
+\label{sec:org277decd}
 
 \begin{verbatim}
 id munge
 \end{verbatim}
 \item Verify Slurm User
-\label{sec:org1fcc054}
+\label{sec:orgc482095}
 
 \begin{verbatim}
 id slurm
 \end{verbatim}
 \end{enumerate}
 \subsection{IMPORTANT Issue Encountered — Missing slurm User}
-\label{sec:org99b1c8b}
+\label{sec:org7a8b809}
 
 Problem:
 
@@ -1862,13 +1874,13 @@ Resolution:
 
 Create manually on ALL nodes.
 \subsection{Create Slurm Group}
-\label{sec:orgdbd4a2c}
+\label{sec:org77559e7}
 
 \begin{verbatim}
 sudo groupadd slurm
 \end{verbatim}
 \subsection{Create Slurm User}
-\label{sec:orgd096d31}
+\label{sec:orgbd82f75}
 
 \begin{verbatim}
 sudo useradd -r -g slurm -s /sbin/nologin slurm
@@ -1886,7 +1898,7 @@ Option & Meaning\\
 \end{tabular}
 \end{center}
 \subsection{Verify Slurm User}
-\label{sec:org0c67c03}
+\label{sec:org564040b}
 
 \begin{verbatim}
 id slurm
@@ -1899,7 +1911,7 @@ uid=...
 gid=...
 \end{verbatim}
 \subsection{IMPORTANT HPC Security Concept}
-\label{sec:orgab98ae2}
+\label{sec:org3610638}
 
 Cluster daemons should not run permanently as root.
 
@@ -1912,7 +1924,7 @@ Therefore:
 
 This is standard enterprise daemon security practice.
 \subsection{Configure Munge Authentication}
-\label{sec:org65d51cb}
+\label{sec:org7c65163}
 
 Purpose:
 
@@ -1928,7 +1940,7 @@ All nodes MUST use the same:
 
 This key acts as the cluster-wide shared secret.
 \subsection{Generate Munge Key on Master}
-\label{sec:orga9c8976}
+\label{sec:org78b46fa}
 
 ONLY on master node:
 
@@ -1936,7 +1948,7 @@ ONLY on master node:
 sudo /usr/sbin/create-munge-key
 \end{verbatim}
 \subsection{Verify Munge Key}
-\label{sec:org0a6ad1e}
+\label{sec:org59f3dc6}
 
 \begin{verbatim}
 ls -l /etc/munge/munge.key
@@ -1954,7 +1966,7 @@ owned by:
 munge munge
 \end{verbatim}
 \subsection{IMPORTANT Mistake Encountered — Munge Key Generated on All Nodes}
-\label{sec:orgbde064c}
+\label{sec:orge0525ef}
 
 Problem:
 
@@ -1974,10 +1986,10 @@ shared trust model
 
 All nodes MUST share identical munge.key.
 \subsection{Correct Munge Key Distribution}
-\label{sec:org2b3f27f}
+\label{sec:org6e62f85}
 \begin{enumerate}
 \item Copy Key Temporarily
-\label{sec:orge0fce32}
+\label{sec:orge5dcb62}
 
 On master:
 
@@ -1985,7 +1997,7 @@ On master:
 sudo cp /etc/munge/munge.key /tmp/
 \end{verbatim}
 \item Temporary Permission Adjustment
-\label{sec:org2b5726f}
+\label{sec:org5eb984d}
 
 \begin{verbatim}
 sudo chmod 644 /tmp/munge.key
@@ -1996,7 +2008,7 @@ Purpose:
 Allow normal user SCP transfer.
 \end{enumerate}
 \subsection{IMPORTANT SSH Root Login Issue}
-\label{sec:org88a2235}
+\label{sec:org8249eb2}
 
 Problem encountered:
 
@@ -2020,31 +2032,31 @@ Resolution:
 
 Use normal user SCP.
 \subsection{Copy Munge Key to Login Node}
-\label{sec:org25899de}
+\label{sec:org8714ff8}
 
 \begin{verbatim}
 scp /tmp/munge.key login:/tmp/
 \end{verbatim}
 \subsection{Copy Munge Key to Compute01}
-\label{sec:org083d945}
+\label{sec:org33d7cc8}
 
 \begin{verbatim}
 scp /tmp/munge.key compute01:/tmp/
 \end{verbatim}
 \subsection{Copy Munge Key to Compute02}
-\label{sec:org93ad156}
+\label{sec:org806eefa}
 
 \begin{verbatim}
 scp /tmp/munge.key compute02:/tmp/
 \end{verbatim}
 \subsection{Copy Munge Key to Compute03}
-\label{sec:orgaa58fad}
+\label{sec:orgf58bd0e}
 
 \begin{verbatim}
 scp /tmp/munge.key compute03:/tmp/
 \end{verbatim}
 \subsection{Remove Temporary Key Copy}
-\label{sec:org3c1b0b9}
+\label{sec:orgf6e4407}
 
 On master:
 
@@ -2052,7 +2064,7 @@ On master:
 sudo rm -f /tmp/munge.key
 \end{verbatim}
 \subsection{Install Munge Key on Client Nodes}
-\label{sec:org1bb49a6}
+\label{sec:org66b3744}
 
 Perform on:
 
@@ -2063,31 +2075,31 @@ Perform on:
 \item compute03
 \end{itemize}
 \subsection{Stop Munge Service}
-\label{sec:orgd46f0c4}
+\label{sec:org1ecf8f1}
 
 \begin{verbatim}
 sudo systemctl stop munge
 \end{verbatim}
 \subsection{Install Key}
-\label{sec:orgc4868a0}
+\label{sec:orgb13f843}
 
 \begin{verbatim}
 sudo mv /tmp/munge.key /etc/munge/
 \end{verbatim}
 \subsection{Fix Ownership}
-\label{sec:orgafcdc5e}
+\label{sec:orgf9ed477}
 
 \begin{verbatim}
 sudo chown munge:munge /etc/munge/munge.key
 \end{verbatim}
 \subsection{Fix Permissions}
-\label{sec:org9f17df9}
+\label{sec:org62237da}
 
 \begin{verbatim}
 sudo chmod 400 /etc/munge/munge.key
 \end{verbatim}
 \subsection{Start Munge}
-\label{sec:orgf31a608}
+\label{sec:org7d1306d}
 
 On ALL nodes:
 
@@ -2095,7 +2107,7 @@ On ALL nodes:
 sudo systemctl enable --now munge
 \end{verbatim}
 \subsection{IMPORTANT Issue Encountered — Munge Not Running on Master}
-\label{sec:org6a7d65f}
+\label{sec:org62ae0ca}
 
 Problem:
 
@@ -2126,7 +2138,7 @@ failed & service crashed\\
 \end{tabular}
 \end{center}
 \subsection{Verify Munge Service}
-\label{sec:org8dcdd6a}
+\label{sec:orgecaf8af}
 
 \begin{verbatim}
 systemctl status munge
@@ -2138,7 +2150,7 @@ Expected:
 active (running)
 \end{verbatim}
 \subsection{Verify Munge Authentication}
-\label{sec:org20fec7f}
+\label{sec:org14a8cd6}
 
 From master:
 
@@ -2146,19 +2158,19 @@ From master:
 munge -n | ssh compute01 unmunge
 \end{verbatim}
 \subsection{Test Compute02}
-\label{sec:orgdf93d86}
+\label{sec:org61f48f2}
 
 \begin{verbatim}
 munge -n | ssh compute02 unmunge
 \end{verbatim}
 \subsection{Test Compute03}
-\label{sec:org6d7f99c}
+\label{sec:org09e7098}
 
 \begin{verbatim}
 munge -n | ssh compute03 unmunge
 \end{verbatim}
 \subsection{Test Login Node}
-\label{sec:org27aa016}
+\label{sec:org5d94814}
 
 \begin{verbatim}
 munge -n | ssh login unmunge
@@ -2170,7 +2182,7 @@ Expected:
 STATUS: Success
 \end{verbatim}
 \subsection{HPC Concepts Learned}
-\label{sec:orgd56095f}
+\label{sec:org48c9e97}
 
 Munge introduced:
 
@@ -2182,7 +2194,7 @@ Munge introduced:
 \item inter-node trust validation
 \end{itemize}
 \subsection{Configure Slurm Scheduler}
-\label{sec:orga3ca4a1}
+\label{sec:org2bdb102}
 
 Purpose:
 
@@ -2196,7 +2208,7 @@ IMPORTANT:
 
 must be IDENTICAL on ALL nodes.
 \subsection{IMPORTANT Issue Encountered — Default localhost Configuration}
-\label{sec:orgdb24485}
+\label{sec:orgd09b404}
 
 Problem:
 
@@ -2217,7 +2229,7 @@ Important HPC lesson:
 
 Incorrect topology configuration is one of the most common Slurm admin problems.
 \subsection{Create Slurm Configuration}
-\label{sec:org53be14b}
+\label{sec:orgb4f6d26}
 
 On master:
 
@@ -2260,7 +2272,7 @@ NodeName=compute03 CPUs=2 State=UNKNOWN
 PartitionName=debug Nodes=ALL Default=YES MaxTime=INFINITE State=UP
 \end{verbatim}
 \subsection{Configuration Explanation}
-\label{sec:org3ec3395}
+\label{sec:org71c7737}
 
 \begin{center}
 \begin{tabular}{ll}
@@ -2274,10 +2286,10 @@ PartitionName & scheduler queue\\
 \end{tabular}
 \end{center}
 \subsection{Create Slurm Runtime Directories}
-\label{sec:orgd4a3e8e}
+\label{sec:orgee09da6}
 \begin{enumerate}
 \item On Master
-\label{sec:org90350b0}
+\label{sec:org7700c9f}
 
 \begin{verbatim}
 sudo mkdir -p /var/spool/slurmctld
@@ -2288,7 +2300,7 @@ sudo mkdir -p /var/spool/slurmd
 \end{verbatim}
 \end{enumerate}
 \subsection{Set Ownership}
-\label{sec:org1d34b67}
+\label{sec:org87a3b33}
 
 \begin{verbatim}
 sudo chown slurm:slurm /var/spool/slurmctld
@@ -2298,29 +2310,29 @@ sudo chown slurm:slurm /var/spool/slurmctld
 sudo chown slurm:slurm /var/spool/slurmd
 \end{verbatim}
 \subsection{Create slurmd Directories on Compute Nodes}
-\label{sec:org9875168}
+\label{sec:orgffb941d}
 \begin{enumerate}
 \item Compute01
-\label{sec:org51cd6e1}
+\label{sec:orgd65c676}
 
 \begin{verbatim}
 ssh compute01 sudo -S mkdir -p /var/spool/slurmd
 \end{verbatim}
 \item Compute02
-\label{sec:org0763254}
+\label{sec:org4670c0d}
 
 \begin{verbatim}
 ssh compute02 sudo -S mkdir -p /var/spool/slurmd
 \end{verbatim}
 \item Compute03
-\label{sec:org4d7c703}
+\label{sec:org725abc3}
 
 \begin{verbatim}
 ssh compute03 sudo -S mkdir -p /var/spool/slurmd
 \end{verbatim}
 \end{enumerate}
 \subsection{IMPORTANT sudo Over SSH Issue}
-\label{sec:org30393fe}
+\label{sec:orgf143cd5}
 
 Problem:
 
@@ -2340,29 +2352,29 @@ Important Linux administration concept:
 
 sudo over non-interactive SSH requires stdin password handling.
 \subsection{Fix Ownership on Compute Nodes}
-\label{sec:org5d2a46f}
+\label{sec:orgd431f7d}
 \begin{enumerate}
 \item Compute01
-\label{sec:org928b7c4}
+\label{sec:org6f400aa}
 
 \begin{verbatim}
 ssh compute01 sudo -S chown slurm:slurm /var/spool/slurmd
 \end{verbatim}
 \item Compute02
-\label{sec:org1fbb616}
+\label{sec:orgba3df50}
 
 \begin{verbatim}
 ssh compute02 sudo -S chown slurm:slurm /var/spool/slurmd
 \end{verbatim}
 \item Compute03
-\label{sec:org837ec84}
+\label{sec:org545a155}
 
 \begin{verbatim}
 ssh compute03 sudo -S chown slurm:slurm /var/spool/slurmd
 \end{verbatim}
 \end{enumerate}
 \subsection{Verify Runtime Directories}
-\label{sec:org4941924}
+\label{sec:org8b0df2c}
 
 \begin{verbatim}
 ls -ld /var/spool/slurmctld
@@ -2374,35 +2386,35 @@ Expected:
 slurm slurm
 \end{verbatim}
 \subsection{Distribute slurm.conf}
-\label{sec:org2fe31d9}
+\label{sec:orgf1836cb}
 \begin{enumerate}
 \item Login
-\label{sec:org20eed47}
+\label{sec:org51c4b36}
 
 \begin{verbatim}
 scp /etc/slurm/slurm.conf login:/tmp/
 \end{verbatim}
 \item Compute01
-\label{sec:orgbe17bb2}
+\label{sec:orgf3bb07d}
 
 \begin{verbatim}
 scp /etc/slurm/slurm.conf compute01:/tmp/
 \end{verbatim}
 \item Compute02
-\label{sec:org57b3ded}
+\label{sec:org5a0b2b8}
 
 \begin{verbatim}
 scp /etc/slurm/slurm.conf compute02:/tmp/
 \end{verbatim}
 \item Compute03
-\label{sec:org6aad414}
+\label{sec:org2ca194c}
 
 \begin{verbatim}
 scp /etc/slurm/slurm.conf compute03:/tmp/
 \end{verbatim}
 \end{enumerate}
 \subsection{Install Configuration on Nodes}
-\label{sec:org75e3daa}
+\label{sec:org9ceb62d}
 
 On ALL nodes:
 
@@ -2410,7 +2422,7 @@ On ALL nodes:
 sudo mv /tmp/slurm.conf /etc/slurm/slurm.conf
 \end{verbatim}
 \subsection{Start Slurm Controller}
-\label{sec:org45ba0b1}
+\label{sec:org3d95f12}
 
 ONLY on master:
 
@@ -2418,7 +2430,7 @@ ONLY on master:
 sudo systemctl enable --now slurmctld
 \end{verbatim}
 \subsection{Verify Controller}
-\label{sec:org118eea3}
+\label{sec:org9c6f6eb}
 
 \begin{verbatim}
 systemctl status slurmctld
@@ -2430,7 +2442,7 @@ Expected:
 active (running)
 \end{verbatim}
 \subsection{Start slurmd on Compute Nodes}
-\label{sec:org46e32e9}
+\label{sec:orgc5723be}
 
 On:
 \begin{itemize}
@@ -2443,7 +2455,7 @@ On:
 sudo systemctl enable --now slurmd
 \end{verbatim}
 \subsection{Verify slurmd}
-\label{sec:org89356ca}
+\label{sec:org3d78442}
 
 \begin{verbatim}
 systemctl status slurmd
@@ -2455,7 +2467,7 @@ Expected:
 active (running)
 \end{verbatim}
 \subsection{Reconfigure Slurm}
-\label{sec:org54b5db5}
+\label{sec:orgc1f7e9a}
 
 On master:
 
@@ -2463,7 +2475,7 @@ On master:
 sudo scontrol reconfigure
 \end{verbatim}
 \subsection{IMPORTANT Issue Encountered — Nodes in DRAIN State}
-\label{sec:orgc10a0b6}
+\label{sec:org2b12943}
 
 Problem:
 
@@ -2487,7 +2499,7 @@ Resolution:
 
 Clear stale slurmd state.
 \subsection{Stop slurmd}
-\label{sec:orgd885c68}
+\label{sec:org2544f85}
 
 On compute nodes:
 
@@ -2495,19 +2507,19 @@ On compute nodes:
 sudo systemctl stop slurmd
 \end{verbatim}
 \subsection{Remove Old State}
-\label{sec:org401d987}
+\label{sec:org2a05ea8}
 
 \begin{verbatim}
 sudo rm -rf /var/spool/slurmd/*
 \end{verbatim}
 \subsection{Restart slurmd}
-\label{sec:org613c576}
+\label{sec:orgfa2c824}
 
 \begin{verbatim}
 sudo systemctl start slurmd
 \end{verbatim}
 \subsection{Resume Nodes}
-\label{sec:org385c821}
+\label{sec:org46bfad7}
 
 On master:
 
@@ -2523,7 +2535,7 @@ sudo scontrol update NodeName=compute02 State=RESUME
 sudo scontrol update NodeName=compute03 State=RESUME
 \end{verbatim}
 \subsection{Verify Cluster Status}
-\label{sec:orga3224b5}
+\label{sec:org507747f}
 
 \begin{verbatim}
 sinfo
@@ -2536,7 +2548,7 @@ PARTITION AVAIL TIMELIMIT NODES STATE NODELIST
 debug* up infinite 3 idle compute[01-03]
 \end{verbatim}
 \subsection{Verify Node Details}
-\label{sec:org1e8ba79}
+\label{sec:org3c758fe}
 
 \begin{verbatim}
 scontrol show nodes
@@ -2552,10 +2564,10 @@ This displays:
 \item resource allocation
 \end{itemize}
 \subsection{Test Slurm Execution}
-\label{sec:org6c2879b}
+\label{sec:org0a7d7a7}
 \begin{enumerate}
 \item Single Node Test
-\label{sec:orgacb0e75}
+\label{sec:orgd15df71}
 
 From login node:
 
@@ -2570,7 +2582,7 @@ compute01.local
 \end{verbatim}
 \end{enumerate}
 \subsection{Multi-node Execution}
-\label{sec:orgd8fcb22}
+\label{sec:org22d1140}
 
 \begin{verbatim}
 srun -N 3 hostname
@@ -2584,7 +2596,7 @@ compute02.local
 compute03.local
 \end{verbatim}
 \subsection{Multi-task Multi-node Execution}
-\label{sec:orga805b25}
+\label{sec:org2e07850}
 
 \begin{verbatim}
 srun -N 3 -n 6 hostname
@@ -2598,7 +2610,7 @@ This verifies:
 \item CPU allocation
 \end{itemize}
 \subsection{Multi-core Single-node Execution}
-\label{sec:org08ba8ae}
+\label{sec:org25c5aab}
 
 \begin{verbatim}
 srun -N 1 -n 2 hostname
@@ -2611,7 +2623,7 @@ compute01.local
 compute01.local
 \end{verbatim}
 \subsection{IMPORTANT Slurm Scheduling Concept}
-\label{sec:orgbaf45c3}
+\label{sec:orgd9173a9}
 
 Earlier:
 
@@ -2643,7 +2655,7 @@ Slurm strictly enforces:
 \item resource consistency
 \end{itemize}
 \section{Shared Software Filesystem (/apps)}
-\label{sec:org74b9ab4}
+\label{sec:orgf0589b7}
 
 Goal:
 
@@ -2670,7 +2682,7 @@ to:
 realistic HPC software environment
 \end{verbatim}
 \subsection{Why Separate /apps Filesystem?}
-\label{sec:org74ec4d3}
+\label{sec:org3ffae03}
 
 Initially:
 
@@ -2711,7 +2723,7 @@ filesystem was created.
 
 This is significantly closer to real HPC architecture.
 \subsection{IMPORTANT Storage Architecture Concept}
-\label{sec:orgf529c17}
+\label{sec:orgfbcbbb2}
 
 Each VM still has its own independent local storage.
 
@@ -2752,7 +2764,7 @@ Therefore:
 
 was created as a dedicated shared software layer.
 \subsection{Add New Virtual Disk to Master}
-\label{sec:org4f2109e}
+\label{sec:org1d28fdf}
 
 A second virtual disk was attached ONLY to:
 
@@ -2780,7 +2792,7 @@ Disk type:
 VDI (Dynamically Allocated)
 \end{verbatim}
 \subsection{Verify New Disk Detection}
-\label{sec:org6c568b0}
+\label{sec:org4fda6d7}
 
 After booting master:
 
@@ -2814,7 +2826,7 @@ sdb
 
 was modified.
 \subsection{Create GPT Partition Table}
-\label{sec:orge906923}
+\label{sec:orga516542}
 
 \begin{verbatim}
 sudo fdisk /dev/sdb
@@ -2842,7 +2854,7 @@ Write changes:
 w
 \end{verbatim}
 \subsection{Verify Partition}
-\label{sec:org9c1d581}
+\label{sec:orgd408d37}
 
 \begin{verbatim}
 lsblk
@@ -2855,7 +2867,7 @@ sdb
 └── sdb1
 \end{verbatim}
 \subsection{Create XFS Filesystem}
-\label{sec:orgceb6b76}
+\label{sec:orgd96d0e2}
 
 \begin{verbatim}
 sudo mkfs.xfs /dev/sdb1
@@ -2870,13 +2882,13 @@ Why XFS?
 \item commonly used in HPC
 \end{itemize}
 \subsection{Create Mount Point}
-\label{sec:org33ae470}
+\label{sec:org09a2070}
 
 \begin{verbatim}
 sudo mkdir -p /apps
 \end{verbatim}
 \subsection{Get Filesystem UUID}
-\label{sec:org1b06050}
+\label{sec:org66c9c79}
 
 \begin{verbatim}
 sudo blkid /dev/sdb1
@@ -2888,7 +2900,7 @@ Example:
 UUID="xxxxxxxx-xxxx-xxxx"
 \end{verbatim}
 \subsection{Configure Persistent Mount}
-\label{sec:org792e1ca}
+\label{sec:org66b0a51}
 
 Edit:
 
@@ -2912,13 +2924,13 @@ UUIDs are preferred over:
 
 because device names can change after reboot.
 \subsection{Mount Filesystem}
-\label{sec:orgc02d77f}
+\label{sec:org0debd77}
 
 \begin{verbatim}
 sudo mount -a
 \end{verbatim}
 \subsection{Verify Mount}
-\label{sec:org3e14414}
+\label{sec:orgaedb91a}
 
 \begin{verbatim}
 df -h
@@ -2936,13 +2948,13 @@ mounted with approximately:
 60 GB
 \end{verbatim}
 \subsection{Configure Ownership}
-\label{sec:org6aefedf}
+\label{sec:org4de77c7}
 
 \begin{verbatim}
 sudo chown hpcadmin:hpcadmin /apps
 \end{verbatim}
 \subsection{Create Shared HPC Software Hierarchy}
-\label{sec:orga0a9e3c}
+\label{sec:org4c156ea}
 
 \begin{verbatim}
 mkdir -p /apps/{spack,modulefiles,software,sources}
@@ -2958,7 +2970,7 @@ Resulting structure:
 └── sources
 \end{verbatim}
 \subsection{HPC Software Hierarchy Concept}
-\label{sec:orgd868d9f}
+\label{sec:orgbb1077b}
 
 Purpose of directories:
 
@@ -2975,7 +2987,7 @@ sources & downloaded sources\\
 
 This is similar to production HPC software layouts.
 \subsection{Export /apps via NFS}
-\label{sec:orge6c9d30}
+\label{sec:org79316f6}
 
 Edit exports file:
 
@@ -2989,13 +3001,13 @@ Add:
 /apps 10.10.10.0/24(rw,sync,no_root_squash)
 \end{verbatim}
 \subsection{Apply NFS Exports}
-\label{sec:org7257f01}
+\label{sec:orga1ab231}
 
 \begin{verbatim}
 sudo exportfs -rav
 \end{verbatim}
 \subsection{Verify Exports}
-\label{sec:orgb01a3ae}
+\label{sec:org4fec78d}
 
 \begin{verbatim}
 showmount -e localhost
@@ -3008,7 +3020,7 @@ Expected:
 /home
 \end{verbatim}
 \subsection{Create Mount Points on Client Nodes}
-\label{sec:org4f048fd}
+\label{sec:org3ea9906}
 
 On:
 \begin{itemize}
@@ -3024,7 +3036,7 @@ Create:
 sudo mkdir -p /apps
 \end{verbatim}
 \subsection{Configure Persistent NFS Mounts}
-\label{sec:org083296f}
+\label{sec:org91f8b0b}
 
 Edit:
 
@@ -3038,13 +3050,13 @@ Add:
 master:/apps   /apps   nfs   defaults,_netdev   0 0
 \end{verbatim}
 \subsection{Mount Shared /apps Filesystem}
-\label{sec:org3f81716}
+\label{sec:org55ee907}
 
 \begin{verbatim}
 sudo mount -a
 \end{verbatim}
 \subsection{Verify Shared Mount}
-\label{sec:org4f552cb}
+\label{sec:org3239646}
 
 \begin{verbatim}
 df -h
@@ -3058,7 +3070,7 @@ master:/apps
 
 mounted on all nodes.
 \subsection{Verify Shared Filesystem Functionality}
-\label{sec:org7159544}
+\label{sec:orgbb7313e}
 
 On master:
 
@@ -3086,7 +3098,7 @@ This verifies:
 \item cluster-wide software visibility
 \end{itemize}
 \subsection{HPC Architecture After /apps Setup}
-\label{sec:org7bef2d5}
+\label{sec:orga21e3bc}
 
 Current cluster storage architecture:
 
@@ -3102,7 +3114,7 @@ local disks & local runtime storage\\
 
 This resembles real HPC environments significantly more closely.
 \section{Spack Software Stack + MPI Runtime Validation}
-\label{sec:org3157054}
+\label{sec:org59d8c3d}
 
 Goal:
 
@@ -3138,7 +3150,7 @@ After completing this section you will be able to:
 \item understand performance metrics
 \end{itemize}
 \subsection{IMPORTANT HPC Software Stack Concept}
-\label{sec:org32d5249}
+\label{sec:org769db63}
 
 Instead of:
 
@@ -3179,7 +3191,7 @@ This separation improves:
 \item maintenance
 \end{itemize}
 \subsection{IMPORTANT Shared Filesystem Concept}
-\label{sec:org900f4ee}
+\label{sec:org832e6cb}
 
 The cluster uses:
 
@@ -3206,7 +3218,7 @@ is mounted cluster-wide through NFS:
 
 This is one of the MOST important HPC architecture concepts.
 \subsection{Install Development Tools}
-\label{sec:orgcdce2fa}
+\label{sec:org2bb1a96}
 
 Installed manually on ALL nodes:
 
@@ -3244,7 +3256,7 @@ Spack builds software from source code and therefore still requires:
 \item basic compiler toolchain
 \end{itemize}
 \subsection{Move into Shared Application Filesystem}
-\label{sec:orgfe241f8}
+\label{sec:orgfe58ae8}
 
 Run on:
 
@@ -3270,7 +3282,7 @@ Expected:
 /apps
 \end{verbatim}
 \subsection{Clone Spack into Shared Filesystem}
-\label{sec:org542515e}
+\label{sec:orge17886b}
 
 Clone Spack:
 
@@ -3286,7 +3298,7 @@ Expected:
 
 This creates centralized package manager installation.
 \subsection{Enter Spack Directory}
-\label{sec:orgf656a92}
+\label{sec:orgd3be6b4}
 
 \begin{verbatim}
 cd spack
@@ -3304,7 +3316,7 @@ Expected:
 /apps/spack
 \end{verbatim}
 \subsection{Initialize Spack Environment}
-\label{sec:orgb218b6b}
+\label{sec:orgb78369e}
 
 Initialize Spack:
 
@@ -3333,7 +3345,7 @@ Without initialization:
 \item software environments will not activate
 \end{itemize}
 \subsection{IMPORTANT Shell Environment Concept}
-\label{sec:orgc4579ef}
+\label{sec:orgcab0725}
 
 \begin{verbatim}
 source
@@ -3356,7 +3368,7 @@ This is extremely important in:
 \item compiler environments
 \end{itemize}
 \subsection{Make Spack Permanent}
-\label{sec:org7177105}
+\label{sec:org3268f73}
 
 To avoid sourcing manually every session:
 
@@ -3389,7 +3401,7 @@ Expected:
 \item Spack version information
 \end{itemize}
 \subsection{Clone Additional Spack Repository}
-\label{sec:org2af2a00}
+\label{sec:org672015f}
 
 Clone repository:
 
@@ -3401,7 +3413,7 @@ Purpose:
 
 Adds additional package definitions.
 \subsection{Configure Spack Repository}
-\label{sec:org8958134}
+\label{sec:orgc873070}
 
 \begin{verbatim}
 spack repo set --destination "$(pwd)/spack-packages" builtin
@@ -3421,7 +3433,7 @@ This allows:
 
 to become visible to Spack.
 \subsection{Verify Spack Functionality}
-\label{sec:org8515436}
+\label{sec:orged40ad8}
 
 \begin{verbatim}
 spack info gcc
@@ -3439,7 +3451,7 @@ This verifies:
 \item package metadata accessible
 \end{itemize}
 \subsection{IMPORTANT HPC Software Stack Concept}
-\label{sec:org736ef3a}
+\label{sec:org1a4a74d}
 
 Spack operates as:
 
@@ -3467,7 +3479,7 @@ Production HPC systems commonly separate:
 
 exactly like this setup.
 \subsection{IMPORTANT Spack Build Concept}
-\label{sec:orgf398b36}
+\label{sec:org256ac47}
 
 When installing software using Spack:
 
@@ -3491,7 +3503,7 @@ Disadvantages:
 \item longer installation time
 \end{itemize}
 \subsection{Detect Available Compilers}
-\label{sec:orge885e23}
+\label{sec:org1d7459c}
 
 Before installing software:
 
@@ -3514,7 +3526,7 @@ Expected:
 \item compiler list
 \end{itemize}
 \subsection{Install GCC Using Spack}
-\label{sec:orgfb7b505}
+\label{sec:org68018c3}
 
 Install GCC version:
 
@@ -3534,7 +3546,7 @@ This may take considerable time because:
 \item optimization occurs
 \end{itemize}
 \subsection{IMPORTANT Multiple Compiler Version Concept}
-\label{sec:orgf990eb4}
+\label{sec:org993080c}
 
 Production HPC systems frequently maintain multiple compiler versions simultaneously.
 
@@ -3558,7 +3570,7 @@ Reasons:
 \item benchmark consistency
 \end{itemize}
 \subsection{Verify Installed Software}
-\label{sec:orgb325ecf}
+\label{sec:org80f2b79}
 
 List installed packages:
 
@@ -3573,7 +3585,7 @@ Expected example:
 gcc@13.4.0
 \end{verbatim}
 \subsection{Load Installed GCC Compiler}
-\label{sec:org1c14b36}
+\label{sec:org9255f0a}
 
 \begin{verbatim}
 spack load gcc@13.4.0
@@ -3605,7 +3617,7 @@ Expected:
 \item GCC 13.4.0
 \end{itemize}
 \subsection{IMPORTANT Runtime Environment Concept}
-\label{sec:org7eb4a66}
+\label{sec:org00a5bf4}
 
 When software is loaded:
 
@@ -3625,7 +3637,7 @@ This allows applications to locate:
 
 automatically.
 \subsection{Register Newly Installed Compiler}
-\label{sec:org17554ff}
+\label{sec:orgb753edd}
 
 After installing GCC:
 
@@ -3648,7 +3660,7 @@ Expected:
 \item new GCC compiler entry
 \end{itemize}
 \subsection{Install OpenMPI Using Spack}
-\label{sec:orgc2a76b3}
+\label{sec:org2f32b19}
 
 Install MPI runtime:
 
@@ -3669,7 +3681,7 @@ This installation includes:
 \item distributed runtime environment
 \end{itemize}
 \subsection{IMPORTANT MPI Compiler Dependency Concept}
-\label{sec:orgf45a0b8}
+\label{sec:org0e6c10d}
 
 MPI stacks are tightly coupled with compiler toolchains.
 
@@ -3687,7 +3699,7 @@ This is important because:
 \item mixed compiler environments may fail
 \end{itemize}
 \subsection{Verify Installed Software Tree}
-\label{sec:orga712175}
+\label{sec:org38ec474}
 
 Show dependency tree:
 
@@ -3712,7 +3724,7 @@ openmpi
    ^gcc@13.4.0
 \end{verbatim}
 \subsection{IMPORTANT Spack Spec Concept}
-\label{sec:org805f40f}
+\label{sec:orgf63ddcd}
 
 Every Spack installation contains:
 
@@ -3741,7 +3753,7 @@ gcc@13.4.0 & compiler used\\
 \end{tabular}
 \end{center}
 \subsection{IMPORTANT Hash-Based Software Loading}
-\label{sec:org1e77e49}
+\label{sec:orgb0440ea}
 
 Sometimes multiple builds of same version exist because of:
 
@@ -3778,7 +3790,7 @@ spack load /xyz5678
 
 This is extremely common in production HPC systems.
 \subsection{Load OpenMPI Environment}
-\label{sec:org0d322db}
+\label{sec:org2342cb8}
 
 \begin{verbatim}
 spack load openmpi
@@ -3806,7 +3818,7 @@ Expected:
 \item OpenMPI version information
 \end{itemize}
 \subsection{IMPORTANT MPI Wrapper Concept}
-\label{sec:org7310109}
+\label{sec:org2869b75}
 
 \begin{verbatim}
 mpicc
@@ -3826,7 +3838,7 @@ around GCC.
 
 This is a critical HPC build concept.
 \subsection{Verify Loaded Software}
-\label{sec:org59ec366}
+\label{sec:org8f566cc}
 
 Display loaded packages:
 
@@ -3857,7 +3869,7 @@ Expected:
 \item no loaded packages
 \end{itemize}
 \subsection{Create MPI Performance Validation Program}
-\label{sec:org150fdba}
+\label{sec:orgf374b5d}
 
 Create source file:
 
@@ -3995,7 +4007,7 @@ int main(int argc, char *argv[])
 }
 \end{verbatim}
 \subsection{IMPORTANT MPI Reduction Concept}
-\label{sec:orgef9a491}
+\label{sec:orgbe03748}
 
 This program uses:
 
@@ -4023,7 +4035,7 @@ global sum
 
 This is one of the MOST important MPI collective communication operations.
 \subsection{IMPORTANT Parallel Execution Concept}
-\label{sec:orgfa1aca0}
+\label{sec:orgfadc762}
 
 Serial execution:
 
@@ -4058,7 +4070,7 @@ Advantages:
 \item scalable computation
 \end{itemize}
 \subsection{Load Software Before Compilation}
-\label{sec:org089743e}
+\label{sec:orgac9fa2c}
 
 Initialize Spack:
 
@@ -4089,7 +4101,7 @@ Expected:
 \item MPI compiler wrapper path
 \end{itemize}
 \subsection{Compile MPI Program}
-\label{sec:orgd5c0b60}
+\label{sec:orgcf1f2cc}
 
 Compile:
 
@@ -4109,7 +4121,7 @@ Expected:
 mpi_sum
 \end{verbatim}
 \subsection{IMPORTANT MPI Compilation Concept}
-\label{sec:org9e0c8ed}
+\label{sec:orgc840515}
 
 MPI programs are compiled using:
 
@@ -4131,7 +4143,7 @@ because MPI wrapper automatically injects:
 \item linker flags
 \end{itemize}
 \subsection{Interactive MPI Runtime Validation}
-\label{sec:orgffb3308}
+\label{sec:orge3d200b}
 
 Run interactively:
 
@@ -4161,7 +4173,7 @@ This validates:
 \item distributed execution
 \end{itemize}
 \subsection{IMPORTANT Shared Filesystem Advantage}
-\label{sec:orgb2af4a5}
+\label{sec:orgab02998}
 
 Because:
 
@@ -4191,7 +4203,7 @@ without recompilation.
 
 This is one of the major HPC architecture advantages.
 \subsection{Create Slurm Batch Script}
-\label{sec:org2a66b9c}
+\label{sec:org1ce5607}
 
 Create batch script:
 
@@ -4224,7 +4236,7 @@ Make executable:
 chmod +x submit.sh
 \end{verbatim}
 \subsection{IMPORTANT Slurm Script Explanation}
-\label{sec:orgf5d275b}
+\label{sec:org9d666d0}
 
 \begin{center}
 \begin{tabular}{ll}
@@ -4239,7 +4251,7 @@ Line & Purpose\\
 \end{tabular}
 \end{center}
 \subsection{IMPORTANT Runtime Environment Section}
-\label{sec:org3a642d0}
+\label{sec:org6c01ef1}
 
 Inside batch script:
 
@@ -4263,7 +4275,7 @@ Without these:
 \item runtime linker errors may occur
 \end{itemize}
 \subsection{IMPORTANT Slurm Runtime Variable}
-\label{sec:orgaf68072}
+\label{sec:orgfa1de51}
 
 \begin{verbatim}
 $SLURM_NTASKS
@@ -4293,7 +4305,7 @@ mpirun -np $SLURM_NTASKS
 
 automatically launches correct number of MPI ranks.
 \subsection{Submit MPI Job}
-\label{sec:org2ff15c5}
+\label{sec:org18922fa}
 
 Submit job:
 
@@ -4316,7 +4328,7 @@ This validates:
 \item scheduler-aware runtime launch
 \end{itemize}
 \subsection{Monitor Jobs}
-\label{sec:orge69c20c}
+\label{sec:org91fa9e6}
 
 Check user jobs:
 
@@ -4330,7 +4342,7 @@ Expected:
 JOBID PARTITION NAME USER ST TIME NODES NODELIST(REASON)
 \end{verbatim}
 \subsection{IMPORTANT Job States}
-\label{sec:org0799f86}
+\label{sec:org0257aa5}
 
 \begin{center}
 \begin{tabular}{ll}
@@ -4344,7 +4356,7 @@ F & failed\\
 \end{tabular}
 \end{center}
 \subsection{View Detailed Job Information}
-\label{sec:org2cc9940}
+\label{sec:orgbccb3b7}
 
 Show detailed job info:
 
@@ -4369,7 +4381,7 @@ Displays:
 \item output locations
 \end{itemize}
 \subsection{Check Cluster Status}
-\label{sec:org1db87d5}
+\label{sec:org8c871e9}
 
 Check cluster nodes:
 
@@ -4383,7 +4395,7 @@ Expected:
 debug* up infinite 3 idle compute[01-03]
 \end{verbatim}
 \subsection{IMPORTANT Node States}
-\label{sec:orgdcf24f1}
+\label{sec:org708955a}
 
 \begin{center}
 \begin{tabular}{ll}
@@ -4397,7 +4409,7 @@ down & offline\\
 \end{tabular}
 \end{center}
 \subsection{Check Output Files}
-\label{sec:orgf264212}
+\label{sec:org0791f22}
 
 After completion:
 
@@ -4427,7 +4439,7 @@ Expected:
 \item efficiency
 \end{itemize}
 \subsection{IMPORTANT HPC Performance Metrics}
-\label{sec:org8ad284f}
+\label{sec:orgc84b1ad}
 
 The program calculates:
 
@@ -4460,7 +4472,7 @@ Real systems experience:
 \item reduction overhead
 \end{itemize}
 \subsection{Cancel Jobs}
-\label{sec:org61e0d03}
+\label{sec:org8725238}
 
 Cancel job:
 
@@ -4480,7 +4492,7 @@ Cancel all user jobs:
 scancel -u $USER
 \end{verbatim}
 \subsection{Interactive Slurm Execution}
-\label{sec:org8850fbf}
+\label{sec:orgb4d8a2a}
 
 Launch interactive shell:
 
@@ -4507,7 +4519,7 @@ This validates:
 \item runtime communication
 \end{itemize}
 \subsection{IMPORTANT HPC Workflow}
-\label{sec:orga4a9449}
+\label{sec:org4fb5644}
 
 Typical HPC workflow:
 
@@ -4525,7 +4537,7 @@ Monitor execution
 Analyze outputs
 \end{verbatim}
 \subsection{IMPORTANT Production HPC Concept}
-\label{sec:org0c2e2e5}
+\label{sec:org6f79536}
 
 Production HPC systems usually separate:
 
@@ -4549,7 +4561,7 @@ This architecture provides:
 \item runtime portability
 \end{itemize}
 \section{Centralized Identity Management using OpenLDAP + nslcd}
-\label{sec:org52efbae}
+\label{sec:orgf756efe}
 
 Goal:
 
@@ -4587,7 +4599,7 @@ After completion:
 \item Slurm can later use centralized identities
 \end{itemize}
 \subsection{Important Architecture}
-\label{sec:org55bc6b2}
+\label{sec:orgab10f8b}
 
 Cluster roles:
 
@@ -4611,7 +4623,7 @@ Only master runs LDAP SERVER (slapd).
 Login and compute nodes run LDAP CLIENTS (nslcd).
 \end{verbatim}
 \subsection{Important Linux Authentication Concepts}
-\label{sec:orgeca0f29}
+\label{sec:orgacc362e}
 
 Before starting, understand the layers.
 
@@ -4638,7 +4650,7 @@ nslcd
 LDAP server
 \end{verbatim}
 \subsection{Install OpenLDAP Server on Master Node}
-\label{sec:org1124afd}
+\label{sec:orgb02eaf3}
 
 Run ONLY on:
 
@@ -4667,7 +4679,7 @@ openldap-clients & ldapsearch, ldapadd etc\\
 \end{tabular}
 \end{center}
 \subsection{Enable LDAP Server}
-\label{sec:org06a3927}
+\label{sec:org2a4fa4d}
 
 Run ONLY on:
 
@@ -4693,7 +4705,7 @@ Expected:
 active (running)
 \end{verbatim}
 \subsection{Generate LDAP Admin Password Hash}
-\label{sec:orgf451a89}
+\label{sec:org473df30}
 
 Run ONLY on:
 
@@ -4729,7 +4741,7 @@ Copy this hash carefully.
 
 It will be used in LDAP database configuration.
 \subsection{Configure LDAP Database}
-\label{sec:org1270353}
+\label{sec:org1b2ef8d}
 
 Run ONLY on:
 
@@ -4774,7 +4786,7 @@ with the hash generated using:
 slappasswd
 \end{verbatim}
 \subsection{Important LDAP Concepts}
-\label{sec:org709fe85}
+\label{sec:org85b3aff}
 
 LDAP uses a hierarchical tree called:
 
@@ -4802,7 +4814,7 @@ cn & common name\\
 \end{tabular}
 \end{center}
 \subsection{Apply LDAP Database Configuration}
-\label{sec:orga168289}
+\label{sec:org0f80eee}
 
 Run ONLY on:
 
@@ -4823,7 +4835,7 @@ Expected:
 modifying entry
 \end{verbatim}
 \subsection{Import LDAP Schemas}
-\label{sec:org9fce33b}
+\label{sec:org4359336}
 
 Schemas define:
 
@@ -4872,7 +4884,7 @@ inetorgperson & user/person identity support\\
 \end{tabular}
 \end{center}
 \subsection{Create LDAP Base Tree}
-\label{sec:orgc072a35}
+\label{sec:org8009f16}
 
 Run ONLY on:
 
@@ -4916,7 +4928,7 @@ ldapadd -x \
 
 Enter LDAP admin password.
 \subsection{Verify LDAP Tree}
-\label{sec:org3721a94}
+\label{sec:org4ed13d5}
 
 Run ONLY on:
 
@@ -4938,7 +4950,7 @@ Expected:
 \item ou=Groups
 \end{itemize}
 \subsection{Create LDAP Group}
-\label{sec:orge73e9a7}
+\label{sec:org0d12bb5}
 
 Run ONLY on:
 
@@ -4970,7 +4982,7 @@ ldapadd -x \
 -f ~/group.ldif
 \end{verbatim}
 \subsection{Create LDAP User Password Hash}
-\label{sec:org73cf3e5}
+\label{sec:org5bf0509}
 
 Run ONLY on:
 
@@ -4992,7 +5004,7 @@ test123
 
 Copy generated hash carefully.
 \subsection{Create LDAP User}
-\label{sec:org756700e}
+\label{sec:org06a7a09}
 
 Run ONLY on:
 
@@ -5044,7 +5056,7 @@ ldapadd -x \
 -f ~/user.ldif
 \end{verbatim}
 \subsection{Important LDAP User Attributes}
-\label{sec:orgc387b9d}
+\label{sec:org8c2ca5e}
 
 \begin{center}
 \begin{tabular}{ll}
@@ -5060,7 +5072,7 @@ sn & surname\\
 \end{tabular}
 \end{center}
 \subsection{Verify LDAP User}
-\label{sec:orge729288}
+\label{sec:org9f49776}
 
 Run ONLY on:
 
@@ -5080,7 +5092,7 @@ Expected:
 \item LDAP user entry
 \end{itemize}
 \subsection{Configure LDAP Client on Login Node}
-\label{sec:org44bde15}
+\label{sec:orgce77164}
 
 Now begin client-side integration.
 
@@ -5098,7 +5110,7 @@ openldap-clients \
 nss-pam-ldapd
 \end{verbatim}
 \subsection{Configure nslcd}
-\label{sec:orgbce268d}
+\label{sec:org1c0b7a3}
 
 Run ONLY on:
 
@@ -5139,7 +5151,7 @@ Secure configuration:
 sudo chmod 600 /etc/nslcd.conf
 \end{verbatim}
 \subsection{Enable nslcd}
-\label{sec:org41398ae}
+\label{sec:orgdeff710}
 
 Run ONLY on:
 
@@ -5165,7 +5177,7 @@ Expected:
 active (running)
 \end{verbatim}
 \subsection{Verify LDAP Connectivity}
-\label{sec:org81c99fb}
+\label{sec:org32da565}
 
 Run ONLY on:
 
@@ -5191,7 +5203,7 @@ This verifies:
 \item login node can communicate with master LDAP server
 \end{itemize}
 \subsection{Configure NSS}
-\label{sec:org8b8e346}
+\label{sec:orgc6c3af8}
 
 Run ONLY on:
 
@@ -5220,7 +5232,7 @@ This tells Linux:
 check local files first, then LDAP.
 \end{verbatim}
 \subsection{Restart nslcd}
-\label{sec:org83334fe}
+\label{sec:orga3af5cd}
 
 Run ONLY on:
 
@@ -5234,7 +5246,7 @@ Restart service:
 sudo systemctl restart nslcd
 \end{verbatim}
 \subsection{Verify LDAP User Resolution}
-\label{sec:orgb890c8a}
+\label{sec:org5ca4702}
 
 Run ONLY on:
 
@@ -5262,10 +5274,10 @@ This proves Linux itself recognizes LDAP users.
 
 This is one of the most important LDAP verification steps.
 \subsection{NOTE (Do this for master too)}
-\label{sec:org066bc95}
+\label{sec:org072ce52}
 Now we must configure: \textbf{master} with EXACT same setup (master should be able to recognise the user).
 \subsection{Install Automatic Home Directory Support}
-\label{sec:orgd3a9ff2}
+\label{sec:org73f472c}
 
 Run ONLY on:
 
@@ -5292,7 +5304,7 @@ Automatically creates user home directory
 during first successful login.
 \end{verbatim}
 \subsection{Configure PAM Authentication}
-\label{sec:org47b3e62}
+\label{sec:org8e5ba32}
 
 Run ONLY on:
 
@@ -5339,7 +5351,7 @@ Important:
 Do NOT remove pam_unix.so lines.
 \end{verbatim}
 \subsection{Configure Second PAM File}
-\label{sec:orgebad77f}
+\label{sec:org8fc3ec1}
 
 Run ONLY on:
 
@@ -5361,7 +5373,7 @@ Reason:
 Different login methods use different PAM stacks.
 \end{verbatim}
 \subsection{Restart Services}
-\label{sec:org2d17195}
+\label{sec:orga826658}
 
 Run ONLY on:
 
@@ -5376,7 +5388,7 @@ sudo systemctl restart nslcd
 sudo systemctl restart oddjobd
 \end{verbatim}
 \subsection{Verify LDAP Authentication}
-\label{sec:orge150ca3}
+\label{sec:org771eb5d}
 
 Run ONLY on:
 
@@ -5406,7 +5418,7 @@ Successful login indicates:
 \item automatic home directory creation working
 \end{itemize}
 \subsection{Verify User Home}
-\label{sec:org808e074}
+\label{sec:orgfdcc602}
 
 Run ONLY on:
 
@@ -5427,7 +5439,7 @@ Expected:
 \end{verbatim}
 \begin{enumerate}
 \item NOW WE MUST REPLICATE TO COMPUTE NODES
-\label{sec:org423d84e}
+\label{sec:orgc4da10b}
 
 Currently:
 
@@ -5446,14 +5458,14 @@ Now we configure:
 with EXACT same client setup.
 \end{enumerate}
 \subsection{Troubleshooting}
-\label{sec:org03ad2b9}
+\label{sec:orge3955e0}
 \begin{enumerate}
 \item Important Slurm + LDAP Troubleshooting
-\label{sec:orgbfe9147}
+\label{sec:org320b12b}
 
 This section explains one of the MOST common HPC setup issues.
 \item Symptom
-\label{sec:org7c46844}
+\label{sec:orgd6857f5}
 
 LDAP users:
 
@@ -5480,7 +5492,7 @@ results in:
 \item slurmctld crashes
 \end{itemize}
 \item Root Cause
-\label{sec:org7b24692}
+\label{sec:orge08c1f2}
 
 Slurm internally works using:
 
@@ -5520,7 +5532,7 @@ Meaning:
 Slurm cannot resolve LDAP user identity correctly.
 \end{verbatim}
 \item Important Verification Commands
-\label{sec:orga382553}
+\label{sec:orgd1cb073}
 
 Run on:
 
@@ -5545,7 +5557,7 @@ uid=10001(testUser) gid=10000(hpcusers)
 
 These commands MUST work correctly on ALL cluster nodes.
 \item Important Master Node Verification
-\label{sec:org4a4f589}
+\label{sec:org8ce3a4e}
 
 The master node MUST also resolve LDAP users correctly.
 
@@ -5599,7 +5611,7 @@ Restart LDAP client:
 sudo systemctl restart nslcd
 \end{verbatim}
 \item Important Slurm Architecture
-\label{sec:orge847df0}
+\label{sec:org9203cbe}
 
 Correct architecture:
 
@@ -5650,7 +5662,7 @@ inactive (dead)
 
 This is CORRECT for login nodes.
 \item Important Slurm Recovery Commands
-\label{sec:org4b00551}
+\label{sec:orga574985}
 
 Whenever:
 
@@ -5693,7 +5705,7 @@ Expected:
 debug* up infinite 3 idle compute[01-03]
 \end{verbatim}
 \item Important Scheduler Debugging
-\label{sec:org5d409aa}
+\label{sec:org546f67a}
 
 If:
 
@@ -5722,7 +5734,7 @@ journalctl -u slurmctld -n 50
 \end{verbatim}
 \end{enumerate}
 \subsection{Current Cluster State After LDAP Setup}
-\label{sec:orgb1a3089}
+\label{sec:org352ec1f}
 
 Cluster now contains:
 
@@ -5740,7 +5752,7 @@ automatic home creation & working\\
 \end{tabular}
 \end{center}
 \subsection{Important Debugging Commands}
-\label{sec:org991ef45}
+\label{sec:org2d7fa97}
 
 Verify LDAP tree:
 
@@ -5775,7 +5787,7 @@ Verify nslcd service:
 systemctl status nslcd
 \end{verbatim}
 \subsection{Important Architecture Understanding}
-\label{sec:orgab04548}
+\label{sec:org253f73b}
 
 Master node:
 \begin{itemize}
@@ -5791,7 +5803,7 @@ Login/compute nodes:
 
 This separation is fundamental in distributed authentication systems.
 \section{Automated LDAP User Creation Script}
-\label{sec:org2a907f3}
+\label{sec:orgab17459}
 
 Managing users manually using individual LDIF files becomes difficult
 as the number of users increases.
@@ -5820,7 +5832,7 @@ The script creates:
 automatically.
 \end{verbatim}
 \subsection{Script Location}
-\label{sec:orgd0488d5}
+\label{sec:org791083c}
 
 Example:
 
@@ -5835,7 +5847,7 @@ Expected:
 createUser.sh
 \end{verbatim}
 \subsection{User Creation Script}
-\label{sec:org2327f3d}
+\label{sec:org790fadd}
 
 Create file:
 
@@ -5954,7 +5966,7 @@ echo "GID      : ${GIDNUM}"
 echo "=================================="
 \end{verbatim}
 \subsection{Make Script Executable}
-\label{sec:orgbe65a99}
+\label{sec:org64813c2}
 
 Before using the script:
 
@@ -5962,7 +5974,7 @@ Before using the script:
 chmod +x createUser.sh
 \end{verbatim}
 \subsection{Understanding Script Arguments}
-\label{sec:org7518fd7}
+\label{sec:org95bad0c}
 
 The script requires THREE arguments:
 
@@ -6020,7 +6032,7 @@ Home Directory & /home/student01\\
 \end{tabular}
 \end{center}
 \subsection{Default Password Format}
-\label{sec:org8acd33c}
+\label{sec:org2b0b576}
 
 The script automatically creates password using:
 
@@ -6045,7 +6057,7 @@ IMPORTANT:
 Users should change password after first login.
 \end{verbatim}
 \subsection{What the Script Automatically Does}
-\label{sec:org0dd06b3}
+\label{sec:orgb6c633b}
 
 The script performs following operations automatically:
 
@@ -6063,7 +6075,7 @@ Add LDAP user & automatic\\
 \end{tabular}
 \end{center}
 \subsection{Example User Creation}
-\label{sec:org470bc9d}
+\label{sec:orgbd794da}
 
 Example:
 
@@ -6098,7 +6110,7 @@ GID      : 11002
 ==================================
 \end{verbatim}
 \subsection{Verify User Creation}
-\label{sec:orgd7f785e}
+\label{sec:org54de563}
 
 Verify user using:
 
@@ -6125,7 +6137,7 @@ ldapsearch -x \
 -b "dc=hpc,dc=local" uid=student02
 \end{verbatim}
 \subsection{Verify Login}
-\label{sec:org3469cae}
+\label{sec:orgd238f99}
 
 Test login:
 
@@ -6145,7 +6157,7 @@ Expected:
 successful login
 \end{verbatim}
 \subsection{Important UID/GID Notes}
-\label{sec:orgca1eb36}
+\label{sec:orgc498653}
 
 IMPORTANT:
 
@@ -6187,7 +6199,7 @@ whoami returning wrong username
 
 Always use unique UID/GID values.
 \subsection{Important HPC Identity Concept}
-\label{sec:orgc48b622}
+\label{sec:org83beab6}
 
 In HPC clusters:
 
@@ -6209,7 +6221,7 @@ across the entire cluster.
 
 This is one of the MOST important concepts in centralized HPC authentication.
 \section{Automated LDAP User Deletion Script}
-\label{sec:org7e472cc}
+\label{sec:org510a549}
 
 Managing users manually using:
 
@@ -6238,7 +6250,7 @@ The script provides interactive cleanup options
 for safer user management.
 \end{verbatim}
 \subsection{Script Location}
-\label{sec:org143ac42}
+\label{sec:org814f0e7}
 
 Example:
 
@@ -6253,7 +6265,7 @@ Expected:
 deleteUser.sh
 \end{verbatim}
 \subsection{User Deletion Script}
-\label{sec:orgbf78e08}
+\label{sec:orge5e39f0}
 
 Create file:
 
@@ -6362,7 +6374,7 @@ echo "User cleanup completed"
 echo "=================================="
 \end{verbatim}
 \subsection{Make Script Executable}
-\label{sec:org21e0caa}
+\label{sec:org1b429d6}
 
 Before using the script:
 
@@ -6370,7 +6382,7 @@ Before using the script:
 chmod +x deleteUser.sh
 \end{verbatim}
 \subsection{Understanding Script Arguments}
-\label{sec:orgcdf6a52}
+\label{sec:org7a3142f}
 
 The script requires ONE argument:
 
@@ -6394,7 +6406,7 @@ Example:
 ./deleteUser.sh student02
 \end{verbatim}
 \subsection{What the Script Automatically Does}
-\label{sec:orgb5df399}
+\label{sec:org3c53c40}
 
 The script performs following operations automatically:
 
@@ -6409,7 +6421,7 @@ Interactive confirmation & prevents accidental cleanup\\
 \end{tabular}
 \end{center}
 \subsection{Example User Deletion}
-\label{sec:orgc3b3462}
+\label{sec:org1f32f0d}
 
 Example:
 
@@ -6463,7 +6475,7 @@ y
 
 is selected, user home directory will also be deleted.
 \subsection{Important Group Deletion Notes}
-\label{sec:org0457d6f}
+\label{sec:orgaa532de}
 
 IMPORTANT:
 
@@ -6489,7 +6501,7 @@ Deleting shared groups can create:
 
 The script therefore asks confirmation before deleting groups.
 \subsection{Important Home Directory Notes}
-\label{sec:org2fa46fa}
+\label{sec:org167d96e}
 
 Deleting home directories permanently removes:
 
@@ -6510,7 +6522,7 @@ Home directory deletion is irreversible.
 
 Always verify before deleting.
 \subsection{Verify User Removal}
-\label{sec:org85a3d5e}
+\label{sec:orgbfa884c}
 
 Verify deletion:
 
@@ -6549,7 +6561,7 @@ Expected:
 user does not exist
 \end{verbatim}
 \subsection{Important HPC User Management Concept}
-\label{sec:orgd0ce4ac}
+\label{sec:org85f4ba7}
 
 In centralized HPC environments:
 
@@ -6573,7 +6585,7 @@ Improper deletion can create:
 
 Therefore automated and controlled cleanup procedures are highly important in production HPC systems.
 \section{Automated LDAP Password Change Script}
-\label{sec:orgc1b764f}
+\label{sec:org8cc17d2}
 
 Managing passwords manually using LDIF files becomes inconvenient
 in centralized LDAP environments.
@@ -6607,7 +6619,7 @@ After changing password:
 
 without changing anything individually on nodes.
 \subsection{Script Location}
-\label{sec:org692b9c8}
+\label{sec:orgdcaf74b}
 
 Example:
 
@@ -6622,7 +6634,7 @@ Expected:
 changePassword.sh
 \end{verbatim}
 \subsection{Password Change Script}
-\label{sec:org0e1f009}
+\label{sec:org983c8e0}
 
 Create file:
 
@@ -6710,7 +6722,7 @@ echo "Username : ${USERNAME}"
 echo "=================================="
 \end{verbatim}
 \subsection{Make Script Executable}
-\label{sec:org0d503dd}
+\label{sec:org41ebbbb}
 
 Before using the script:
 
@@ -6718,7 +6730,7 @@ Before using the script:
 chmod +x changePassword.sh
 \end{verbatim}
 \subsection{Understanding Script Arguments}
-\label{sec:orga639b05}
+\label{sec:org2075df9}
 
 The script requires ONE argument:
 
@@ -6742,7 +6754,7 @@ Example:
 ./changePassword.sh student01
 \end{verbatim}
 \subsection{What the Script Automatically Does}
-\label{sec:org18847b0}
+\label{sec:orgd5ec039}
 
 The script performs following operations automatically:
 
@@ -6758,7 +6770,7 @@ Modify LDAP password & centralized password update\\
 \end{tabular}
 \end{center}
 \subsection{Example Password Change}
-\label{sec:orgd1252c9}
+\label{sec:orga05dbcf}
 
 Example:
 
@@ -6800,7 +6812,7 @@ Username : student01
 ==================================
 \end{verbatim}
 \subsection{Verify Password Change}
-\label{sec:org2f492df}
+\label{sec:org01d3350}
 
 Test login using updated password:
 
@@ -6828,7 +6840,7 @@ Because LDAP authentication is centralized, the updated password works automatic
 \item master node
 \end{itemize}
 \subsection{Important Password Management Notes}
-\label{sec:orga0d0e16}
+\label{sec:org2c5f25c}
 
 IMPORTANT:
 
