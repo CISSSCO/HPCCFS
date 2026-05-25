@@ -6236,3 +6236,1408 @@ slappasswd
 #+end_src
 
 This improves security by avoiding direct plain-text password storage.
+* Advanced Slurm Configuration Preparation
+
+This phase marks the transition from a:
+
+#+begin_example
+basic educational Slurm setup
+#+end_example
+
+to a more:
+
+#+begin_example
+resource-aware and production-like HPC scheduler environment
+#+end_example
+
+At this stage, the cluster was already fully functional and stable.
+
+Existing working components:
+
+- Slurm scheduler
+- sbatch job submission
+- MPI execution
+- multinode MPI jobs
+- LDAP centralized authentication
+- shared filesystem
+- shared Spack software stack
+
+The goal of this phase was to carefully introduce advanced scheduler
+features WITHOUT destabilizing runtime execution.
+
+** IMPORTANT APPROACH
+
+Advanced Slurm administration should always be performed incrementally.
+
+Instead of enabling many advanced features simultaneously, only ONE
+feature was introduced and validated at a time.
+
+This approach helps:
+
+- isolate issues properly
+- simplify debugging
+- understand scheduler behavior
+- maintain cluster stability
+
+This is how production HPC administrators commonly manage scheduler
+configuration changes.
+
+** Advanced Slurm Roadmap
+
+The cluster was upgraded gradually in the following order:
+
+| Phase | Feature | Risk Level |
+|-------+----------+-------------|
+| 1 | Resource Accounting | Safe |
+| 2 | Memory-Aware Scheduling | Safe |
+| 3 | CPU Binding / Affinity | Safe |
+| 4 | Job Limits | Safe |
+| 5 | QoS | Medium |
+| 6 | Accounts & Fairshare | Medium |
+| 7 | Reservations | Medium |
+| 8 | Advanced Scheduling Policies | Medium |
+| 9 | cgroups/task/cgroup | Advanced |
+| 10 | Monitoring & Metrics | Advanced |
+
+*** IMPORTANT NOTE
+
+At this stage:
+
+#+begin_example
+TaskPlugin=task/cgroup
+#+end_example
+
+was intentionally NOT enabled.
+
+Reason:
+
+Strict cgroup enforcement can introduce runtime instability,
+especially on:
+
+- Rocky Linux 9
+- cgroup v2 systems
+- educational clusters
+
+Instead, the cluster first focused on:
+
+- stable scheduling
+- resource accounting
+- affinity scheduling
+- scheduler-aware resource tracking
+
+before moving toward strict kernel-level enforcement.
+
+** Resource-Aware Scheduling
+
+Goal:
+
+Teach Slurm to understand:
+
+- CPU resources
+- memory resources
+- consumable resources
+- schedulable resources
+
+without enabling strict runtime enforcement.
+
+This creates a much safer and more stable intermediate scheduler state.
+
+** Understanding Current Cluster Resource State
+
+Initial scheduler behavior:
+
+- node-aware scheduling
+- CPU-aware scheduling
+
+BUT:
+
+Slurm did NOT properly understand actual node memory capacity.
+
+This can be verified using:
+
+#+begin_src bash
+scontrol show node compute01
+#+end_src
+
+Without:
+
+#+begin_example
+RealMemory
+#+end_example
+
+configured, Slurm cannot properly perform memory-aware scheduling.
+
+** Understanding Actual Node Memory
+
+Actual node memory was checked using:
+
+#+begin_src bash
+ssh compute01 free -m
+ssh compute02 free -m
+ssh compute03 free -m
+#+end_src
+
+Observed memory:
+
+#+begin_example
+~1700 MB
+#+end_example
+
+IMPORTANT:
+
+Production HPC clusters NEVER allocate 100% physical memory to jobs.
+
+Reason:
+
+The operating system itself requires memory for:
+
+- kernel
+- SSH sessions
+- Slurm daemons
+- filesystem cache
+- system services
+- background tasks
+
+A portion of memory must always remain reserved for stable node
+operation.
+
+** Configuring RealMemory
+
+Node configuration was updated inside:
+
+#+begin_src bash
+sudo vim /etc/slurm/slurm.conf
+#+end_src
+
+Original configuration:
+
+#+begin_src ini
+NodeName=compute01 CPUs=2 State=UNKNOWN
+NodeName=compute02 CPUs=2 State=UNKNOWN
+NodeName=compute03 CPUs=2 State=UNKNOWN
+#+end_src
+
+Updated configuration:
+
+#+begin_src ini
+NodeName=compute01 CPUs=2 RealMemory=1200 State=UNKNOWN
+NodeName=compute02 CPUs=2 RealMemory=1200 State=UNKNOWN
+NodeName=compute03 CPUs=2 RealMemory=1200 State=UNKNOWN
+#+end_src
+
+** RealMemory Concept
+
+#+begin_src ini
+RealMemory=1200
+#+end_src
+
+does NOT represent total physical memory.
+
+Instead, it defines:
+
+#+begin_example
+schedulable memory available to jobs
+#+end_example
+
+Example:
+
+| Actual Physical Memory | Configured Schedulable Memory |
+|------------------------+-------------------------------|
+| ~1700 MB | 1200 MB |
+
+This reserved memory helps maintain:
+
+- system stability
+- scheduler reliability
+- daemon responsiveness
+- SSH availability
+
+during heavy workloads.
+
+** Resource-Aware Scheduling Concept
+
+After configuring:
+
+#+begin_example
+RealMemory
+#+end_example
+
+Slurm now understands:
+
+- CPU resources
+- schedulable memory
+- consumable resources
+
+instead of only allocating entire nodes.
+
+This is a major scheduler upgrade.
+
+The scheduler transitioned from:
+
+#+begin_example
+simple node allocation
+#+end_example
+
+to:
+
+#+begin_example
+resource-aware scheduling
+#+end_example
+
+** Scheduler Configuration Enhancements
+
+The following important scheduler options were enabled:
+
+#+begin_src ini
+SchedulerType=sched/backfill
+
+SelectType=select/cons_tres
+SelectTypeParameters=CR_Core
+
+TaskPlugin=task/affinity
+#+end_src
+
+** Configuration Explanation
+
+*** SchedulerType=sched/backfill
+
+Enables Slurm backfill scheduler.
+
+Purpose:
+
+Allows smaller jobs to execute while larger jobs wait for resources.
+
+Benefits:
+
+- improves cluster utilization
+- reduces idle resources
+- increases scheduling efficiency
+
+This is commonly used in production HPC systems.
+
+*** SelectType=select/cons_tres
+
+Enables:
+
+#+begin_example
+consumable resource scheduling
+#+end_example
+
+This allows Slurm to track:
+
+- CPUs
+- memory
+- schedulable resources
+
+instead of only allocating complete nodes.
+
+*** SelectTypeParameters=CR_Core
+
+Enables:
+
+#+begin_example
+core-aware scheduling
+#+end_example
+
+Resources are now allocated at CPU-core granularity.
+
+This is extremely important for:
+
+- MPI workloads
+- OpenMP workloads
+- hybrid parallel applications
+
+*** TaskPlugin=task/affinity
+
+Enables CPU affinity support.
+
+Purpose:
+
+Allows Slurm to:
+
+- pin tasks to CPUs
+- improve cache locality
+- optimize task placement
+- stabilize parallel performance
+
+This is one of the most important performance-related scheduler
+features in HPC environments.
+
+** Distributing Updated Slurm Configuration
+
+Updated configuration was distributed cluster-wide.
+
+Copy configuration:
+
+#+begin_src bash
+scp /etc/slurm/slurm.conf login:/tmp/
+scp /etc/slurm/slurm.conf compute01:/tmp/
+scp /etc/slurm/slurm.conf compute02:/tmp/
+scp /etc/slurm/slurm.conf compute03:/tmp/
+#+end_src
+
+Move configuration into place:
+
+#+begin_src bash
+sudo mv /tmp/slurm.conf /etc/slurm/
+#+end_src
+
+Compute nodes:
+
+#+begin_src bash
+ssh compute01 sudo -S mv /tmp/slurm.conf /etc/slurm/
+ssh compute02 sudo -S mv /tmp/slurm.conf /etc/slurm/
+ssh compute03 sudo -S mv /tmp/slurm.conf /etc/slurm/
+#+end_src
+
+** Restarting Slurm Services
+
+Restart controller on master node:
+
+#+begin_src bash
+sudo systemctl restart slurmctld
+#+end_src
+
+Restart compute daemons:
+
+#+begin_src bash
+ssh compute01 sudo -S systemctl restart slurmd
+ssh compute02 sudo -S systemctl restart slurmd
+ssh compute03 sudo -S systemctl restart slurmd
+#+end_src
+
+Purpose:
+
+Reload updated scheduler configuration across all nodes.
+
+** Verifying Cluster Health
+
+Verify node state:
+
+#+begin_src bash
+sinfo
+#+end_src
+
+Expected:
+
+#+begin_example
+compute[01-03] idle
+#+end_example
+
+Verify scheduler memory recognition:
+
+#+begin_src bash
+scontrol show node compute01
+#+end_src
+
+Expected:
+
+#+begin_example
+RealMemory=1200
+#+end_example
+
+This validates:
+
+- scheduler configuration loaded correctly
+- memory-aware scheduling active
+- stable cluster operation
+
+** Difference Between Scheduling and Enforcement
+
+At this stage:
+
+#+begin_example
+memory-aware scheduling
+#+end_example
+
+was enabled.
+
+BUT:
+
+#+begin_example
+strict kernel-level memory enforcement
+#+end_example
+
+was NOT enabled.
+
+This distinction is extremely important.
+
+Current behavior:
+
+#+begin_src bash
+#SBATCH --mem=500M
+#+end_src
+
+does:
+
+- reserve memory in scheduler accounting
+- affect scheduling decisions
+- prevent scheduler over-allocation
+
+BUT does NOT:
+
+- hard-limit memory usage
+- kill memory-overusing jobs
+- enforce kernel-level restrictions
+
+because:
+
+#+begin_example
+TaskPlugin=task/cgroup
+#+end_example
+
+was intentionally NOT enabled.
+
+** Why task/cgroup Was Postponed
+
+Earlier experiments with:
+
+#+begin_src ini
+TaskPlugin=task/cgroup
+#+end_src
+
+introduced runtime instability.
+
+Observed issues included:
+
+- batch runtime failures
+- node drain states
+- unstable job execution
+- scheduler inconsistencies
+
+Reason:
+
+Modern Rocky Linux 9 systems use:
+
+#+begin_example
+cgroup v2
+#+end_example
+
+which often requires significantly more careful Slurm configuration and
+kernel-level tuning.
+
+Instead of introducing unstable runtime enforcement early, the cluster
+was intentionally kept in a stable intermediate state using:
+
+#+begin_src ini
+TaskPlugin=task/affinity
+#+end_src
+
+This approach provides:
+
+- stable runtime execution
+- CPU affinity support
+- resource-aware scheduling
+- simplified administration
+
+without destabilizing scheduler behavior.
+
+** Process Tracking Note
+
+The cluster still uses:
+
+#+begin_src ini
+ProctrackType=proctrack/cgroup
+#+end_src
+
+This is generally safe because:
+
+- lightweight process tracking only
+- no strict runtime enforcement
+- no aggressive kernel-level isolation
+
+This differs significantly from:
+
+#+begin_src ini
+TaskPlugin=task/cgroup
+#+end_src
+
+which performs actual resource enforcement and isolation.
+
+Keeping:
+
+#+begin_example
+proctrack/cgroup
+#+end_example
+
+while avoiding:
+
+#+begin_example
+task/cgroup
+#+end_example
+
+provides a much safer and more stable educational HPC environment.
+
+** Verifying Stable Job Execution
+
+After enabling resource-aware scheduling:
+
+- sbatch jobs remained stable
+- MPI jobs executed correctly
+- multinode execution continued working
+- no node drain issues occurred
+- no runtime instability observed
+
+This confirmed that the scheduler upgrade was successful.
+
+** Milestone Achieved
+
+The cluster successfully evolved from:
+
+#+begin_example
+basic educational scheduler
+#+end_example
+
+into:
+
+#+begin_example
+resource-aware production-like scheduler
+#+end_example
+
+while maintaining:
+
+- stable runtime execution
+- multinode MPI support
+- scheduler reliability
+- simplified administration
+
+This forms the foundation required for future advanced features such as:
+
+- CPU affinity and task binding
+- QoS
+- fairshare
+- accounting
+- scheduling policies
+- advanced resource management
+  
+* Advanced Slurm Configuration
+
+This section extends the Slurm setup from a basic scheduler into a more
+resource-aware and production-like HPC workload manager.
+
+At this stage, the cluster already had:
+
+- working Slurm scheduler
+- multinode job execution
+- MPI runtime support
+- centralized LDAP authentication
+- shared filesystem
+- shared Spack software stack
+
+The goal of this phase was to gradually introduce advanced scheduler
+features without destabilizing the cluster runtime environment.
+
+The approach followed:
+
+- incremental configuration
+- verification after every change
+- understanding scheduler behavior
+- avoiding unsafe configurations initially
+
+** IMPORTANT APPROACH
+
+Advanced Slurm administration should always be performed incrementally.
+
+Instead of enabling multiple advanced features simultaneously, only one
+feature was introduced and tested at a time.
+
+This helps isolate issues and understand scheduler behavior properly.
+
+** Current Cluster State Before Advanced Configuration
+
+Cluster components already working:
+
+| Component            | Status  |
+|----------------------+---------|
+| Slurm scheduler      | Working |
+| sbatch               | Working |
+| MPI jobs             | Working |
+| Multinode jobs       | Working |
+| LDAP users           | Working |
+| Shared filesystem    | Working |
+| Spack software stack | Working |
+
+This provided a stable foundation before introducing advanced scheduler
+features.
+
+** Resource-Aware Scheduling
+
+Goal:
+
+Enable Slurm to understand and schedule cluster resources more accurately.
+
+This phase introduced:
+
+- memory-aware scheduling
+- consumable resource scheduling
+- core-aware scheduling
+- scheduler backfill support
+
+without enabling strict kernel-level resource enforcement.
+
+*** IMPORTANT CONCEPT
+
+At this stage:
+
+#+begin_example
+memory-aware scheduling
+#+end_example
+
+was enabled.
+
+NOT:
+
+#+begin_example
+strict memory enforcement
+#+end_example
+
+This distinction is extremely important.
+
+The scheduler now understands memory resources and schedules jobs
+accordingly, but Linux is still responsible for actual memory allocation.
+
+No cgroup-based hard memory limits were enabled yet.
+
+*** Existing Stable Slurm Configuration
+
+Current working configuration:
+
+#+begin_src ini
+ClusterName=hpccluster
+SlurmctldHost=master
+
+MpiDefault=none
+ProctrackType=proctrack/cgroup
+ReturnToService=2
+
+SlurmctldPidFile=/run/slurmctld.pid
+SlurmdPidFile=/run/slurmd.pid
+
+SlurmdSpoolDir=/var/spool/slurmd
+StateSaveLocation=/var/spool/slurmctld
+
+SlurmUser=slurm
+
+SwitchType=switch/none
+TaskPlugin=task/affinity
+
+SchedulerType=sched/backfill
+
+SelectType=select/cons_tres
+SelectTypeParameters=CR_Core
+
+AuthType=auth/munge
+
+NodeName=compute01 CPUs=2 RealMemory=1200 State=UNKNOWN
+NodeName=compute02 CPUs=2 RealMemory=1200 State=UNKNOWN
+NodeName=compute03 CPUs=2 RealMemory=1200 State=UNKNOWN
+
+PartitionName=debug Nodes=ALL Default=YES MaxTime=INFINITE State=UP
+#+end_src
+
+*** Explanation of Important Parameters
+
+**** SchedulerType=sched/backfill
+
+Enables Slurm backfill scheduler.
+
+Purpose:
+
+Allows smaller jobs to run while larger jobs wait for resources.
+
+Benefits:
+
+- improves cluster utilization
+- reduces idle time
+- increases scheduling efficiency
+
+Production HPC systems commonly use backfill scheduling.
+
+**** SelectType=select/cons_tres
+
+Enables:
+
+#+begin_example
+consumable resource scheduling
+#+end_example
+
+This changes Slurm from:
+
+#+begin_example
+simple node allocation
+#+end_example
+
+to:
+
+#+begin_example
+resource-aware allocation
+#+end_example
+
+Slurm now tracks:
+
+- CPUs
+- memory
+- consumable resources
+
+instead of only allocating entire nodes.
+
+**** SelectTypeParameters=CR_Core
+
+Enables:
+
+#+begin_example
+core-aware scheduling
+#+end_example
+
+Resources are now scheduled at CPU core granularity.
+
+This is extremely important for:
+
+- MPI workloads
+- OpenMP workloads
+- hybrid parallel jobs
+
+**** TaskPlugin=task/affinity
+
+Enables CPU affinity support.
+
+Purpose:
+
+Allows Slurm to:
+
+- pin tasks to CPUs
+- control process placement
+- improve cache locality
+- optimize parallel performance
+
+This is one of the most important performance-related scheduler features.
+
+**** RealMemory=1200
+
+Defines schedulable memory for each node.
+
+Important:
+
+This value should NOT equal total physical memory.
+
+Example:
+
+Node actual memory:
+
+#+begin_example
+1700 MB
+#+end_example
+
+Configured schedulable memory:
+
+#+begin_example
+1200 MB
+#+end_example
+
+Reason:
+
+The operating system itself requires memory for:
+
+- kernel
+- filesystem cache
+- SSH sessions
+- Slurm daemons
+- background services
+
+Production clusters always reserve memory for system operation.
+
+*** IMPORTANT MEMORY SCHEDULING CONCEPT
+
+At this stage:
+
+#+begin_src bash
+#SBATCH --mem=500M
+#+end_src
+
+does:
+
+- reserve memory in scheduler accounting
+- affect scheduling decisions
+- prevent scheduler over-allocation
+
+BUT does NOT:
+
+- hard-limit memory usage
+- kill memory-overusing jobs
+- enforce kernel-level restrictions
+
+because:
+
+#+begin_example
+TaskPlugin=task/cgroup
+#+end_example
+
+was intentionally NOT enabled yet.
+
+This avoids runtime instability while still enabling resource-aware
+scheduling.
+
+** CPU Affinity and Task Binding
+
+Goal:
+
+Understand and validate:
+
+- CPU affinity
+- process placement
+- task binding
+- scheduler-controlled CPU allocation
+
+This phase connects directly with:
+
+- parallel performance
+- cache locality
+- MPI optimization
+- OpenMP optimization
+
+*** IMPORTANT CONCEPT
+
+Without CPU affinity:
+
+- processes may migrate between CPUs
+- cache locality decreases
+- performance becomes inconsistent
+
+With affinity:
+
+- processes stay pinned to CPUs
+- cache locality improves
+- scheduler behavior becomes deterministic
+
+This is extremely important in production HPC systems.
+
+** Understanding CPU Topology
+
+CPU topology information was inspected using:
+
+#+begin_src bash
+ssh compute01 lscpu
+#+end_src
+
+Important fields:
+
+| Field | Meaning |
+|--------+---------|
+| CPU(s) | total logical CPUs |
+| Core(s) per socket | physical cores |
+| Socket(s) | CPU packages |
+| Thread(s) per core | SMT/Hyperthreading |
+| NUMA node(s) | memory locality domains |
+
+This information becomes important for:
+
+- task placement
+- thread pinning
+- NUMA optimization
+- cache locality
+
+** CPU Affinity Validation Program
+
+Program used to validate CPU placement:
+
+#+begin_src C :tangle affinity.c
+#define _GNU_SOURCE
+
+#include <stdio.h>
+#include <sched.h>
+#include <unistd.h>
+
+int main() {
+
+    int cpu = sched_getcpu();
+
+    printf("Process running on CPU: %d\n", cpu);
+
+    sleep(20);
+
+    return 0;
+}
+#+end_src
+
+Compile:
+
+#+begin_src bash
+gcc affinity.c -o affinity
+#+end_src
+
+Purpose:
+
+The program asks Linux:
+
+#+begin_example
+Which CPU core am I running on?
+#+end_example
+
+This helps visualize scheduler-controlled CPU placement.
+
+** Distributed CPU Placement Test
+
+Slurm batch script:
+
+#+begin_src bash
+#!/bin/bash
+#SBATCH -N 2
+#SBATCH --ntasks-per-node=1
+#SBATCH --job-name=affinity
+#SBATCH --output=%j.out
+#SBATCH --error=%j.err
+#SBATCH --time=00:01:00
+
+srun ./affinity
+#+end_src
+
+Submit:
+
+#+begin_src bash
+sbatch affinity.sh
+#+end_src
+
+Observed behavior:
+
+#+begin_example
+Process running on CPU: 0
+Process running on CPU: 0
+#+end_example
+
+IMPORTANT:
+
+CPU numbering is local to each node.
+
+Meaning:
+
+- compute01 has CPU0
+- compute02 also has CPU0
+
+Each node maintains independent CPU numbering.
+
+This is an important distributed-system concept.
+
+** Multiple Task Placement Test
+
+Modified batch script:
+
+#+begin_src bash
+#!/bin/bash
+#SBATCH -N 2
+#SBATCH --ntasks-per-node=2
+#SBATCH --job-name=affinity
+#SBATCH --output=%j.out
+#SBATCH --error=%j.err
+#SBATCH --time=00:01:00
+
+srun ./affinity
+#+end_src
+
+Observed behavior:
+
+#+begin_example
+Process running on CPU: 0
+Process running on CPU: 1
+Process running on CPU: 1
+Process running on CPU: 0
+#+end_example
+
+This validates:
+
+- task distribution across cores
+- scheduler-controlled placement
+- multi-core resource allocation
+
+Each node distributed tasks across available CPUs.
+
+** Explicit CPU Binding
+
+Explicit CPU binding script:
+
+#+begin_src bash
+#!/bin/bash
+#SBATCH -N 1
+#SBATCH --ntasks=2
+#SBATCH --cpus-per-task=1
+#SBATCH --job-name=bindtest
+#SBATCH --output=%j.out
+#SBATCH --error=%j.err
+#SBATCH --time=00:01:00
+
+srun --cpu-bind=cores ./affinity
+#+end_src
+
+Submit:
+
+#+begin_src bash
+sbatch bind.sh
+#+end_src
+
+Observed behavior:
+
+#+begin_example
+Process running on CPU: 0
+Process running on CPU: 1
+#+end_example
+
+This validates:
+
+- explicit CPU pinning
+- deterministic CPU placement
+- Slurm affinity control
+- Linux scheduler cooperation
+
+*** IMPORTANT CONCEPT
+
+Without:
+
+#+begin_src bash
+--cpu-bind=cores
+#+end_src
+
+Linux may migrate processes between CPUs.
+
+With explicit binding:
+
+- processes stay pinned
+- cache locality improves
+- performance stabilizes
+
+This becomes extremely important for:
+
+- MPI scaling
+- OpenMP scaling
+- hybrid MPI/OpenMP execution
+- NUMA systems
+
+** Slurm Accounting Database Setup
+
+Goal:
+
+Transform Slurm from:
+
+#+begin_example
+basic scheduler
+#+end_example
+
+into:
+
+#+begin_example
+persistent accounting-aware scheduler
+#+end_example
+
+This phase introduced:
+
+- MariaDB backend
+- Slurm accounting daemon
+- persistent job history
+- resource usage tracking
+- scheduler accounting infrastructure
+
+** Install MariaDB
+
+Performed ONLY on master node.
+
+Install packages:
+
+#+begin_src bash
+sudo dnf install -y mariadb-server mariadb
+#+end_src
+
+Enable and start service:
+
+#+begin_src bash
+sudo systemctl enable --now mariadb
+#+end_src
+
+Verify:
+
+#+begin_src bash
+sudo systemctl status mariadb
+#+end_src
+
+Expected:
+
+#+begin_example
+active (running)
+#+end_example
+
+** Secure MariaDB
+
+Run:
+
+#+begin_src bash
+sudo mysql_secure_installation
+#+end_src
+
+Recommended configuration:
+
+| Question                             | Recommended Answer |
+|--------------------------------------+--------------------|
+| Switch to unix_socket authentication | no                 |
+| Change root password                 | optional           |
+| Remove anonymous users               | yes                |
+| Disallow remote root login           | yes                |
+| Remove test database                 | yes                |
+| Reload privileges                    | yes                |
+
+** Create Slurm Accounting Database
+
+Enter MariaDB:
+
+#+begin_src bash
+sudo mysql -u root -p
+#+end_src
+
+Create database:
+
+#+begin_src sql
+CREATE DATABASE slurm_acct_db;
+#+end_src
+
+Create Slurm database user:
+
+#+begin_src sql
+CREATE USER 'slurm'@'localhost' IDENTIFIED BY 'slurmdbpass';
+#+end_src
+
+Grant permissions:
+
+#+begin_src sql
+GRANT ALL PRIVILEGES ON slurm_acct_db.* TO 'slurm'@'localhost';
+#+end_src
+
+Apply changes:
+
+#+begin_src sql
+FLUSH PRIVILEGES;
+#+end_src
+
+Exit:
+
+#+begin_src sql
+EXIT;
+#+end_src
+
+** Install Slurm Accounting Daemon
+
+Install:
+
+#+begin_src bash
+sudo dnf install -y slurm-slurmdbd
+#+end_src
+
+Purpose:
+
+Installs:
+
+#+begin_example
+slurmdbd
+#+end_example
+
+which connects:
+
+- Slurm scheduler
+- accounting database
+- resource tracking infrastructure
+
+** Configure slurmdbd
+
+Create configuration:
+
+#+begin_src bash
+sudo vim /etc/slurm/slurmdbd.conf
+#+end_src
+
+Configuration:
+
+#+begin_src ini
+AuthType=auth/munge
+
+DbdHost=master
+DbdPort=6819
+
+SlurmUser=slurm
+
+DebugLevel=info
+LogFile=/var/log/slurmdbd.log
+PidFile=/run/slurmdbd.pid
+
+StorageType=accounting_storage/mysql
+StorageHost=localhost
+StoragePort=3306
+StorageUser=slurm
+StoragePass=slurmdbpass
+StorageLoc=slurm_acct_db
+#+end_src
+
+*** IMPORTANT SECURITY STEP
+
+Protect configuration file:
+
+#+begin_src bash
+sudo chown slurm:slurm /etc/slurm/slurmdbd.conf
+sudo chmod 600 /etc/slurm/slurmdbd.conf
+#+end_src
+
+Reason:
+
+Database credentials are stored inside the file.
+
+Production systems always restrict access to this configuration.
+
+** Connect Slurm With Accounting System
+
+Modify:
+
+#+begin_src bash
+sudo vim /etc/slurm/slurm.conf
+#+end_src
+
+Add:
+
+#+begin_src ini
+AccountingStorageType=accounting_storage/slurmdbd
+AccountingStorageHost=master
+AccountingStoragePort=6819
+JobAcctGatherType=jobacct_gather/linux
+#+end_src
+
+Purpose:
+
+Enable:
+
+- persistent job accounting
+- resource tracking
+- historical scheduler data
+
+** Restart Slurm Services
+
+Restart accounting daemon on master:
+
+#+begin_src bash
+sudo systemctl enable --now slurmdbd
+#+end_src
+
+Verify:
+
+#+begin_src bash
+sudo systemctl status slurmdbd
+#+end_src
+
+Expected:
+
+#+begin_example
+active (running)
+#+end_example
+
+Restart Slurm controller:
+
+#+begin_src bash
+sudo systemctl restart slurmctld
+#+end_src
+
+Restart compute daemons:
+
+#+begin_src bash
+ssh compute01 sudo -S systemctl restart slurmd
+ssh compute02 sudo -S systemctl restart slurmd
+ssh compute03 sudo -S systemctl restart slurmd
+#+end_src
+
+** Verify Accounting Infrastructure
+
+Check cluster:
+
+#+begin_src bash
+sinfo
+#+end_src
+
+Expected:
+
+#+begin_example
+compute[01-03] idle
+#+end_example
+
+Check accounting cluster registration:
+
+#+begin_src bash
+sacctmgr list cluster
+#+end_src
+
+Expected:
+
+#+begin_example
+hpccluster
+#+end_example
+
+** Verify Persistent Job Accounting
+
+Submit MPI job:
+
+#+begin_src bash
+sbatch submit.sh a.out
+#+end_src
+
+Check scheduler queue:
+
+#+begin_src bash
+squeue --me
+#+end_src
+
+Check accounting history:
+
+#+begin_src bash
+sacct
+#+end_src
+
+Observed output:
+
+#+begin_example
+JobID           JobName  Partition    AllocCPUS      State
+22                 test      debug             4  COMPLETED
+22.batch          batch                       2  COMPLETED
+22.0              prted                       2  COMPLETED
+#+end_example
+
+This validates:
+
+- persistent accounting
+- resource tracking
+- MPI runtime tracking
+- scheduler database integration
+
+** IMPORTANT MPI Accounting Observation
+
+Accounting now tracks internal execution hierarchy:
+
+|    Entry | Meaning              |
+|----------+----------------------|
+|       22 | main job             |
+| 22.batch | batch execution step |
+|     22.0 | MPI runtime launcher |
+
+This provides deeper visibility into scheduler behavior and runtime
+execution structure.
+
+** Current Cluster Capability
+
+The cluster now supports:
+
+| Feature                   | Status  |
+|---------------------------+---------|
+| Multinode scheduling      | Working |
+| MPI execution             | Working |
+| LDAP authentication       | Working |
+| Shared filesystem         | Working |
+| Spack software stack      | Working |
+| Resource-aware scheduling | Working |
+| Memory-aware scheduling   | Working |
+| CPU affinity              | Working |
+| Explicit CPU binding      | Working |
+| Slurm accounting database | Working |
+| Persistent job history    | Working |
+| Resource tracking         | Working |
+
+The cluster has now evolved from a basic educational setup into a much
+more realistic HPC infrastructure environment.
