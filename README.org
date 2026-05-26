@@ -7641,3 +7641,1382 @@ The cluster now supports:
 
 The cluster has now evolved from a basic educational setup into a much
 more realistic HPC infrastructure environment.
+* QoS + User Limits + Scheduling Policies
+
+This phase extends the Slurm scheduler from:
+
+#+begin_example
+resource-aware scheduling
+#+end_example
+
+into:
+
+#+begin_example
+policy-aware scheduling
+#+end_example
+
+At this stage, the cluster already supported:
+
+- multinode scheduling
+- MPI execution
+- LDAP authentication
+- shared filesystem
+- shared Spack software stack
+- resource-aware scheduling
+- CPU affinity
+- persistent Slurm accounting
+
+The goal of this phase was to introduce:
+
+- user policies
+- scheduler limits
+- QoS enforcement
+- runtime restrictions
+- fair resource sharing
+
+without introducing kernel-level runtime instability.
+
+** IMPORTANT CONCEPT
+
+Before this phase:
+
+Slurm could:
+
+- schedule resources
+- track jobs
+- track users
+- record accounting information
+
+BUT it could NOT yet:
+
+- enforce user policies
+- restrict CPU usage
+- limit runtime
+- prevent resource abuse
+
+This phase enables:
+
+#+begin_example
+policy-aware scheduling
+#+end_example
+
+similar to real production HPC systems.
+
+** IMPORTANT Slurm Scheduling Hierarchy
+
+Slurm scheduling hierarchy:
+
+#+begin_example
+Cluster
+ └── Account
+      └── User
+           └── QoS
+#+end_example
+
+Production HPC systems commonly organize users using:
+
+- projects
+- research groups
+- departments
+- labs
+
+called:
+
+#+begin_example
+Accounts
+#+end_example
+
+Users are then associated with:
+
+- accounts
+- QoS policies
+- scheduler limits
+
+** Existing Stable Accounting Infrastructure
+
+Before enabling QoS enforcement, the following components were already
+working:
+
+| Component            | Status  |
+|----------------------+---------|
+| MariaDB              | Working |
+| slurmdbd             | Working |
+| sacct                | Working |
+| Persistent accounting| Working |
+| Job history tracking | Working |
+| Resource tracking    | Working |
+
+This provided the required foundation for policy enforcement.
+
+** Understanding QoS
+
+QoS stands for:
+
+#+begin_example
+Quality of Service
+#+end_example
+
+QoS controls:
+
+- maximum CPUs
+- maximum jobs
+- walltime limits
+- scheduler priorities
+- resource restrictions
+- policy enforcement
+
+Production HPC clusters heavily rely on QoS to maintain fairness and
+prevent abuse.
+
+** IMPORTANT QoS Concept
+
+QoS does NOT directly enforce kernel-level runtime isolation.
+
+Instead, it performs:
+
+#+begin_example
+scheduler-side policy enforcement
+#+end_example
+
+Meaning:
+
+Slurm scheduler decides:
+
+- whether jobs may start
+- whether jobs remain pending
+- whether limits are exceeded
+
+WITHOUT requiring:
+
+#+begin_example
+task/cgroup
+#+end_example
+
+or strict kernel enforcement.
+
+This keeps the cluster significantly more stable while still enabling
+realistic scheduler policies.
+
+** Verify Cluster Registration
+
+Before creating accounts and policies, verify cluster registration.
+
+Run on:
+
+- login node
+- or master node
+
+#+begin_src bash
+sacctmgr list cluster
+#+end_src
+
+Expected:
+
+#+begin_example
+hpccluster
+#+end_example
+
+Purpose:
+
+Verifies:
+
+- accounting database connectivity
+- slurmdbd functionality
+- cluster accounting registration
+
+** Create Slurm Account
+
+Accounts represent:
+
+- research groups
+- projects
+- departments
+- user groups
+
+Create a general account.
+
+Run on master node:
+
+#+begin_src bash
+sudo sacctmgr add account general
+#+end_src
+
+Verify:
+
+#+begin_src bash
+sacctmgr list account
+#+end_src
+
+Expected:
+
+#+begin_example
+general
+#+end_example
+
+** IMPORTANT Account Concept
+
+Linux users and Slurm accounts are NOT the same thing.
+
+Linux users provide:
+
+#+begin_example
+authentication identity
+#+end_example
+
+Slurm accounts provide:
+
+#+begin_example
+scheduler policy grouping
+#+end_example
+
+This distinction is extremely important in production HPC systems.
+
+** Add Users to Slurm Accounting
+
+LDAP users already existed in Linux.
+
+However, Slurm accounting ALSO requires user associations.
+
+Example user:
+
+#+begin_example
+rishi
+#+end_example
+
+Run on master node:
+
+#+begin_src bash
+sudo sacctmgr add user rishi account=general
+#+end_src
+
+Add additional users if needed:
+
+#+begin_src bash
+sudo sacctmgr add user hpcadmin account=general
+#+end_src
+
+Verify associations:
+
+#+begin_src bash
+sacctmgr list user
+#+end_src
+
+Expected:
+
+Users associated with:
+
+#+begin_example
+general
+#+end_example
+
+** Create QoS Policy
+
+Create QoS policy named:
+
+#+begin_example
+normal
+#+end_example
+
+Run on master node:
+
+#+begin_src bash
+sudo sacctmgr add qos normal
+#+end_src
+
+Verify:
+
+#+begin_src bash
+sacctmgr list qos
+#+end_src
+
+Expected:
+
+#+begin_example
+normal
+#+end_example
+
+** Configure QoS Limits
+
+The following limits were configured.
+
+*** Maximum Concurrent CPUs
+
+Run:
+
+#+begin_src bash
+sudo sacctmgr modify qos normal set MaxTRESPerUser=cpu=4
+#+end_src
+
+Purpose:
+
+Limit each user to:
+
+#+begin_example
+maximum 4 CPUs simultaneously
+#+end_example
+
+IMPORTANT:
+
+This controls:
+
+#+begin_example
+active running resource usage
+#+end_example
+
+NOT:
+
+- total submissions
+- queued jobs
+- single-job submission ability
+
+*** Maximum Concurrent Running Jobs
+
+Run:
+
+#+begin_src bash
+sudo sacctmgr modify qos normal set MaxJobsPerUser=2
+#+end_src
+
+Purpose:
+
+Limit users to:
+
+#+begin_example
+maximum 2 running jobs
+#+end_example
+
+Additional jobs remain pending.
+
+*** Maximum Walltime
+
+Run:
+
+#+begin_src bash
+sudo sacctmgr modify qos normal set MaxWall=01:00:00
+#+end_src
+
+Purpose:
+
+Restrict maximum job runtime to:
+
+#+begin_example
+1 hour
+#+end_example
+
+Jobs requesting larger runtime remain pending.
+
+** Attach QoS to Account
+
+Connect QoS policy to account.
+
+Run:
+
+#+begin_src bash
+sudo sacctmgr modify account general set qos=normal
+#+end_src
+
+Purpose:
+
+Users associated with:
+
+#+begin_example
+general
+#+end_example
+
+now inherit:
+
+#+begin_example
+normal
+#+end_example
+
+QoS policies.
+
+** Verify Associations
+
+Verify:
+
+- user associations
+- account associations
+- QoS assignments
+
+Run:
+
+#+begin_src bash
+sacctmgr show assoc
+#+end_src
+
+Purpose:
+
+Displays:
+
+- users
+- accounts
+- partitions
+- qos assignments
+
+** IMPORTANT ISSUE FACED
+
+Initially, QoS appeared to exist correctly:
+
+- QoS visible
+- associations visible
+- accounting working
+- job tracking working
+
+BUT:
+
+#+begin_example
+policy enforcement was NOT working
+#+end_example
+
+Jobs exceeding configured CPU limits still executed successfully.
+
+Example:
+
+#+begin_example
+MaxTRESPerUser=cpu=4
+#+end_example
+
+BUT:
+
+#+begin_example
+6 CPU jobs still executed
+#+end_example
+
+This revealed an extremely important missing scheduler configuration.
+
+** Root Cause of QoS Enforcement Failure
+
+The following line was missing from:
+
+#+begin_example
+/etc/slurm/slurm.conf
+#+end_example
+
+Missing configuration:
+
+#+begin_src ini
+AccountingStorageEnforce=limits,qos
+#+end_src
+
+Without this line:
+
+- accounting works
+- sacct works
+- qos appears correctly
+- associations appear correctly
+
+BUT:
+
+#+begin_example
+scheduler policies are NOT enforced
+#+end_example
+
+This is one of the most common beginner Slurm configuration mistakes.
+
+** Enable QoS Enforcement
+
+Edit configuration on master node:
+
+#+begin_src bash
+sudo vim /etc/slurm/slurm.conf
+#+end_src
+
+Add:
+
+#+begin_src ini
+AccountingStorageEnforce=limits,qos
+#+end_src
+
+Recommended placement:
+
+Near existing accounting configuration:
+
+#+begin_src ini
+AccountingStorageType=accounting_storage/slurmdbd
+AccountingStorageHost=master
+AccountingStoragePort=6819
+JobAcctGatherType=jobacct_gather/linux
+#+end_src
+
+** IMPORTANT Enforcement Concept
+
+This line enables actual scheduler-side enforcement for:
+
+- qos limits
+- account limits
+- user policies
+- scheduler restrictions
+
+Without:
+
+#+begin_example
+AccountingStorageEnforce
+#+end_example
+
+QoS becomes informational only.
+
+** Distribute Updated Configuration
+
+Copy updated configuration from master node:
+
+#+begin_src bash
+scp /etc/slurm/slurm.conf login:/tmp/
+scp /etc/slurm/slurm.conf compute01:/tmp/
+scp /etc/slurm/slurm.conf compute02:/tmp/
+scp /etc/slurm/slurm.conf compute03:/tmp/
+#+end_src
+
+Move configuration into place on login node:
+
+#+begin_src bash
+sudo mv /tmp/slurm.conf /etc/slurm/
+#+end_src
+
+Move configuration into place on compute nodes:
+
+#+begin_src bash
+ssh compute01 sudo -S mv /tmp/slurm.conf /etc/slurm/
+ssh compute02 sudo -S mv /tmp/slurm.conf /etc/slurm/
+ssh compute03 sudo -S mv /tmp/slurm.conf /etc/slurm/
+#+end_src
+
+** Restart Slurm Services
+
+Restart controller on master node:
+
+#+begin_src bash
+sudo systemctl restart slurmctld
+#+end_src
+
+Restart compute daemons:
+
+#+begin_src bash
+ssh compute01 sudo -S systemctl restart slurmd
+ssh compute02 sudo -S systemctl restart slurmd
+ssh compute03 sudo -S systemctl restart slurmd
+#+end_src
+
+Purpose:
+
+Reload updated scheduler policy configuration.
+
+** Verify Cluster Health
+
+Run:
+
+#+begin_src bash
+sinfo
+#+end_src
+
+Expected:
+
+#+begin_example
+compute[01-03] idle
+#+end_example
+
+This validates:
+
+- scheduler stability
+- successful configuration reload
+- healthy compute nodes
+
+** Verify QoS Enforcement
+
+*** CPU Limit Validation
+
+Job requesting:
+
+#+begin_example
+6 CPUs
+#+end_example
+
+using:
+
+#+begin_src bash
+#SBATCH -N 3
+#SBATCH --ntasks-per-node=2
+#SBATCH --ntasks=6
+#+end_src
+
+was submitted.
+
+Observed scheduler behavior:
+
+#+begin_example
+PENDING
+Reason=QOSMaxCpuPerUserLimit
+#+end_example
+
+This validates:
+
+- active QoS enforcement
+- CPU limit enforcement
+- scheduler-side policy restriction
+
+*** IMPORTANT CPU QoS Concept
+
+#+begin_src ini
+MaxTRESPerUser=cpu=4
+#+end_src
+
+means:
+
+#+begin_example
+maximum ACTIVE running CPUs simultaneously
+#+end_example
+
+NOT:
+
+- maximum job submissions
+- maximum queued jobs
+- maximum CPUs requested in scripts
+
+This distinction is extremely important.
+
+** Verify Valid CPU Allocation
+
+Job requesting:
+
+#+begin_example
+4 CPUs
+#+end_example
+
+using:
+
+#+begin_src bash
+#SBATCH -N 2
+#SBATCH --ntasks-per-node=2
+#+end_src
+
+executed successfully.
+
+Observed output:
+
+#+begin_example
+SLURM_NTASKS=4
+SLURM_JOB_NUM_NODES=2
+SLURM_CPUS_ON_NODE=2
+#+end_example
+
+This validates:
+
+- multinode allocation
+- scheduler variable propagation
+- QoS-aware MPI execution
+- proper CPU accounting
+
+** IMPORTANT MPI + QoS Integration
+
+MPI jobs remained fully functional while QoS policies were enforced.
+
+This validates successful integration between:
+
+- Slurm scheduler
+- QoS policies
+- multinode scheduling
+- MPI runtime
+- resource accounting
+
+** Verify Walltime Enforcement
+
+Job script modified:
+
+#+begin_src bash
+#SBATCH --time=02:00:00
+#+end_src
+
+Observed scheduler behavior:
+
+#+begin_example
+PENDING
+Reason=QOSMaxWallDurationPerJobLimit
+#+end_example
+
+This validates:
+
+- runtime limit enforcement
+- scheduler-side walltime policy control
+
+** IMPORTANT Pending Queue Concept
+
+QoS-restricted jobs are usually:
+
+#+begin_example
+queued and pending
+#+end_example
+
+NOT:
+
+#+begin_example
+immediately rejected
+#+end_example
+
+This is standard production HPC scheduler behavior.
+
+Scheduler explains pending reason using:
+
+#+begin_src bash
+squeue --me
+#+end_src
+
+or:
+
+#+begin_src bash
+scontrol show job <jobid>
+#+end_src
+
+This greatly improves scheduler transparency.
+
+** Inspect QoS Configuration
+
+View configured QoS settings:
+
+#+begin_src bash
+sacctmgr show qos normal
+#+end_src
+
+Observed configuration:
+
+#+begin_example
+MaxWall=01:00:00
+MaxTRESPU=cpu=4
+MaxJobsPU=2
+#+end_example
+
+This validates:
+
+- correct QoS policy configuration
+- scheduler policy persistence
+- accounting database integration
+
+** IMPORTANT Scheduler Layers
+
+The cluster now supports multiple scheduler layers simultaneously.
+
+| Layer               | Purpose                          |
+|---------------------+----------------------------------|
+| Resource scheduling | CPU and memory allocation        |
+| Affinity scheduling | CPU placement and pinning        |
+| Accounting          | Persistent job/resource tracking |
+| Policy enforcement  | User and QoS restrictions        |
+
+This architecture is significantly closer to real production HPC
+clusters.
+
+** Current Cluster Capability
+
+The cluster now supports:
+
+| Feature                        | Status  |
+|--------------------------------+---------|
+| Multinode scheduling           | Working |
+| MPI execution                  | Working |
+| LDAP authentication            | Working |
+| Shared filesystem              | Working |
+| Spack software stack           | Working |
+| Resource-aware scheduling      | Working |
+| CPU affinity                   | Working |
+| Persistent accounting          | Working |
+| QoS enforcement                | Working |
+| User limits                    | Working |
+| CPU policy enforcement         | Working |
+| Walltime policy enforcement    | Working |
+| Multi-user scheduling policies | Working |
+
+The cluster has now evolved into a significantly more realistic
+multi-user HPC scheduling environment.
+* Validation and Verification of Advanced Slurm Configuration and QoS
+
+This section validates all advanced Slurm scheduler features configured
+during the setup process.
+
+The purpose of validation is to ensure:
+
+- scheduler stability
+- correct resource tracking
+- proper QoS enforcement
+- multinode execution
+- MPI integration
+- accounting consistency
+- policy-aware scheduling behavior
+
+All validation steps were tested practically on the configured cluster.
+
+** Cluster Validation State
+
+At the time of validation, the cluster already supported:
+
+| Feature | Status |
+|----------+--------|
+| Slurm scheduler | Working |
+| Multinode scheduling | Working |
+| MPI execution | Working |
+| LDAP authentication | Working |
+| Shared filesystem | Working |
+| Spack software stack | Working |
+| Resource-aware scheduling | Working |
+| CPU affinity | Working |
+| Accounting database | Working |
+| QoS enforcement | Working |
+
+This validation phase ensures all components function together correctly.
+
+** Verify Cluster Health
+
+Run on login node:
+
+#+begin_src bash
+sinfo
+#+end_src
+
+Expected:
+
+#+begin_example
+PARTITION AVAIL  TIMELIMIT  NODES  STATE NODELIST
+debug*       up   infinite      3   idle compute[01-03]
+#+end_example
+
+Purpose:
+
+Verifies:
+
+- scheduler communication
+- node availability
+- slurmd daemon health
+- cluster operational state
+
+IMPORTANT:
+
+Nodes should NOT show:
+
+- drain
+- down
+- fail
+- unknown
+
+during normal operation.
+
+** Verify Node Resource Recognition
+
+Run:
+
+#+begin_src bash
+scontrol show node compute01
+#+end_src
+
+Important fields:
+
+#+begin_example
+CPUTot=2
+RealMemory=1200
+CfgTRES=cpu=2,mem=1200M
+#+end_example
+
+Purpose:
+
+Validates:
+
+- CPU detection
+- memory-aware scheduling
+- TRES resource tracking
+- scheduler resource recognition
+
+This confirms Slurm now understands:
+
+- schedulable CPUs
+- schedulable memory
+- consumable resources
+
+instead of only node allocation.
+
+** Verify Accounting Infrastructure
+
+Run:
+
+#+begin_src bash
+sudo systemctl status mariadb
+#+end_src
+
+Expected:
+
+#+begin_example
+active (running)
+#+end_example
+
+Purpose:
+
+Validates accounting database backend.
+
+Verify accounting daemon:
+
+#+begin_src bash
+sudo systemctl status slurmdbd
+#+end_src
+
+Expected:
+
+#+begin_example
+active (running)
+#+end_example
+
+Purpose:
+
+Validates:
+
+- Slurm database daemon
+- scheduler/accounting communication
+- persistent accounting infrastructure
+
+** Verify Cluster Accounting Registration
+
+Run:
+
+#+begin_src bash
+sacctmgr list cluster
+#+end_src
+
+Expected:
+
+#+begin_example
+hpccluster
+#+end_example
+
+Purpose:
+
+Verifies:
+
+- cluster registration
+- accounting database connectivity
+- slurmdbd integration
+
+** Verify Accounts and User Associations
+
+Run:
+
+#+begin_src bash
+sacctmgr show assoc
+#+end_src
+
+Expected:
+
+#+begin_example
+Cluster    Account    User    Partition    QOS
+hpccluster general    rishi               normal
+#+end_example
+
+Purpose:
+
+Validates:
+
+- Slurm account creation
+- user associations
+- QoS assignments
+- scheduler policy hierarchy
+
+** Verify QoS Configuration
+
+Run:
+
+#+begin_src bash
+sacctmgr show qos normal
+#+end_src
+
+Expected:
+
+#+begin_example
+MaxWall=01:00:00
+MaxTRESPU=cpu=4
+MaxJobsPU=2
+#+end_example
+
+Purpose:
+
+Validates:
+
+- QoS creation
+- CPU limits
+- runtime limits
+- job count limits
+
+** IMPORTANT Validation Issue Faced
+
+Initially:
+
+- QoS existed
+- associations existed
+- accounting worked
+- jobs tracked correctly
+
+BUT:
+
+#+begin_example
+scheduler policies were NOT enforced
+#+end_example
+
+Jobs exceeding configured CPU limits still executed successfully.
+
+Example:
+
+#+begin_example
+MaxTRESPU=cpu=4
+#+end_example
+
+BUT:
+
+#+begin_example
+6 CPU jobs still executed
+#+end_example
+
+This revealed a missing scheduler enforcement configuration.
+
+** Root Cause Analysis
+
+The following configuration was missing:
+
+#+begin_src ini
+AccountingStorageEnforce=limits,qos
+#+end_src
+
+inside:
+
+#+begin_example
+/etc/slurm/slurm.conf
+#+end_example
+
+Without this line:
+
+- accounting works
+- sacct works
+- qos visible
+- associations visible
+
+BUT:
+
+#+begin_example
+scheduler-side policy enforcement remains disabled
+#+end_example
+
+This is one of the most common Slurm QoS configuration mistakes.
+
+** Fix Applied
+
+Added to:
+
+#+begin_example
+/etc/slurm/slurm.conf
+#+end_example
+
+#+begin_src ini
+AccountingStorageEnforce=limits,qos
+#+end_src
+
+Then:
+
+- distributed configuration to all nodes
+- restarted slurmctld
+- restarted slurmd daemons
+
+This enabled actual policy enforcement.
+
+** MPI Validation Program
+
+The following MPI-based parallel array summation program was used for
+validation.
+
+Program characteristics:
+
+- MPI parallel execution
+- multinode communication
+- distributed workload
+- scheduler-aware execution
+- CPU resource consumption
+
+Compilation:
+
+#+begin_src bash
+mpicc arrSum.c -o a.out
+#+end_src
+
+Purpose:
+
+Generate realistic MPI workloads for scheduler validation.
+
+** Validation Job Script
+
+Validation batch script:
+
+#+begin_src bash
+#!/bin/bash
+#SBATCH -N 2
+#SBATCH --ntasks-per-node=2
+#SBATCH --job-name=test
+#SBATCH --output=%J.out
+#SBATCH --error=%J.err
+#SBATCH --time=00:10:00
+
+source /apps/spack/share/spack/setup-env.sh
+spack load openmpi
+
+echo "SLURM_NTASKS=$SLURM_NTASKS"
+echo "SLURM_JOB_NUM_NODES=$SLURM_JOB_NUM_NODES"
+echo "SLURM_CPUS_ON_NODE=$SLURM_CPUS_ON_NODE"
+
+mpirun -np $SLURM_NTASKS ./a.out
+#+end_src
+
+Purpose:
+
+Validates:
+
+- multinode scheduling
+- MPI integration
+- scheduler environment variables
+- CPU allocation
+- QoS-aware execution
+
+** Verify Successful MPI Execution
+
+Submit job:
+
+#+begin_src bash
+sbatch submit.sh
+#+end_src
+
+Monitor queue:
+
+#+begin_src bash
+squeue --me
+#+end_src
+
+Expected:
+
+#+begin_example
+RUNNING
+#+end_example
+
+Purpose:
+
+Verifies:
+
+- scheduler functionality
+- multinode allocation
+- successful MPI execution
+
+** Verify Scheduler Environment Variables
+
+Observed output:
+
+#+begin_example
+SLURM_NTASKS=4
+SLURM_JOB_NUM_NODES=2
+SLURM_CPUS_ON_NODE=2
+#+end_example
+
+This validates:
+
+- correct CPU allocation
+- correct task allocation
+- proper multinode scheduling
+- scheduler environment propagation
+
+** Verify CPU QoS Enforcement
+
+Modified job script:
+
+#+begin_src bash
+#SBATCH -N 3
+#SBATCH --ntasks-per-node=2
+#SBATCH --ntasks=6
+#+end_src
+
+Requested resources:
+
+#+begin_example
+6 CPUs
+#+end_example
+
+Configured QoS limit:
+
+#+begin_example
+MaxTRESPU=cpu=4
+#+end_example
+
+Observed scheduler behavior:
+
+#+begin_example
+PENDING
+Reason=QOSMaxCpuPerUserLimit
+#+end_example
+
+Purpose:
+
+Validates:
+
+- CPU policy enforcement
+- active QoS restriction
+- scheduler-side resource control
+
+** IMPORTANT CPU QoS Concept
+
+#+begin_src ini
+MaxTRESPU=cpu=4
+#+end_src
+
+means:
+
+#+begin_example
+maximum ACTIVE running CPUs simultaneously
+#+end_example
+
+NOT:
+
+- maximum submitted jobs
+- maximum queued jobs
+- maximum CPUs requested in scripts
+
+This distinction is extremely important.
+
+** Verify Walltime Enforcement
+
+Modified batch script:
+
+#+begin_src bash
+#SBATCH --time=02:00:00
+#+end_src
+
+Configured QoS limit:
+
+#+begin_example
+MaxWall=01:00:00
+#+end_example
+
+Observed scheduler behavior:
+
+#+begin_example
+PENDING
+Reason=QOSMaxWallDurationPerJobLimit
+#+end_example
+
+Purpose:
+
+Validates:
+
+- runtime limit enforcement
+- walltime policy enforcement
+- scheduler-side runtime restriction
+
+** Verify Job Count Enforcement
+
+Configured:
+
+#+begin_example
+MaxJobsPU=2
+#+end_example
+
+Submitted multiple jobs:
+
+#+begin_src bash
+sbatch submit.sh
+sbatch submit.sh
+sbatch submit.sh
+#+end_src
+
+Observed behavior:
+
+- first jobs execute
+- additional jobs remain pending
+
+Purpose:
+
+Validates:
+
+- concurrent job restriction
+- scheduler fairness policy
+- user job limit enforcement
+
+** Verify Accounting Persistence
+
+Run:
+
+#+begin_src bash
+sacct
+#+end_src
+
+Observed output:
+
+#+begin_example
+JobID           JobName  Partition    AllocCPUS      State
+22                 test      debug             4  COMPLETED
+22.batch          batch                       2  COMPLETED
+22.0              prted                       2  COMPLETED
+#+end_example
+
+Purpose:
+
+Validates:
+
+- persistent accounting
+- MPI runtime tracking
+- historical scheduler data
+- job execution tracking
+
+** IMPORTANT MPI Accounting Observation
+
+Accounting tracks internal MPI execution hierarchy:
+
+| Entry | Meaning |
+|--------+---------|
+| 22 | main scheduler job |
+| 22.batch | batch execution step |
+| 22.0 | MPI runtime launcher |
+
+This provides deeper scheduler visibility similar to production HPC
+environments.
+
+** Final Validation State
+
+After validation, the cluster successfully supported:
+
+| Feature | Status |
+|----------+--------|
+| Multinode scheduling | Working |
+| MPI execution | Working |
+| LDAP authentication | Working |
+| Shared filesystem | Working |
+| Spack software stack | Working |
+| Resource-aware scheduling | Working |
+| CPU affinity | Working |
+| Accounting database | Working |
+| Persistent accounting | Working |
+| QoS enforcement | Working |
+| CPU policy enforcement | Working |
+| Runtime policy enforcement | Working |
+| User job limits | Working |
+| Scheduler-side policy control | Working |
+
+** Validation Conclusion
+
+The cluster successfully evolved from:
+
+#+begin_example
+basic educational scheduler
+#+end_example
+
+into:
+
+#+begin_example
+policy-aware production-like HPC infrastructure
+#+end_example
+
+while maintaining:
+
+- scheduler stability
+- multinode MPI execution
+- resource-aware scheduling
+- persistent accounting
+- user policy enforcement
+- simplified administration
+
+This now closely resembles the operational structure used in real HPC
+centers and supercomputing environments.
