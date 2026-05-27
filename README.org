@@ -9020,3 +9020,927 @@ while maintaining:
 
 This now closely resembles the operational structure used in real HPC
 centers and supercomputing environments.
+* Fairshare Scheduling and Multifactor Priority Scheduling
+
+This phase upgrades the Slurm scheduler from:
+
+#+begin_example
+policy-aware scheduling
+#+end_example
+
+into:
+
+#+begin_example
+fairness-aware scheduling
+#+end_example
+
+At this stage, the cluster already supported:
+
+- multinode scheduling
+- MPI execution
+- resource-aware scheduling
+- QoS enforcement
+- persistent accounting
+- CPU-aware scheduling
+- memory-aware scheduling
+- user policy enforcement
+
+The goal of this phase was to introduce:
+
+- fair resource sharing
+- historical usage balancing
+- multifactor scheduling
+- scheduler priorities
+- usage-aware scheduling behavior
+
+similar to real production HPC environments.
+
+** IMPORTANT Fairshare Concept
+
+Before enabling fairshare:
+
+Scheduler decisions were mostly based on:
+
+- available resources
+- QoS limits
+- job submission order
+
+Meaning:
+
+#+begin_example
+first user to submit jobs usually gains resources first
+#+end_example
+
+This can create unfair long-term resource usage.
+
+Fairshare introduces:
+
+#+begin_example
+historical usage-aware scheduling
+#+end_example
+
+Meaning:
+
+Users consuming large amounts of resources gradually lose scheduler
+priority while lighter users gain scheduling preference.
+
+This creates:
+
+- balanced cluster usage
+- long-term fairness
+- anti-resource-hoarding behavior
+- improved scheduler fairness
+
+Production supercomputers heavily rely on fairshare scheduling.
+
+** IMPORTANT Difference Between QoS and Fairshare
+
+QoS controls:
+
+#+begin_example
+hard scheduling limits
+#+end_example
+
+Examples:
+
+- maximum CPUs
+- maximum jobs
+- maximum runtime
+
+Fairshare controls:
+
+#+begin_example
+dynamic scheduling priority balancing
+#+end_example
+
+Meaning:
+
+Jobs are NOT strictly blocked.
+
+Instead:
+
+#+begin_example
+scheduler priority changes over time
+#+end_example
+
+depending on:
+
+- historical resource usage
+- waiting time
+- scheduler fairness policies
+
+This distinction is extremely important.
+
+** Existing Stable Scheduler Infrastructure
+
+Before enabling fairshare, the cluster already supported:
+
+| Feature                      | Status  |
+|------------------------------+---------|
+| Multinode scheduling         | Working |
+| MPI execution                | Working |
+| QoS enforcement              | Working |
+| Resource-aware scheduling    | Working |
+| CPU affinity                 | Working |
+| Persistent accounting        | Working |
+| Slurm database accounting    | Working |
+| Scheduler policy enforcement | Working |
+
+This provided the required foundation for multifactor scheduling.
+
+** IMPORTANT Scheduler Concept
+
+Fairshare requires:
+
+#+begin_example
+multifactor priority scheduling
+#+end_example
+
+because scheduler decisions must now consider multiple factors
+simultaneously.
+
+Without multifactor scheduling:
+
+#+begin_example
+fairshare cannot function correctly
+#+end_example
+
+** Enable Multifactor Priority Scheduler
+
+Edit Slurm configuration on master node:
+
+#+begin_src bash
+sudo vim /etc/slurm/slurm.conf
+#+end_src
+
+Add:
+
+#+begin_src ini
+PriorityType=priority/multifactor
+
+PriorityWeightFairshare=10000
+PriorityWeightAge=1000
+PriorityWeightJobSize=100
+PriorityWeightPartition=1000
+#+end_src
+
+Recommended placement:
+
+Near existing scheduler configuration:
+
+#+begin_src ini
+SchedulerType=sched/backfill
+#+end_src
+
+** IMPORTANT PriorityType Concept
+
+#+begin_src ini
+PriorityType=priority/multifactor
+#+end_src
+
+enables:
+
+#+begin_example
+advanced scheduler priority calculations
+#+end_example
+
+The scheduler now computes priorities using:
+
+- fairshare
+- waiting age
+- job size
+- partition priority
+- scheduler weights
+
+This is the standard production HPC scheduling model.
+
+** Understanding PriorityWeightFairshare
+
+#+begin_src ini
+PriorityWeightFairshare=10000
+#+end_src
+
+This is the MOST important fairshare configuration line.
+
+Purpose:
+
+Controls how strongly historical resource usage influences scheduler
+priority.
+
+Higher value:
+
+#+begin_example
+stronger fairshare effect
+#+end_example
+
+Meaning:
+
+Users with lower historical usage gain significantly better priority.
+
+** Understanding PriorityWeightAge
+
+#+begin_src ini
+PriorityWeightAge=1000
+#+end_src
+
+Purpose:
+
+Older waiting jobs gradually gain scheduler priority.
+
+Prevents:
+
+#+begin_example
+scheduler starvation
+#+end_example
+
+Meaning:
+
+Jobs waiting for long periods slowly move upward in priority.
+
+** Understanding PriorityWeightJobSize
+
+#+begin_src ini
+PriorityWeightJobSize=100
+#+end_src
+
+Purpose:
+
+Influence scheduling based on requested job size.
+
+Depending on cluster policy:
+
+- larger jobs may receive preference
+- smaller jobs may backfill easier
+
+This helps improve cluster utilization.
+
+** Understanding PriorityWeightPartition
+
+#+begin_src ini
+PriorityWeightPartition=1000
+#+end_src
+
+Purpose:
+
+Allow different partitions to receive different scheduler priorities.
+
+Useful for future partitions such as:
+
+- debug
+- teaching
+- long-running
+- premium
+- GPU partitions
+
+** Configure Fairshare Decay Settings
+
+Still inside:
+
+#+begin_example
+/etc/slurm/slurm.conf
+#+end_example
+
+Add:
+
+#+begin_src ini
+PriorityDecayHalfLife=7-0
+PriorityUsageResetPeriod=NONE
+PriorityFavorSmall=NO
+FairShareDampeningFactor=1
+#+end_src
+
+** Understanding PriorityDecayHalfLife
+
+#+begin_src ini
+PriorityDecayHalfLife=7-0
+#+end_src
+
+Meaning:
+
+Historical resource usage gradually decays over:
+
+#+begin_example
+7 days
+#+end_example
+
+Purpose:
+
+Allows users to recover scheduler priority over time.
+
+Without decay:
+
+#+begin_example
+historical usage penalties become permanent
+#+end_example
+
+which is undesirable.
+
+Production clusters commonly use:
+
+- days
+- weeks
+- months
+
+depending on scheduling policy.
+
+** Understanding PriorityUsageResetPeriod
+
+#+begin_src ini
+PriorityUsageResetPeriod=NONE
+#+end_src
+
+Meaning:
+
+Usage history never fully resets.
+
+Instead:
+
+#+begin_example
+usage gradually decays naturally
+#+end_example
+
+This creates smoother long-term fairness behavior.
+
+** Understanding PriorityFavorSmall
+
+#+begin_src ini
+PriorityFavorSmall=NO
+#+end_src
+
+Purpose:
+
+Prevent scheduler from aggressively favoring very small jobs.
+
+This keeps scheduling behavior more balanced.
+
+** Understanding FairShareDampeningFactor
+
+#+begin_src ini
+FairShareDampeningFactor=1
+#+end_src
+
+Purpose:
+
+Controls strength of fairshare effects.
+
+Lower values:
+
+- weaker balancing
+
+Higher values:
+
+- stronger balancing
+
+Value:
+
+#+begin_example
+1
+#+end_example
+
+provides moderate balanced behavior.
+
+** Distribute Updated Configuration
+
+Copy updated configuration from master node:
+
+#+begin_src bash
+scp /etc/slurm/slurm.conf login:/tmp/
+scp /etc/slurm/slurm.conf compute01:/tmp/
+scp /etc/slurm/slurm.conf compute02:/tmp/
+scp /etc/slurm/slurm.conf compute03:/tmp/
+#+end_src
+
+Purpose:
+
+Distribute updated scheduler configuration to all nodes.
+
+** Install Configuration
+
+Move configuration into place on login node:
+
+#+begin_src bash
+sudo mv /tmp/slurm.conf /etc/slurm/
+#+end_src
+
+Move configuration into place on compute nodes:
+
+#+begin_src bash
+ssh compute01 sudo -S mv /tmp/slurm.conf /etc/slurm/
+ssh compute02 sudo -S mv /tmp/slurm.conf /etc/slurm/
+ssh compute03 sudo -S mv /tmp/slurm.conf /etc/slurm/
+#+end_src
+
+Purpose:
+
+Replace old scheduler configuration with updated multifactor scheduling
+configuration.
+
+** Restart Slurm Services
+
+Restart scheduler controller on master node:
+
+#+begin_src bash
+sudo systemctl restart slurmctld
+#+end_src
+
+Observed temporarily:
+
+#+begin_example
+compute[01-03] unk
+#+end_example
+
+This is normal during scheduler restart.
+
+Restart compute daemons:
+
+#+begin_src bash
+ssh compute01 sudo -S systemctl restart slurmd
+ssh compute02 sudo -S systemctl restart slurmd
+ssh compute03 sudo -S systemctl restart slurmd
+#+end_src
+
+After restart:
+
+#+begin_src bash
+sinfo
+#+end_src
+
+Observed:
+
+#+begin_example
+compute[01-03] idle
+#+end_example
+
+This validated:
+
+- successful scheduler reload
+- healthy compute nodes
+- stable scheduler state
+
+** IMPORTANT Issue Initially Observed
+
+Immediately after configuration:
+
+#+begin_src bash
+sprio
+#+end_src
+
+returned:
+
+#+begin_example
+You are not running a supported priority plugin
+#+end_example
+
+This revealed:
+
+#+begin_example
+PriorityType=priority/multifactor
+#+end_example
+
+was not yet active.
+
+Cause:
+
+Scheduler restart had not yet fully applied the new configuration.
+
+After:
+
+- configuration distribution
+- slurmctld restart
+- slurmd restart
+
+the issue disappeared successfully.
+
+** IMPORTANT sprio Concept
+
+#+begin_src bash
+sprio
+#+end_src
+
+is one of the MOST important Slurm administrator commands.
+
+Purpose:
+
+Displays:
+
+- scheduler priority calculations
+- fairshare contribution
+- job age contribution
+- job size contribution
+- partition priority contribution
+
+This command explains:
+
+#+begin_example
+WHY jobs receive current scheduling priority
+#+end_example
+
+** IMPORTANT Observation About sprio
+
+Initially:
+
+#+begin_src bash
+sprio
+#+end_src
+
+showed no jobs.
+
+This was NOT a failure.
+
+Reason:
+
+#+begin_example
+sprio only displays pending jobs
+#+end_example
+
+NOT:
+
+- completed jobs
+- running jobs
+
+Since jobs executed quickly, there were no pending jobs to analyze.
+
+This behavior is completely normal.
+
+** Verify Fairshare Accounting
+
+Run:
+
+#+begin_src bash
+sshare
+#+end_src
+
+Observed output:
+
+#+begin_example
+RawUsage = 387
+#+end_example
+
+Purpose:
+
+Validates:
+
+- historical usage tracking
+- accounting integration
+- fairshare accounting functionality
+
+This proved Slurm was successfully recording:
+
+- CPU usage
+- historical resource consumption
+- scheduling history
+
+** Understanding sshare Output
+
+#+begin_src bash
+sshare
+#+end_src
+
+displays:
+
+- scheduler shares
+- historical usage
+- fairshare values
+- normalized shares
+
+This is one of the most important scheduler accounting commands.
+
+** Understanding RawUsage
+
+Example:
+
+#+begin_example
+RawUsage = 387
+#+end_example
+
+Meaning:
+
+User has consumed historical scheduler resources.
+
+This includes:
+
+- CPU usage
+- scheduler allocations
+- accumulated job execution time
+
+Higher value means:
+
+#+begin_example
+heavier historical cluster usage
+#+end_example
+
+** Understanding FairShare Value
+
+Example:
+
+#+begin_example
+FairShare = 1.000000
+#+end_example
+
+Meaning:
+
+User currently has full scheduling entitlement.
+
+Initially this remained:
+
+#+begin_example
+1.000000
+#+end_example
+
+because only one active user existed.
+
+Fairshare becomes meaningful only when:
+
+- multiple users compete
+- jobs remain pending
+- scheduler must prioritize workloads
+
+This is extremely important.
+
+** IMPORTANT Fairshare Concept
+
+Fairshare is:
+
+#+begin_example
+comparative scheduling behavior
+#+end_example
+
+NOT:
+
+#+begin_example
+absolute scheduling behavior
+#+end_example
+
+Meaning:
+
+Fairshare only matters when scheduler must choose between competing jobs.
+
+** Create Additional User Competition
+
+Additional users added to Slurm accounting:
+
+#+begin_src bash
+sudo sacctmgr add user hpcadmin account=general
+sudo sacctmgr add user student01 account=general
+sudo sacctmgr add user student02 account=general
+#+end_src
+
+Verify associations:
+
+#+begin_src bash
+sacctmgr show assoc
+#+end_src
+
+Purpose:
+
+Create realistic multi-user scheduler competition.
+
+** Generate Scheduler Contention
+
+Multiple users submitted jobs simultaneously.
+
+Observed queue state:
+
+#+begin_src bash
+squeue
+#+end_src
+
+Observed:
+
+#+begin_example
+44 debug test student01 PD (Resources)
+45 debug test student01 PD (Priority)
+46 debug test rishi     PD (Priority)
+#+end_example
+
+This was the FIRST real proof that:
+
+#+begin_example
+multifactor scheduler priorities were functioning
+#+end_example
+
+** IMPORTANT Understanding Pending Reasons
+
+#+begin_example
+(Resources)
+#+end_example
+
+Meaning:
+
+Cluster currently lacks sufficient free CPUs or nodes.
+
+Scheduler would run the job immediately if resources existed.
+
+#+begin_example
+(Priority)
+#+end_example
+
+Meaning:
+
+Resources may become available, BUT another job currently has higher
+scheduler priority.
+
+This is the MOST important fairshare scheduling observation.
+
+** Understand sprio Output
+
+Observed example:
+
+#+begin_example
+JOBID PARTITION PRIORITY SITE AGE FAIRSHARE JOBSIZE PARTITION
+44    debug      9066     0    0    8000      67      1000
+46    debug      3066     0    0    2000      67      1000
+#+end_example
+
+This output demonstrates active multifactor scheduling.
+
+** Understanding PRIORITY Column
+
+Example:
+
+#+begin_example
+9066
+#+end_example
+
+Meaning:
+
+Final scheduler priority score.
+
+Higher value means:
+
+#+begin_example
+job executes earlier
+#+end_example
+
+This is the combined result of:
+
+- fairshare
+- age
+- partition priority
+- job size
+
+** Understanding FAIRSHARE Column
+
+Example:
+
+#+begin_example
+8000
+#+end_example
+
+Meaning:
+
+Fairshare contribution to total scheduler priority.
+
+Higher value:
+
+- lighter historical usage
+- scheduler preference
+- better fairness entitlement
+
+Lower value:
+
+- heavier historical resource usage
+- reduced scheduler preference
+
+This is the core of fairshare scheduling.
+
+** IMPORTANT Fairshare Validation
+
+Observed priorities:
+
+| Job | Fairshare Contribution |
+|------+------------------------|
+| 44 | 8000 |
+| 46 | 2000 |
+
+This proved:
+
+#+begin_example
+historical resource usage was actively influencing scheduler priority
+#+end_example
+
+This is REAL production-style scheduler behavior.
+
+** Understanding AGE Column
+
+Initially:
+
+#+begin_example
+0
+#+end_example
+
+because jobs were still new.
+
+Over time:
+
+- waiting jobs accumulate age score
+- scheduler gradually boosts their priority
+
+Purpose:
+
+Prevent:
+
+#+begin_example
+scheduler starvation
+#+end_example
+
+** Understanding JOBSIZE Column
+
+Example:
+
+#+begin_example
+67
+#+end_example
+
+Meaning:
+
+Scheduler contribution based on requested resources.
+
+Can depend on:
+
+- CPUs
+- nodes
+- tasks
+- requested resources
+
+Different clusters tune this differently.
+
+** Understanding PARTITION Column
+
+Example:
+
+#+begin_example
+1000
+#+end_example
+
+This came from:
+
+#+begin_src ini
+PriorityWeightPartition=1000
+#+end_src
+
+Currently all jobs used the same partition.
+
+In future:
+
+Different partitions can receive:
+
+- different priorities
+- different scheduling behavior
+- different policies
+
+** IMPORTANT Final Scheduler State
+
+The scheduler now simultaneously considers:
+
+| Scheduling Factor | Purpose                    |
+|-------------------+----------------------------|
+| resources         | free CPUs and nodes        |
+| qos               | policy restrictions        |
+| fairshare         | historical usage balancing |
+| age               | waiting time fairness      |
+| partition         | queue importance           |
+| job size          | workload balancing         |
+
+This is significantly closer to real production HPC scheduling behavior.
+
+** Final Fairshare Validation State
+
+After validation, the cluster successfully supported:
+
+| Feature                       | Status  |
+|-------------------------------+---------|
+| Multifactor scheduling        | Working |
+| Fairshare accounting          | Working |
+| Historical usage tracking     | Working |
+| Dynamic scheduler priorities  | Working |
+| Queue priority balancing      | Working |
+| QoS integration               | Working |
+| Resource-aware scheduling     | Working |
+| Pending priority calculations | Working |
+
+** Final Conclusion
+
+The scheduler successfully evolved from:
+
+#+begin_example
+simple resource-based scheduling
+#+end_example
+
+into:
+
+#+begin_example
+fairness-aware multifactor HPC scheduling
+#+end_example
+
+while maintaining:
+
+- cluster stability
+- MPI execution
+- multinode scheduling
+- scheduler accounting
+- QoS enforcement
+- realistic HPC scheduling behavior
+
+This now resembles the scheduling architecture used in real HPC centers
+and production supercomputing environments.
